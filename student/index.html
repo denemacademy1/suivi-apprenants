@@ -17,7 +17,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .header{background:linear-gradient(135deg,#1E1B4B,#4F46E5);color:#fff;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .header-left{display:flex;align-items:center;gap:16px}
 .logo{display:flex;align-items:center;gap:10px}
-.logo-icon{width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-icon{width:36px;height:36px;border-radius:10px;overflow:hidden}
 .logo-name{font-size:16px;font-weight:700}
 .header-sep{width:1px;height:24px;background:rgba(255,255,255,.2)}
 .welcome{font-size:13px;opacity:.85}
@@ -145,7 +145,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <!-- HEADER -->
     <div class="header">
       <div class="header-left">
-        <div class="logo"><div class="logo-icon">🎓</div><div class="logo-name">Denem Academy</div></div>
+        <div class="logo"><div class="logo-icon"><img src="../assets/logo.png" alt="Denem Academy" style="width:36px;height:36px;object-fit:cover;border-radius:10px"></div><div class="logo-name">Denem Academy</div></div>
         <div class="header-sep"></div>
         <div class="welcome">Bonjour, <strong id="user-name">…</strong> 👋</div>
       </div>
