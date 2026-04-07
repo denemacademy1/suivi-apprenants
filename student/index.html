@@ -216,17 +216,23 @@ auth.onAuthStateChanged(async user=>{
   loadData();
 });
 
-async function loadData(){
-  // Load published modules
-  const modSnap=await db.collection("modules").where("published","==",true).orderBy("ordre").get();
-  S.modules=modSnap.docs.map(d=>({id:d.id,...d.data()}));
-  // Load progressions
+function loadData(){
+  // Real-time listener for published modules (sort client-side to avoid composite index)
+  db.collection("modules").where("published","==",true).onSnapshot(snap=>{
+    S.modules=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordre||0)-(b.ordre||0));
+    renderSidebar();
+    updateGlobalProgress();
+  },err=>console.error("Erreur modules:",err));
+
+  // Real-time listener for progressions
   if(S.apprenant){
-    const progSnap=await db.collection("progressions").where("apprenant_id","==",S.apprenant.id).get();
-    progSnap.forEach(d=>{S.progressions[d.data().module_id]=d.data();});
+    db.collection("progressions").where("apprenant_id","==",S.apprenant.id).onSnapshot(snap=>{
+      S.progressions={};
+      snap.forEach(d=>{S.progressions[d.data().module_id]=d.data();});
+      renderSidebar();
+      updateGlobalProgress();
+    },err=>console.error("Erreur progressions:",err));
   }
-  renderSidebar();
-  updateGlobalProgress();
 }
 
 function updateGlobalProgress(){
