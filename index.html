@@ -438,7 +438,7 @@ const PAGE_INFO={
 //  STATE
 // ══════════════════════════════════════
 const S={
-  apprenants:[],rdvs:[],contacts:[],
+  apprenants:[],rdvs:[],contacts:[],modules:[],progressions:[],
   page:"dashboard",student:null,panelTab:0,
   filterCharge:"all",filterStatut:"all",filterCohorte:"all",search:"",
   editStudentId:null,editRdvId:null,
@@ -495,6 +495,16 @@ function startListeners(){
     if(S.student&&S.panelTab===3)renderPanelTab();
     if(S.page==="dashboard")renderCurrent();
   });
+  db.collection("modules").where("published","==",true).orderBy("ordre").onSnapshot(snap=>{
+    S.modules=snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateBadges();renderCurrent();
+    if(S.student)renderPanelTab();
+  });
+  db.collection("progressions").onSnapshot(snap=>{
+    S.progressions=snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateBadges();renderCurrent();
+    if(S.student)renderPanelTab();
+  });
 }
 
 // ══════════════════════════════════════
@@ -510,8 +520,11 @@ function fDateLong(d){if(!d)return"—";try{return new Date(d).toLocaleDateStrin
 const today=()=>new Date().toISOString().split("T")[0];
 const isUpcoming=(d,n=7)=>{if(!d)return false;const dt=new Date(d),t=new Date();t.setHours(0,0,0,0);const l=new Date(t);l.setDate(l.getDate()+n);return dt>=t&&dt<=l;};
 const isPast=(d)=>{if(!d)return false;return new Date(d)<new Date(today());};
-const scoreTotal=(a)=>(a.modules_scores||[]).filter(s=>s!=null).reduce((t,v)=>t+v,0);
-const modulesOk=(a)=>(a.modules_scores||[]).filter(s=>s!=null).length;
+const stuProgs=(appId)=>S.progressions.filter(p=>p.apprenant_id===appId&&p.statut==="completed");
+const modulesOk=(a)=>stuProgs(a.id).length;
+const totalModules=()=>S.modules.length||MODULES.length;
+const moduleProgress=(a)=>{const t=totalModules();return t?Math.round((modulesOk(a)/t)*100):avp(a.jour);};
+const scoreTotal=(a)=>stuProgs(a.id).reduce((t,p)=>t+(p.score_quiz||0),0);
 const stuContacts=(id)=>S.contacts.filter(c=>c.apprenant_id===id);
 function byCharge(arr){if(S.filterCharge==="all")return arr;return arr.filter(a=>a.charge===S.filterCharge||a.charge_suivi===S.filterCharge);}
 
@@ -675,7 +688,7 @@ function renderApprenants(){
           <thead><tr><th>Apprenant</th><th>Cohorte</th><th>Jour</th><th>Phase</th><th>Avancement</th><th>Contacts</th><th>Dernier contact</th><th>Chargé</th><th>Statut</th><th></th></tr></thead>
           <tbody>
           ${data.length?data.map(a=>{
-            const ph=phaseOf(a.jour),p=avp(a.jour),sc=stuContacts(a.id),last=sc[0];
+            const ph=phaseOf(a.jour),p=moduleProgress(a),sc=stuContacts(a.id),last=sc[0];
             const dots=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const cls=done?"cdot-ok":a.jour>=ct.jour+5?"cdot-late":"cdot-no";return`<div class="cdot ${cls}" title="${ct.nom}"></div>`;}).join("");
             return`<tr onclick="openStudentPanel('${a.id}')">
               <td><div class="stu-cell"><div class="avatar" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div><div><div class="stu-name">${a.prenom} ${a.nom}</div><div class="stu-email">${a.email||""}</div></div></div></td>
@@ -777,10 +790,18 @@ function renderRapports(){
       <div class="chart-card"><div class="section-title">Avancement moyen par chargé</div><canvas id="ch-ch" height="220"></canvas></div>
     </div>`;
   setTimeout(()=>{
-    const rates=MODULES.map(m=>{const done=data.filter(a=>(a.modules_scores||[])[m.id-1]!=null).length;return data.length?Math.round((done/data.length)*100):0;});
-    const phColors=MODULES.map(m=>{const p=PHASES.find(ph=>ph.id===m.phase);return p?p.c+"CC":"#4F46E5CC";});
+    const modSrc=S.modules.length?S.modules:MODULES.map(m=>({id:m.id,titre:m.nom,phase_id:String(m.phase)}));
+    const PHASE_COLORS_CHART={onboarding:"#8B5CF6CC",formation:"#3B82F6CC",pratique:"#10B981CC",finalisation:"#F59E0BCC"};
+    const rates=modSrc.map(m=>{
+      const done=S.modules.length
+        ?data.filter(a=>S.progressions.some(p=>p.apprenant_id===a.id&&p.module_id===m.id&&p.statut==="completed")).length
+        :data.filter(a=>(a.modules_scores||[])[m.id-1]!=null).length;
+      return data.length?Math.round((done/data.length)*100):0;
+    });
+    const phColors=modSrc.map(m=>PHASE_COLORS_CHART[m.phase_id]||"#4F46E5CC");
+    const modLabels=modSrc.map(m=>(m.titre||m.nom||"").substring(0,12));
     if(S.charts.mod)S.charts.mod.destroy();
-    S.charts.mod=new Chart(document.getElementById("ch-mod").getContext("2d"),{type:"bar",data:{labels:["Onboard","Mod.1","Mod.2","Mod.3","Mod.4","Mod.5","Mod.6","Projet","Certif"],datasets:[{label:"% complété",data:rates,backgroundColor:phColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}},x:{grid:{display:false}}}}});
+    S.charts.mod=new Chart(document.getElementById("ch-mod").getContext("2d"),{type:"bar",data:{labels:modLabels,datasets:[{label:"% complété",data:rates,backgroundColor:phColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}},x:{grid:{display:false},ticks:{maxRotation:30,font:{size:10}}}}}})
 
     const sc={};STATUTS.forEach(s=>sc[s]=data.filter(a=>a.statut===s).length);
     if(S.charts.stat)S.charts.stat.destroy();
@@ -857,9 +878,9 @@ function renderPanelTab(){
 function renderPanelProfil(a){
   document.getElementById("panel-body").innerHTML=`
     <div class="stat-boxes">
-      <div class="stat-box"><div class="stat-val" style="color:var(--primary)">J${a.jour}/90</div><div class="stat-lbl">Jour</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--success)">${avp(a.jour)}%</div><div class="stat-lbl">Avancement</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--warning)">${modulesOk(a)}/${MODULES.length}</div><div class="stat-lbl">Modules OK</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--primary)">J${a.jour}/90</div><div class="stat-lbl">Jour parcours</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--success)">${moduleProgress(a)}%</div><div class="stat-lbl">Modules complétés</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--warning)">${modulesOk(a)}/${totalModules()}</div><div class="stat-lbl">Modules OK</div></div>
     </div>
     ${[["📧 Email",a.email],["📱 Téléphone",a.telephone],["🎓 Cohorte",a.cohorte],["📅 Début",a.date_debut],["👤 Chargé",a.charge],["🏆 Score",scoreTotal(a)+" pts"],["🎯 Objectif",a.objectif]].map(([l,v])=>v?`<div class="field-row"><span class="field-lbl">${l}</span><span class="field-val">${v}</span></div>`:"").join("")}`;
 }
@@ -876,23 +897,50 @@ function renderPanelParcours(a){
     </div>`;}).join("")}</div>`;
 }
 function renderPanelModules(a){
-  document.getElementById("panel-body").innerHTML=`
-    <div>${MODULES.map((m,i)=>{
-      const s=(a.modules_scores||[])[i];const ok=s!=null;const ph=PHASES.find(p=>p.id===m.phase);const pct=ok?Math.round((s/m.pts)*100):0;
-      return`<div class="mod-row">
-        <div class="mod-dot" style="background:${ok?"#10B981":"#E2E8F0"}"></div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:500">${m.nom}</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
-            <div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:${pct}%;background:${ph?ph.c:"var(--primary)"}"></div></div>
-            <span style="font-size:11px;color:var(--muted)">${m.duree}</span>
-          </div>
+  const progs=stuProgs(a.id);
+  const doneIds=new Set(progs.map(p=>p.module_id));
+  const PHASE_COLORS={onboarding:"#8B5CF6",formation:"#3B82F6",pratique:"#10B981",finalisation:"#F59E0B"};
+  const PHASE_LABELS={onboarding:"Onboarding",formation:"Formation",pratique:"Pratique",finalisation:"Finalisation"};
+  if(!S.modules.length){
+    document.getElementById("panel-body").innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:32px;margin-bottom:8px">📚</div>
+      <div style="font-weight:600">Aucun module publié</div>
+      <div style="font-size:12px;margin-top:4px">Créez des modules depuis le <a href="../admin/" target="_blank" style="color:var(--primary)">panel admin</a></div>
+    </div>`;return;
+  }
+  const rows=S.modules.map(m=>{
+    const prog=progs.find(p=>p.module_id===m.id);
+    const ok=doneIds.has(m.id);
+    const score=prog?.score_quiz??null;
+    const minScore=m.score_minimum||70;
+    const phasec=PHASE_COLORS[m.phase_id]||"var(--primary)";
+    const phasel=PHASE_LABELS[m.phase_id]||m.phase_id||"";
+    return`<div class="mod-row">
+      <div class="mod-dot" style="background:${ok?"#10B981":"#E2E8F0"}"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px">
+          ${m.titre}
+          ${ok?`<span style="font-size:10px;background:#DCFCE7;color:#16A34A;padding:1px 6px;border-radius:10px;font-weight:700">✓ Complété</span>`:''}
         </div>
-        <span style="font-size:11px;color:var(--muted)">/${m.pts}</span>
-        <input class="mod-score-input" type="number" min="0" max="${m.pts}" value="${ok?s:""}" placeholder="—" id="ms-${i}">
-      </div>`;}).join("")}</div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-primary" onclick="saveModScores('${a.id}')">💾 Enregistrer les scores</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span style="font-size:10px;background:${phasec}22;color:${phasec};padding:1px 7px;border-radius:10px;font-weight:600">${phasel}</span>
+          ${m.duree_estimee?`<span style="font-size:11px;color:var(--muted)">⏱ ${m.duree_estimee}</span>`:''}
+          ${score!=null?`<span style="font-size:11px;color:${score>=minScore?"#16A34A":"#DC2626"};font-weight:600">Quiz : ${score}% ${score>=minScore?"✓":"✗"}</span>`:''}
+          ${ok&&prog?.completed_at?`<span style="font-size:11px;color:var(--muted)">${fDate(prog.completed_at?.toDate?.()?.toISOString?.()?.split('T')[0]||'')}</span>`:''}
+        </div>
+      </div>
     </div>`;
+  }).join("");
+  const done=progs.length,total=S.modules.length,pct=total?Math.round(done/total*100):0;
+  document.getElementById("panel-body").innerHTML=`
+    <div style="background:var(--primary-light);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:6px">${done} / ${total} modules complétés</div>
+        <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:${pct}%;background:var(--primary)"></div></div>
+      </div>
+      <div style="font-size:22px;font-weight:800;color:var(--primary)">${pct}%</div>
+    </div>
+    <div>${rows}</div>`;
 }
 function saveModScores(id){
   const scores=MODULES.map((_,i)=>{const v=document.getElementById(`ms-${i}`)?.value;return(v===undefined||v==="")?null:Math.min(parseInt(v)||0,MODULES[i].pts);});
