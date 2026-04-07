@@ -141,7 +141,7 @@ nav::-webkit-scrollbar{width:0}
 .section-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:10px}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
 .badges-grid{display:flex;gap:10px;flex-wrap:wrap}
-.badge-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:700;transition:all .2s;cursor:default;position:relative;overflow:hidden}
+.badge-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:700;transition:all .2s;cursor:default;position:relative}
 .badge-pill.unlocked{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#A5B4FC}
 .badge-pill.unlocked::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,102,241,.08),transparent);pointer-events:none}
 .badge-pill.locked{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.2);filter:grayscale(1)}
@@ -312,6 +312,11 @@ nav::-webkit-scrollbar{width:0}
 }
 [data-tip]:hover::after,[data-tip]:hover::before{opacity:1;transform:translateX(-50%) scale(1)}
 [data-tip]:hover::before{transform:translateX(-50%)}
+/* Tooltip vers le bas (pour éléments en haut de page) */
+[data-tip].tip-below::after{bottom:auto;top:calc(100% + 10px);transform:translateX(-50%) scale(.92)}
+[data-tip].tip-below::before{bottom:auto;top:calc(100% + 5px);border-top-color:transparent;border-bottom-color:#1C1A35}
+[data-tip].tip-below:hover::after{transform:translateX(-50%) scale(1)}
+[data-tip].tip-below:hover::before{transform:translateX(-50%)}
 
 /* ─── NOTES & TODOS ─── */
 .notes-layout{display:flex;height:calc(100vh - 56px);overflow:hidden}
@@ -448,8 +453,8 @@ nav::-webkit-scrollbar{width:0}
         <div class="suc-track"><div class="suc-fill" id="suc-fill" style="width:0%"></div></div>
         <!-- XP bar -->
         <div class="xp-row">
-          <div class="xp-level-badge" id="xp-level-badge" data-tip="Niveaux XP&#10;1 · Débutant : 0 XP&#10;2 · Apprenti : 200 XP&#10;3 · Confirmé : 500 XP&#10;4 · Expert : 1000 XP&#10;5 · Maître : 2000 XP">⚡ Niveau 1</div>
-          <span class="xp-label" data-tip="Comment gagner des XP ?&#10;+100 XP par module complété&#10;+50 XP si quiz ≥ 90%&#10;+25 XP si quiz ≥ 80%&#10;+10 XP par connexion quotidienne"><span id="xp-current">0</span> XP</span>
+          <div class="xp-level-badge tip-below" id="xp-level-badge" data-tip="Niveaux XP&#10;1 · Débutant : 0 XP&#10;2 · Apprenti : 200 XP&#10;3 · Confirmé : 500 XP&#10;4 · Expert : 1000 XP&#10;5 · Maître : 2000 XP">⚡ Niveau 1</div>
+          <span class="xp-label tip-below" data-tip="Comment gagner des XP ?&#10;+100 XP par module complété&#10;+50 XP si quiz ≥ 90%&#10;+25 XP si quiz ≥ 80%&#10;+10 XP par connexion quotidienne"><span id="xp-current">0</span> XP</span>
         </div>
         <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
       </div>
