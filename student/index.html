@@ -283,7 +283,7 @@ function renderModule(m){
   const prog=S.progressions[m.id];
   const isDone=prog?.statut==="termine";
   const phase=getPhase(m.phase_id);
-  const ytId=extractYtId(m.video_url);
+  const embedUrl=getVideoEmbed(m.video_url);
 
   let html='';
 
@@ -311,10 +311,10 @@ function renderModule(m){
     </div>`;
 
   // VIDEO
-  if(ytId){
+  if(embedUrl){
     html+=`<div class="video-section">
       <div class="section-label">🎬 Vidéo du cours</div>
-      <div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytId}?rel=0" frameborder="0" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe></div>
+      <div class="video-wrap"><iframe src="${embedUrl}" frameborder="0" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe></div>
     </div>`;
   }
 
@@ -477,10 +477,15 @@ async function completeModule(moduleId,score){
 }
 
 // ── HELPERS ──
-function extractYtId(url){
+function getVideoEmbed(url){
   if(!url)return null;
-  const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
-  return m?m[1]:null;
+  // YouTube
+  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  if(yt)return`https://www.youtube.com/embed/${yt[1]}?rel=0`;
+  // Vimeo
+  const vi=url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if(vi)return`https://player.vimeo.com/video/${vi[1]}?badge=0&autopause=0&player_id=0`;
+  return null;
 }
 const PHASES=[
   {id:1,nom:"Onboarding",c:"#8B5CF6",icon:"🚀"},{id:2,nom:"Fondamentaux",c:"#3B82F6",icon:"📚"},
