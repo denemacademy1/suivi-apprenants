@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denem Academy — Mon espace</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#4F46E5;--primary-light:#EEF2FF;--success:#10B981;--success-light:#D1FAE5;--warning:#F59E0B;--danger:#EF4444;--bg:#F1F5F9;--card:#fff;--border:#E2E8F0;--text:#1E293B;--muted:#64748B;--light:#94A3B8}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;font-size:14px}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#1E1B4B,#4F46E5);color:#fff;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.header-left{display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-name{font-size:16px;font-weight:700}
+.header-sep{width:1px;height:24px;background:rgba(255,255,255,.2)}
+.welcome{font-size:13px;opacity:.85}
+.header-right{display:flex;align-items:center;gap:12px}
+.progress-global{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border-radius:20px;padding:6px 14px}
+.prog-label{font-size:12px;opacity:.85}
+.prog-bar-wrap{width:100px;height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden}
+.prog-bar-fill{height:100%;background:#10B981;border-radius:3px;transition:width .5s}
+.prog-pct{font-size:12px;font-weight:700;min-width:30px;text-align:right}
+.btn-logout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s}
+.btn-logout:hover{background:rgba(255,255,255,.25)}
+
+/* BODY */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:260px;min-width:260px;background:var(--card);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-title{padding:16px 20px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.phase-group{margin-bottom:4px}
+.phase-header{padding:10px 20px 4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.module-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.module-item:hover{background:var(--bg)}
+.module-item.active{background:var(--primary-light);border-left-color:var(--primary)}
+.module-item.locked{opacity:.5;cursor:not-allowed}
+.module-status{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;border:2px solid var(--border);background:#fff}
+.ms-done{background:var(--success);border-color:var(--success);color:#fff}
+.ms-current{background:var(--primary);border-color:var(--primary);color:#fff;animation:pulse 2s infinite}
+.ms-lock{background:var(--bg);border-color:var(--border)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(79,70,229,.3)}50%{box-shadow:0 0 0 4px rgba(79,70,229,0)}}
+.module-info{flex:1;min-width:0}
+.module-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.module-meta{font-size:11px;color:var(--muted)}
+
+/* MAIN CONTENT */
+.main{flex:1;overflow-y:auto;padding:24px}
+.content-card{background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:20px}
+.content-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.content-phase{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.content-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px}
+.content-desc{font-size:13px;color:var(--muted)}
+.content-badges{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.cbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.cb-done{background:var(--success-light);color:#065F46}
+.cb-pending{background:#F1F5F9;color:#475569}
+.cb-score{background:var(--primary-light);color:#3730A3}
+
+/* VIDEO */
+.video-section{padding:24px}
+.section-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.video-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000;margin-bottom:20px}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%}
+.no-content{text-align:center;padding:32px;color:var(--muted);background:var(--bg);border-radius:10px;font-size:13px}
+
+/* PDF */
+.pdf-section{padding:0 24px 24px}
+.pdf-card{border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s}
+.pdf-card:hover{border-color:var(--primary);background:var(--primary-light)}
+.pdf-icon{width:44px;height:44px;background:#FEE2E2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.pdf-name{font-size:14px;font-weight:600;color:var(--text)}
+.pdf-size{font-size:12px;color:var(--muted)}
+.pdf-btn{margin-left:auto;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* TEXT CONTENT */
+.text-section{padding:0 24px 24px}
+.text-content{font-size:14px;line-height:1.8;color:var(--text)}
+.text-content h3{font-size:16px;font-weight:700;margin:16px 0 8px}
+.text-content p{margin-bottom:12px}
+.text-content ul{padding-left:20px;margin-bottom:12px}
+.text-content li{margin-bottom:6px}
+
+/* QUIZ */
+.quiz-section{padding:24px;border-top:2px solid var(--bg)}
+.quiz-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.quiz-title{font-size:16px;font-weight:700}
+.quiz-progress{font-size:12px;color:var(--muted)}
+.question-card{background:var(--bg);border-radius:10px;padding:16px 20px;margin-bottom:16px}
+.question-text{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)}
+.question-num{font-size:11px;font-weight:700;color:var(--primary);margin-bottom:6px;text-transform:uppercase}
+.options{display:flex;flex-direction:column;gap:8px}
+.option{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;background:#fff;font-size:13px}
+.option:hover{border-color:var(--primary);background:var(--primary-light)}
+.option.selected{border-color:var(--primary);background:var(--primary-light);color:var(--primary);font-weight:500}
+.option.correct{border-color:var(--success);background:var(--success-light);color:#065F46;font-weight:500}
+.option.wrong{border-color:var(--danger);background:#FEE2E2;color:#991B1B}
+.option input[type=radio]{display:none}
+.option-letter{width:24px;height:24px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+
+.quiz-actions{display:flex;gap:10px;margin-top:20px}
+.btn-quiz{padding:12px 24px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-submit{background:var(--primary);color:#fff}.btn-submit:hover{background:#4338CA}
+.btn-retry{background:#fff;color:var(--text);border:1.5px solid var(--border)}.btn-retry:hover{background:var(--bg)}
+.btn-next{background:var(--success);color:#fff}.btn-next:hover{background:#059669}
+.quiz-result{text-align:center;padding:32px;border-radius:12px;margin-top:16px}
+.result-success{background:var(--success-light)}
+.result-fail{background:#FEE2E2}
+.result-icon{font-size:48px;margin-bottom:12px}
+.result-score{font-size:32px;font-weight:800;margin-bottom:8px}
+.result-msg{font-size:14px;color:var(--muted)}
+
+/* COMPLETE BANNER */
+.complete-banner{background:linear-gradient(135deg,#10B981,#059669);color:#fff;border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.complete-banner-icon{font-size:36px}
+.complete-banner-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.complete-banner-sub{font-size:13px;opacity:.85}
+
+/* LOADING / EMPTY */
+.loading{display:flex;align-items:center;justify-content:center;padding:80px;color:var(--muted);gap:12px;font-size:14px}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:80px 24px;color:var(--muted)}
+.empty-state-icon{font-size:48px;margin-bottom:16px}
+.empty-state h3{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px}
+
+/* NEXT MODULE BTN */
+.btn-next-module{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:16px}
+.btn-next-module:hover{background:#4338CA}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading" id="loading-screen"><div class="spinner"></div> Chargement de votre espace…</div>
+
+  <div id="main-app" style="display:none;flex-direction:column;height:100vh">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-left">
+        <div class="logo"><div class="logo-icon">🎓</div><div class="logo-name">Denem Academy</div></div>
+        <div class="header-sep"></div>
+        <div class="welcome">Bonjour, <strong id="user-name">…</strong> 👋</div>
+      </div>
+      <div class="header-right">
+        <div class="progress-global">
+          <span class="prog-label">Avancement</span>
+          <div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
+          <span class="prog-pct" id="prog-pct">0%</span>
+        </div>
+        <button class="btn-logout" onclick="logout()">Déconnexion</button>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <div class="sidebar-title">📚 Mes modules</div>
+        <div id="module-list"><div class="loading" style="padding:40px"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- MAIN -->
+      <div class="main" id="main-content">
+        <div class="empty-state">
+          <div class="empty-state-icon">👆</div>
+          <h3>Sélectionnez un module</h3>
+          <p>Choisissez un module dans la liste à gauche pour commencer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FB={apiKey:"AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",authDomain:"denem-academy-5de41.firebaseapp.com",projectId:"denem-academy-5de41",storageBucket:"denem-academy-5de41.firebasestorage.app",messagingSenderId:"570632584566",appId:"1:570632584566:web:ea9b964787b40805a7ce57"};
+firebase.initializeApp(FB);
+const auth=firebase.auth();
+const db=firebase.firestore();
+const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
+
+const BASE=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+
+let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false};
+
+// ── AUTH CHECK ──
+auth.onAuthStateChanged(async user=>{
+  if(!user){location.href=BASE+'/login/';return;}
+  const doc=await db.collection("users").doc(user.uid).get();
+  if(!doc.exists){location.href=BASE+'/login/';return;}
+  const userData=doc.data();
+  if(userData.role!=='student'){location.href=userData.role==='admin'?BASE+'/admin/':BASE+'/';return;}
+  S.user=user;S.userData=userData;
+  document.getElementById("user-name").textContent=userData.prenom||userData.email;
+  // Find apprenant linked to this user
+  const appSnap=await db.collection("apprenants").where("email","==",user.email).limit(1).get();
+  if(!appSnap.empty){S.apprenant={id:appSnap.docs[0].id,...appSnap.docs[0].data()};}
+  document.getElementById("loading-screen").style.display="none";
+  document.getElementById("main-app").style.display="flex";
+  loadData();
+});
+
+async function loadData(){
+  // Load published modules
+  const modSnap=await db.collection("modules").where("published","==",true).orderBy("ordre").get();
+  S.modules=modSnap.docs.map(d=>({id:d.id,...d.data()}));
+  // Load progressions
+  if(S.apprenant){
+    const progSnap=await db.collection("progressions").where("apprenant_id","==",S.apprenant.id).get();
+    progSnap.forEach(d=>{S.progressions[d.data().module_id]=d.data();});
+  }
+  renderSidebar();
+  updateGlobalProgress();
+}
+
+function updateGlobalProgress(){
+  const total=S.modules.length;
+  if(!total)return;
+  const done=Object.values(S.progressions).filter(p=>p.statut==="termine").length;
+  const pct=Math.round((done/total)*100);
+  document.getElementById("prog-fill").style.width=pct+"%";
+  document.getElementById("prog-pct").textContent=pct+"%";
+}
+
+// ── SIDEBAR ──
+function renderSidebar(){
+  const phases=[
+    {id:1,nom:"Onboarding",icon:"🚀"},{id:2,nom:"Fondamentaux",icon:"📚"},
+    {id:3,nom:"Pratique guidée",icon:"⚡"},{id:4,nom:"Approfondissement",icon:"🎯"},
+    {id:5,nom:"Projet final",icon:"🏗️"},{id:6,nom:"Certification",icon:"🎓"},
+  ];
+  let html='';
+  phases.forEach(phase=>{
+    const mods=S.modules.filter(m=>m.phase_id===phase.id);
+    if(!mods.length)return;
+    html+=`<div class="phase-group"><div class="phase-header">${phase.icon} ${phase.nom}</div>`;
+    mods.forEach(m=>{
+      const prog=S.progressions[m.id];
+      const done=prog?.statut==="termine";
+      const isCur=S.currentModule?.id===m.id;
+      const statusCls=done?"ms-done":isCur?"ms-current":"ms-lock";
+      const statusIcon=done?"✓":isCur?"●":"○";
+      html+=`<div class="module-item ${isCur?"active":""}" onclick="selectModule('${m.id}')">
+        <div class="module-status ${statusCls}">${statusIcon}</div>
+        <div class="module-info">
+          <div class="module-title">${m.titre}</div>
+          <div class="module-meta">${m.duree_estimee||""}${done?" · ✅ Complété":""}</div>
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  if(!html)html=`<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Aucun module disponible pour l'instant.</div>`;
+  document.getElementById("module-list").innerHTML=html;
+}
+
+// ── SELECT MODULE ──
+function selectModule(id){
+  const m=S.modules.find(x=>x.id===id);
+  if(!m)return;
+  S.currentModule=m;S.quizAnswers={};S.quizSubmitted=false;
+  renderSidebar();
+  renderModule(m);
+}
+
+function renderModule(m){
+  const prog=S.progressions[m.id];
+  const isDone=prog?.statut==="termine";
+  const phase=getPhase(m.phase_id);
+  const ytId=extractYtId(m.video_url);
+
+  let html='';
+
+  // Complete banner
+  if(isDone){
+    html+=`<div class="complete-banner"><div class="complete-banner-icon">🏆</div>
+      <div><div class="complete-banner-title">Module complété !</div>
+      <div class="complete-banner-sub">Score quiz : ${prog.score_quiz||0}% · Bravo, continuez comme ça !</div></div></div>`;
+  }
+
+  html+=`<div class="content-card">
+    <div class="content-header">
+      <div>
+        <div class="content-phase" style="color:${phase.c}">${phase.icon} ${phase.nom}</div>
+        <div class="content-title">${m.titre}</div>
+        <div class="content-desc">${m.description||""}</div>
+        <div class="content-badges">
+          ${m.video_url?`<span class="cbadge cb-pending">🎬 Vidéo</span>`:""}
+          ${m.pdf_url?`<span class="cbadge cb-pending">📄 PDF</span>`:""}
+          ${m.quiz&&m.quiz.length?`<span class="cbadge cb-pending">📝 Quiz (${m.quiz.length} questions)</span>`:""}
+          ${isDone?`<span class="cbadge cb-done">✅ Complété</span>`:`<span class="cbadge cb-pending">⏳ En cours</span>`}
+          ${isDone&&prog.score_quiz?`<span class="cbadge cb-score">🏆 ${prog.score_quiz}%</span>`:""}
+        </div>
+      </div>
+    </div>`;
+
+  // VIDEO
+  if(ytId){
+    html+=`<div class="video-section">
+      <div class="section-label">🎬 Vidéo du cours</div>
+      <div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytId}?rel=0" frameborder="0" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe></div>
+    </div>`;
+  }
+
+  // PDF
+  if(m.pdf_url){
+    html+=`<div class="pdf-section">
+      <div class="section-label">📄 Support de cours</div>
+      <div class="pdf-card" onclick="window.open('${m.pdf_url}','_blank')">
+        <div class="pdf-icon">📕</div>
+        <div><div class="pdf-name">${m.pdf_nom||'Support de cours'}</div><div class="pdf-size">Cliquer pour ouvrir le PDF</div></div>
+        <button class="pdf-btn">📥 Ouvrir</button>
+      </div>
+    </div>`;
+  }
+
+  // TEXT CONTENT
+  if(m.contenu){
+    html+=`<div class="text-section">
+      <div class="section-label">📖 Contenu du cours</div>
+      <div class="text-content">${m.contenu}</div>
+    </div>`;
+  }
+
+  html+='</div>';
+
+  // QUIZ
+  if(m.quiz&&m.quiz.length){
+    html+=renderQuiz(m,isDone,prog);
+  } else if(!isDone){
+    html+=`<div style="text-align:center;padding:24px">
+      <button class="btn-next-module" onclick="completeModule('${m.id}',100)">✅ Marquer ce module comme complété →</button>
+    </div>`;
+  }
+
+  document.getElementById("main-content").innerHTML=html;
+}
+
+// ── QUIZ ──
+function renderQuiz(m,isDone,prog){
+  if(isDone&&prog){
+    return`<div class="content-card"><div class="quiz-section">
+      <div class="quiz-header"><div class="quiz-title">📝 Quiz de validation</div></div>
+      <div class="quiz-result result-success">
+        <div class="result-icon">🏆</div>
+        <div class="result-score" style="color:#059669">${prog.score_quiz}%</div>
+        <div class="result-msg">Quiz réussi ! Module complété avec succès.</div>
+      </div>
+    </div></div>`;
+  }
+  let html=`<div class="content-card"><div class="quiz-section">
+    <div class="quiz-header"><div class="quiz-title">📝 Quiz de validation</div><div class="quiz-progress">${m.quiz.length} question(s) · Minimum ${m.score_minimum||70}% pour valider</div></div>
+    <div id="quiz-questions">`;
+  const letters=['A','B','C','D'];
+  m.quiz.forEach((q,qi)=>{
+    html+=`<div class="question-card">
+      <div class="question-num">Question ${qi+1}</div>
+      <div class="question-text">${q.question}</div>
+      <div class="options">`;
+    (q.options||[]).forEach((opt,oi)=>{
+      html+=`<label class="option" id="opt-${qi}-${oi}" onclick="selectAnswer(${qi},${oi})">
+        <input type="radio" name="q${qi}" value="${oi}">
+        <span class="option-letter">${letters[oi]}</span>
+        <span>${opt}</span>
+      </label>`;
+    });
+    html+=`</div></div>`;
+  });
+  html+=`</div>
+    <div class="quiz-actions">
+      <button class="btn-quiz btn-submit" onclick="submitQuiz('${m.id}')">Valider le quiz →</button>
+    </div>
+    <div id="quiz-result-area"></div>
+  </div></div>`;
+  return html;
+}
+
+function selectAnswer(qi,oi){
+  S.quizAnswers[qi]=oi;
+  // Visual update
+  const q=S.currentModule.quiz[qi];
+  document.querySelectorAll(`[id^="opt-${qi}-"]`).forEach(el=>{
+    el.classList.remove('selected');
+  });
+  document.getElementById(`opt-${qi}-${oi}`)?.classList.add('selected');
+}
+
+async function submitQuiz(moduleId){
+  if(S.quizSubmitted)return;
+  const m=S.modules.find(x=>x.id===moduleId);
+  if(!m||!m.quiz)return;
+  // Check all answered
+  const unanswered=m.quiz.findIndex((_,i)=>S.quizAnswers[i]===undefined);
+  if(unanswered>=0){alert(`Veuillez répondre à la question ${unanswered+1}.`);return;}
+  S.quizSubmitted=true;
+  // Calculate score
+  let correct=0;
+  m.quiz.forEach((q,qi)=>{
+    const userAns=S.quizAnswers[qi];
+    const isCorrect=userAns===q.correct;
+    if(isCorrect)correct++;
+    // Show correct/wrong
+    document.querySelectorAll(`[id^="opt-${qi}-"]`).forEach(el=>{
+      el.style.pointerEvents='none';
+      const oi=parseInt(el.id.split('-')[2]);
+      if(oi===q.correct)el.classList.add('correct');
+      else if(oi===userAns&&!isCorrect)el.classList.add('wrong');
+    });
+  });
+  const score=Math.round((correct/m.quiz.length)*100);
+  const minScore=m.score_minimum||70;
+  const passed=score>=minScore;
+
+  const resultArea=document.getElementById("quiz-result-area");
+  if(passed){
+    resultArea.innerHTML=`<div class="quiz-result result-success">
+      <div class="result-icon">🎉</div>
+      <div class="result-score" style="color:#059669">${score}%</div>
+      <div class="result-msg">${correct}/${m.quiz.length} bonnes réponses · Quiz réussi !</div>
+      <button class="btn-quiz btn-next" style="margin-top:16px" onclick="completeModule('${moduleId}',${score})">✅ Valider et continuer →</button>
+    </div>`;
+  } else {
+    resultArea.innerHTML=`<div class="quiz-result result-fail">
+      <div class="result-icon">😔</div>
+      <div class="result-score" style="color:var(--danger)">${score}%</div>
+      <div class="result-msg">${correct}/${m.quiz.length} bonnes réponses · Score minimum : ${minScore}%</div>
+      <button class="btn-quiz btn-retry" style="margin-top:16px" onclick="retryQuiz('${moduleId}')">🔄 Réessayer</button>
+    </div>`;
+  }
+  document.querySelector('.btn-submit')?.remove();
+}
+
+function retryQuiz(moduleId){
+  S.quizAnswers={};S.quizSubmitted=false;
+  const m=S.modules.find(x=>x.id===moduleId);
+  if(m)renderModule(m);
+}
+
+async function completeModule(moduleId,score){
+  if(!S.apprenant){alert("Votre compte n'est pas lié à un apprenant. Contactez votre chargé de suivi.");return;}
+  const progId=`${S.apprenant.id}_${moduleId}`;
+  const progData={apprenant_id:S.apprenant.id,module_id:moduleId,statut:"termine",score_quiz:score,completed_at:TS(),updatedAt:TS()};
+  await db.collection("progressions").doc(progId).set(progData,{merge:true});
+  // Update progression in state
+  S.progressions[moduleId]=progData;
+  // Update apprenant modules_scores in Firestore
+  const m=S.modules.find(x=>x.id===moduleId);
+  if(m&&S.apprenant){
+    const scores=[...(S.apprenant.modules_scores||Array(9).fill(null))];
+    const idx=S.modules.indexOf(m);
+    if(idx>=0)scores[idx]=score;
+    await db.collection("apprenants").doc(S.apprenant.id).update({
+      modules_scores:scores,
+      jour:Math.min(90,Math.max(S.apprenant.jour||1,m.jour_fin||S.apprenant.jour||1)),
+      updatedAt:TS()
+    });
+  }
+  updateGlobalProgress();
+  renderSidebar();
+  renderModule(m||S.currentModule);
+}
+
+// ── HELPERS ──
+function extractYtId(url){
+  if(!url)return null;
+  const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  return m?m[1]:null;
+}
+const PHASES=[
+  {id:1,nom:"Onboarding",c:"#8B5CF6",icon:"🚀"},{id:2,nom:"Fondamentaux",c:"#3B82F6",icon:"📚"},
+  {id:3,nom:"Pratique guidée",c:"#10B981",icon:"⚡"},{id:4,nom:"Approfondissement",c:"#F59E0B",icon:"🎯"},
+  {id:5,nom:"Projet final",c:"#EF4444",icon:"🏗️"},{id:6,nom:"Certification",c:"#6366F1",icon:"🎓"},
+];
+function getPhase(id){return PHASES.find(p=>p.id===id)||PHASES[0];}
+function logout(){auth.signOut().then(()=>location.href=BASE+'/login/');}
+</script>
+</body>
+</html>

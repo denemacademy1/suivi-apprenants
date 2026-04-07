@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denem Academy — Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F8FAFC;color:#1E293B;display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:220px;background:#1E1B4B;color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo .name{font-size:16px;font-weight:800;color:#fff}
+.sidebar-logo .role{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-logo .badge{display:inline-block;background:#EF4444;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:6px;text-transform:uppercase}
+nav{flex:1;padding:16px 0;overflow-y:auto}
+.nav-section{padding:8px 16px 4px;font-size:10px;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;transition:all .15s;border-radius:0;margin:1px 8px;border-radius:8px}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(99,102,241,.3);color:#fff}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,.1)}
+.user-info{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.user-avatar{width:32px;height:32px;background:linear-gradient(135deg,#4F46E5,#7C3AED);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.user-name{font-size:12px;font-weight:600;color:#fff}
+.user-email{font-size:10px;color:rgba(255,255,255,.4)}
+.btn-logout{width:100%;padding:8px;background:rgba(255,255,255,.06);border:none;border-radius:8px;color:rgba(255,255,255,.6);font-size:12px;cursor:pointer;transition:.2s;text-align:left;padding-left:12px}
+.btn-logout:hover{background:rgba(255,255,255,.1);color:#fff}
+/* Main */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid #E2E8F0;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:18px;font-weight:700;color:#1E293B}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.page{padding:32px;display:none}
+.page.active{display:block}
+/* Cards */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:#fff;border-radius:14px;padding:20px;border:1px solid #E2E8F0}
+.stat-card .val{font-size:28px;font-weight:800;color:#4F46E5}
+.stat-card .lbl{font-size:12px;color:#64748B;margin-top:4px}
+/* Buttons */
+.btn{padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.35)}
+.btn-secondary{background:#F1F5F9;color:#475569}
+.btn-secondary:hover{background:#E2E8F0}
+.btn-danger{background:#FEE2E2;color:#DC2626}
+.btn-danger:hover{background:#FECACA}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-success{background:#DCFCE7;color:#16A34A}
+/* Panels */
+.panel{background:#fff;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden}
+.panel-header{padding:18px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:15px;font-weight:700;color:#1E293B}
+.panel-body{padding:24px}
+/* Table */
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.3px;padding:10px 14px;border-bottom:2px solid #F1F5F9}
+td{padding:12px 14px;border-bottom:1px solid #F8FAFC;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFBFF}
+.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-green{background:#DCFCE7;color:#16A34A}
+.badge-blue{background:#DBEAFE;color:#1D4ED8}
+.badge-yellow{background:#FEF3C7;color:#92400E}
+.badge-purple{background:#EDE9FE;color:#5B21B6}
+.badge-gray{background:#F1F5F9;color:#475569}
+/* Forms */
+.form-row{display:grid;gap:16px;margin-bottom:16px}
+.form-row.cols-2{grid-template-columns:1fr 1fr}
+.form-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-group label{display:block;font-size:12px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;color:#1E293B;outline:none;transition:border .2s;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#4F46E5;box-shadow:0 0 0 3px #EEF2FF}
+.form-group textarea{resize:vertical;min-height:80px}
+/* Modal */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.3)}
+.modal-header{padding:24px 28px 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;border-bottom:1px solid #F1F5F9;padding-bottom:16px;margin-bottom:0}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{width:32px;height:32px;border:none;background:#F1F5F9;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#64748B}
+.modal-close:hover{background:#E2E8F0}
+.modal-body{padding:24px 28px 28px}
+/* Tabs inside modal */
+.m-tabs{display:flex;gap:4px;background:#F1F5F9;border-radius:10px;padding:4px;margin-bottom:24px}
+.m-tab{flex:1;padding:8px;border:none;background:none;border-radius:7px;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;transition:all .2s}
+.m-tab.active{background:#fff;color:#4F46E5;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.m-section{display:none}.m-section.active{display:block}
+/* Quiz builder */
+.quiz-question{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px;margin-bottom:12px}
+.quiz-question-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.quiz-options{display:grid;gap:8px}
+.quiz-option{display:flex;align-items:center;gap:10px}
+.quiz-option input[type=radio]{accent-color:#4F46E5;width:16px;height:16px;cursor:pointer}
+.quiz-option input[type=text]{flex:1;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;outline:none}
+.quiz-option input[type=text]:focus{border-color:#4F46E5}
+.quiz-option label{font-size:12px;font-weight:600;color:#64748B;width:20px}
+/* Upload zone */
+.upload-zone{border:2px dashed #C7D2FE;border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFBFF}
+.upload-zone:hover,.upload-zone.drag{border-color:#4F46E5;background:#EEF2FF}
+.upload-zone .uz-icon{font-size:28px;margin-bottom:8px}
+.upload-zone .uz-text{font-size:13px;color:#64748B}
+.upload-zone .uz-hint{font-size:11px;color:#94A3B8;margin-top:4px}
+.upload-progress{height:4px;background:#E2E8F0;border-radius:2px;margin-top:12px;overflow:hidden;display:none}
+.upload-progress-bar{height:100%;background:linear-gradient(90deg,#4F46E5,#7C3AED);border-radius:2px;transition:width .3s}
+/* Phase selector */
+.phase-selector{display:flex;gap:8px;flex-wrap:wrap}
+.phase-chip{padding:6px 14px;border:1.5px solid #E2E8F0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:#fff;color:#64748B}
+.phase-chip.selected{border-color:#4F46E5;background:#EEF2FF;color:#4F46E5}
+/* Alert */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
+.alert.show{display:flex;align-items:center;gap:10px}
+.alert-success{background:#DCFCE7;color:#15803D}
+.alert-error{background:#FEE2E2;color:#DC2626}
+/* Module list */
+.module-item{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid #F1F5F9;gap:14px}
+.module-item:last-child{border-bottom:none}
+.module-drag{color:#CBD5E1;cursor:grab;font-size:18px}
+.module-num{width:28px;height:28px;background:#EEF2FF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#4F46E5;flex-shrink:0}
+.module-info{flex:1}
+.module-title{font-size:14px;font-weight:600;color:#1E293B}
+.module-meta{font-size:12px;color:#64748B;margin-top:2px;display:flex;gap:12px;align-items:center}
+.module-actions{display:flex;gap:6px}
+/* User list */
+.user-row{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid #F1F5F9;gap:14px}
+.user-row:last-child{border-bottom:none}
+.user-ava{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.user-details{flex:1}
+.user-name-row{font-size:13px;font-weight:600}
+.user-email-row{font-size:12px;color:#64748B}
+/* Spinner */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(79,70,229,.3);border-top-color:#4F46E5;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:#94A3B8}
+.empty .e-icon{font-size:48px;margin-bottom:12px}
+.empty .e-text{font-size:14px;font-weight:600;color:#64748B;margin-bottom:4px}
+.empty .e-sub{font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="name">🎓 Denem Academy</div>
+    <div class="role">Panneau d'administration</div>
+    <div class="badge">Admin</div>
+  </div>
+  <nav>
+    <div class="nav-section">Contenu</div>
+    <div class="nav-item active" onclick="showPage('modules')"><span class="icon">📚</span>Modules</div>
+    <div class="nav-section">Utilisateurs</div>
+    <div class="nav-item" onclick="showPage('users')"><span class="icon">👥</span>Comptes</div>
+    <div class="nav-item" onclick="showPage('apprenants')"><span class="icon">🎯</span>Apprenants</div>
+    <div class="nav-section">Système</div>
+    <div class="nav-item" onclick="showPage('stats')"><span class="icon">📊</span>Statistiques</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="user-avatar">A</div>
+      <div>
+        <div class="user-name" id="user-name">Admin</div>
+        <div class="user-email" id="user-email">—</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">🚪 Se déconnecter</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Modules de formation</div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" id="topbar-btn" onclick="openModuleModal()">+ Nouveau module</button>
+    </div>
+  </div>
+
+  <!-- MODULES PAGE -->
+  <div class="page active" id="page-modules">
+    <div class="alert alert-success" id="alert-ok">✅ <span id="alert-msg"></span></div>
+    <div class="alert alert-error" id="alert-err">❌ <span id="alert-err-msg"></span></div>
+
+    <div class="stats-grid" id="module-stats">
+      <div class="stat-card"><div class="val" id="stat-total">—</div><div class="lbl">Modules au total</div></div>
+      <div class="stat-card"><div class="val" id="stat-pub">—</div><div class="lbl">Publiés</div></div>
+      <div class="stat-card"><div class="val" id="stat-draft">—</div><div class="lbl">Brouillons</div></div>
+      <div class="stat-card"><div class="val" id="stat-phases">4</div><div class="lbl">Phases</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Liste des modules</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="filter-phase" onchange="renderModules()" style="padding:7px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;outline:none">
+            <option value="">Toutes les phases</option>
+            <option value="onboarding">Onboarding</option>
+            <option value="formation">Formation</option>
+            <option value="pratique">Mise en pratique</option>
+            <option value="finalisation">Finalisation</option>
+          </select>
+        </div>
+      </div>
+      <div id="modules-list">
+        <div class="empty"><div class="e-icon">📚</div><div class="e-text">Aucun module</div><div class="e-sub">Créez votre premier module de formation</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS PAGE -->
+  <div class="page" id="page-users">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Comptes utilisateurs</div>
+        <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Nouveau compte</button>
+      </div>
+      <div id="users-list">
+        <div class="empty"><div class="e-icon">👥</div><div class="e-text">Chargement…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPRENANTS PAGE -->
+  <div class="page" id="page-apprenants">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Fiches apprenants</div>
+        <a href="../" class="btn btn-secondary btn-sm">→ Dashboard CSM</a>
+      </div>
+      <div id="apprenants-list">
+        <div class="empty"><div class="e-icon">🎯</div><div class="e-text">Chargement…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS PAGE -->
+  <div class="page" id="page-stats">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="val" id="gs-users">—</div><div class="lbl">Utilisateurs</div></div>
+      <div class="stat-card"><div class="val" id="gs-apprenants">—</div><div class="lbl">Apprenants</div></div>
+      <div class="stat-card"><div class="val" id="gs-modules">—</div><div class="lbl">Modules</div></div>
+      <div class="stat-card"><div class="val" id="gs-progressions">—</div><div class="lbl">Progressions</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Progression par module</div></div>
+      <div id="module-progress-table"><div class="empty"><div class="e-icon">📊</div><div class="e-text">Chargement…</div></div></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODULE MODAL -->
+<div class="modal-backdrop" id="module-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="module-modal-title">Nouveau module</div>
+      <button class="modal-close" onclick="closeModuleModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="m-tabs">
+        <button class="m-tab active" onclick="showMTab('infos')">📋 Infos</button>
+        <button class="m-tab" onclick="showMTab('contenu')">🎬 Contenu</button>
+        <button class="m-tab" onclick="showMTab('quiz')">✅ Quiz</button>
+      </div>
+
+      <!-- TAB: INFOS -->
+      <div class="m-section active" id="m-infos">
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Titre du module *</label>
+            <input type="text" id="m-titre" placeholder="Ex: Introduction à la plateforme">
+          </div>
+          <div class="form-group">
+            <label>Durée estimée</label>
+            <input type="text" id="m-duree" placeholder="Ex: 45 min">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Description</label>
+          <textarea id="m-description" placeholder="Courte description du module…" rows="2"></textarea>
+        </div>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Phase</label>
+            <div class="phase-selector" id="phase-selector">
+              <div class="phase-chip selected" onclick="selectPhase('onboarding',this)">🚀 Onboarding</div>
+              <div class="phase-chip" onclick="selectPhase('formation',this)">📚 Formation</div>
+              <div class="phase-chip" onclick="selectPhase('pratique',this)">🛠 Pratique</div>
+              <div class="phase-chip" onclick="selectPhase('finalisation',this)">🏁 Finalisation</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Ordre d'affichage</label>
+            <input type="number" id="m-ordre" placeholder="1" min="1">
+          </div>
+        </div>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Jour de début</label>
+            <input type="number" id="m-jour-debut" placeholder="Ex: 1">
+          </div>
+          <div class="form-group">
+            <label>Jour de fin</label>
+            <input type="number" id="m-jour-fin" placeholder="Ex: 7">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Statut</label>
+          <select id="m-statut">
+            <option value="draft">Brouillon (non visible)</option>
+            <option value="published">Publié (visible par les apprenants)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TAB: CONTENU -->
+      <div class="m-section" id="m-contenu">
+        <div class="form-group" style="margin-bottom:16px">
+          <label>URL Vidéo YouTube</label>
+          <input type="text" id="m-video-url" placeholder="https://www.youtube.com/watch?v=... ou youtu.be/...">
+          <div style="font-size:11px;color:#94A3B8;margin-top:6px">Collez le lien YouTube (vidéo normale ou non répertoriée)</div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Fichier PDF</label>
+          <div class="upload-zone" id="pdf-zone" onclick="document.getElementById('pdf-input').click()">
+            <div class="uz-icon">📄</div>
+            <div class="uz-text" id="pdf-zone-text">Cliquez ou glissez un fichier PDF</div>
+            <div class="uz-hint">PDF · Max 10 Mo</div>
+            <div class="upload-progress" id="pdf-progress"><div class="upload-progress-bar" id="pdf-progress-bar"></div></div>
+          </div>
+          <input type="file" id="pdf-input" accept=".pdf" style="display:none" onchange="uploadPDF(this.files[0])">
+          <input type="hidden" id="m-pdf-url">
+          <input type="hidden" id="m-pdf-nom">
+        </div>
+        <div class="form-group">
+          <label>Contenu texte (HTML simple)</label>
+          <textarea id="m-contenu-text" rows="6" placeholder="<p>Bienvenue dans ce module…</p>&#10;<ul><li>Point 1</li><li>Point 2</li></ul>"></textarea>
+          <div style="font-size:11px;color:#94A3B8;margin-top:6px">Supporte les balises HTML : &lt;p&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;strong&gt;, &lt;h3&gt;</div>
+        </div>
+      </div>
+
+      <!-- TAB: QUIZ -->
+      <div class="m-section" id="m-quiz">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:14px;font-weight:600">Questions du quiz</div>
+            <div style="font-size:12px;color:#64748B;margin-top:2px">Marquez la bonne réponse avec ●</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="addQuestion()">+ Question</button>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Score minimum pour valider (%)</label>
+          <input type="number" id="m-score-min" value="70" min="0" max="100" style="width:120px">
+        </div>
+        <div id="quiz-questions"></div>
+        <div id="quiz-empty" style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">Aucune question — cliquez "+ Question"</div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:16px;border-top:1px solid #F1F5F9">
+        <button class="btn btn-secondary" onclick="closeModuleModal()">Annuler</button>
+        <button class="btn btn-primary" id="btn-save-module" onclick="saveModule()">Enregistrer le module</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-backdrop" id="user-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Nouveau compte utilisateur</div>
+      <button class="modal-close" onclick="closeUserModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:20px">
+        ⚠️ Le compte sera créé immédiatement dans Firebase Auth. Le mot de passe doit être communiqué à l'utilisateur.
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Rôle</label>
+        <select id="new-user-role">
+          <option value="student">👤 Apprenant</option>
+          <option value="csm">🎯 Chargé de suivi</option>
+          <option value="admin">⚙️ Administrateur</option>
+        </select>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Prénom *</label>
+          <input type="text" id="new-user-prenom" placeholder="Camille">
+        </div>
+        <div class="form-group">
+          <label>Nom *</label>
+          <input type="text" id="new-user-nom" placeholder="Dupont">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Email *</label>
+        <input type="email" id="new-user-email" placeholder="camille.dupont@email.fr">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label>Mot de passe temporaire *</label>
+        <input type="text" id="new-user-pwd" placeholder="Min. 6 caractères">
+      </div>
+      <div class="alert alert-error" id="user-modal-err">❌ <span id="user-modal-err-msg"></span></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn btn-secondary" onclick="closeUserModal()">Annuler</button>
+        <button class="btn btn-primary" id="btn-save-user" onclick="createUser()">Créer le compte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FB={apiKey:"AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",authDomain:"denem-academy-5de41.firebaseapp.com",projectId:"denem-academy-5de41",storageBucket:"denem-academy-5de41.firebasestorage.app",messagingSenderId:"570632584566",appId:"1:570632584566:web:ea9b964787b40805a7ce57"};
+firebase.initializeApp(FB);
+const auth=firebase.auth();
+const db=firebase.firestore();
+const storage=firebase.storage();
+
+// ─── State ───────────────────────────────────────────────
+let modules=[];
+let users=[];
+let apprenants=[];
+let progressions=[];
+let editingModuleId=null;
+let selectedPhase='onboarding';
+let quizQuestions=[];
+
+// ─── Auth ─────────────────────────────────────────────────
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    const base=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+    location.href=base+'/login/';return;
+  }
+  const doc=await db.collection("users").doc(user.uid).get();
+  const role=doc.exists?doc.data().role:"student";
+  if(role!=='admin'){
+    const base=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+    if(role==='student')location.href=base+'/student/';
+    else location.href=base+'/';
+    return;
+  }
+  const d=doc.data();
+  document.getElementById('user-name').textContent=`${d.prenom||''} ${d.nom||''}`.trim()||'Admin';
+  document.getElementById('user-email').textContent=user.email;
+  document.getElementById('user-avatar').textContent=(d.prenom||'A').charAt(0).toUpperCase();
+  initListeners();
+});
+
+function doLogout(){auth.signOut();}
+
+// ─── Real-time listeners ──────────────────────────────────
+function initListeners(){
+  db.collection("modules").orderBy("ordre").onSnapshot(snap=>{
+    modules=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderModules();
+    updateModuleStats();
+  });
+  db.collection("users").orderBy("createdAt","desc").onSnapshot(snap=>{
+    users=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderUsers();
+  });
+  db.collection("apprenants").orderBy("prenom").onSnapshot(snap=>{
+    apprenants=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderApprenants();
+  });
+  db.collection("progressions").onSnapshot(snap=>{
+    progressions=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderStatsPage();
+  });
+}
+
+// ─── Navigation ───────────────────────────────────────────
+const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales'};
+const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../','_blank')"},stats:{text:'',fn:''}};
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`page-${p}`).classList.add('active');
+  document.querySelector(`[onclick="showPage('${p}')"]`).classList.add('active');
+  document.getElementById('page-title').textContent=pageTitles[p]||p;
+  const btn=document.getElementById('topbar-btn');
+  if(pageBtn[p]&&pageBtn[p].text){btn.textContent=pageBtn[p].text;btn.onclick=new Function(pageBtn[p].fn);btn.style.display='';}
+  else btn.style.display='none';
+}
+
+// ─── Modules ──────────────────────────────────────────────
+const PHASES={onboarding:{label:'Onboarding',color:'badge-purple',icon:'🚀'},formation:{label:'Formation',color:'badge-blue',icon:'📚'},pratique:{label:'Pratique',color:'badge-green',icon:'🛠'},finalisation:{label:'Finalisation',color:'badge-yellow',icon:'🏁'}};
+
+function renderModules(){
+  const filter=document.getElementById('filter-phase').value;
+  const list=filter?modules.filter(m=>m.phase_id===filter):modules;
+  const el=document.getElementById('modules-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="e-icon">📚</div><div class="e-text">Aucun module</div><div class="e-sub">Créez votre premier module de formation</div></div>';return;}
+  el.innerHTML=list.map((m,i)=>{
+    const ph=PHASES[m.phase_id]||{label:m.phase_id||'—',color:'badge-gray',icon:'📋'};
+    const pub=m.published?'<span class="badge badge-green">Publié</span>':'<span class="badge badge-gray">Brouillon</span>';
+    const hasVideo=m.video_url?'🎬':'';
+    const hasPDF=m.pdf_url?'📄':'';
+    const hasQuiz=m.quiz&&m.quiz.length?`✅ ${m.quiz.length}Q`:'';
+    return `<div class="module-item">
+      <div class="module-num">${m.ordre||i+1}</div>
+      <div class="module-info">
+        <div class="module-title">${m.titre}</div>
+        <div class="module-meta">
+          <span class="badge ${ph.color}">${ph.icon} ${ph.label}</span>
+          ${pub}
+          ${hasVideo?`<span style="font-size:11px">${hasVideo} Vidéo</span>`:''}
+          ${hasPDF?`<span style="font-size:11px">${hasPDF} PDF</span>`:''}
+          ${hasQuiz?`<span style="font-size:11px">${hasQuiz}</span>`:''}
+          ${m.duree_estimee?`<span style="font-size:11px">⏱ ${m.duree_estimee}</span>`:''}
+        </div>
+      </div>
+      <div class="module-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editModule('${m.id}')">✏️ Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteModule('${m.id}','${m.titre.replace(/'/g,"\\'")}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateModuleStats(){
+  const pub=modules.filter(m=>m.published).length;
+  document.getElementById('stat-total').textContent=modules.length;
+  document.getElementById('stat-pub').textContent=pub;
+  document.getElementById('stat-draft').textContent=modules.length-pub;
+}
+
+async function deleteModule(id,titre){
+  if(!confirm(`Supprimer le module "${titre}" ?`))return;
+  await db.collection("modules").doc(id).delete();
+  showAlert(`Module "${titre}" supprimé.`);
+}
+
+// ─── Module Modal ─────────────────────────────────────────
+function openModuleModal(id){
+  editingModuleId=null;quizQuestions=[];selectedPhase='onboarding';
+  document.getElementById('module-modal-title').textContent='Nouveau module';
+  document.getElementById('m-titre').value='';
+  document.getElementById('m-description').value='';
+  document.getElementById('m-duree').value='';
+  document.getElementById('m-ordre').value=modules.length+1;
+  document.getElementById('m-jour-debut').value='';
+  document.getElementById('m-jour-fin').value='';
+  document.getElementById('m-statut').value='draft';
+  document.getElementById('m-video-url').value='';
+  document.getElementById('m-contenu-text').value='';
+  document.getElementById('m-pdf-url').value='';
+  document.getElementById('m-pdf-nom').value='';
+  document.getElementById('pdf-zone-text').textContent='Cliquez ou glissez un fichier PDF';
+  selectPhase('onboarding',document.querySelector('.phase-chip'));
+  renderQuizQuestions();
+  showMTab('infos');
+  document.getElementById('module-modal').classList.add('open');
+}
+
+function editModule(id){
+  const m=modules.find(x=>x.id===id);
+  if(!m)return;
+  editingModuleId=id;
+  quizQuestions=m.quiz?JSON.parse(JSON.stringify(m.quiz)):[];
+  selectedPhase=m.phase_id||'onboarding';
+  document.getElementById('module-modal-title').textContent='Modifier le module';
+  document.getElementById('m-titre').value=m.titre||'';
+  document.getElementById('m-description').value=m.description||'';
+  document.getElementById('m-duree').value=m.duree_estimee||'';
+  document.getElementById('m-ordre').value=m.ordre||1;
+  document.getElementById('m-jour-debut').value=m.jour_debut||'';
+  document.getElementById('m-jour-fin').value=m.jour_fin||'';
+  document.getElementById('m-statut').value=m.published?'published':'draft';
+  document.getElementById('m-video-url').value=m.video_url||'';
+  document.getElementById('m-contenu-text').value=m.contenu||'';
+  document.getElementById('m-pdf-url').value=m.pdf_url||'';
+  document.getElementById('m-pdf-nom').value=m.pdf_nom||'';
+  document.getElementById('pdf-zone-text').textContent=m.pdf_nom||'Cliquez ou glissez un fichier PDF';
+  document.getElementById('m-score-min').value=m.score_minimum||70;
+  // Phase chips
+  document.querySelectorAll('.phase-chip').forEach(c=>{
+    const ph=c.textContent.includes('Onboarding')?'onboarding':c.textContent.includes('Formation')?'formation':c.textContent.includes('Pratique')?'pratique':'finalisation';
+    c.classList.toggle('selected',ph===selectedPhase);
+  });
+  renderQuizQuestions();
+  showMTab('infos');
+  document.getElementById('module-modal').classList.add('open');
+}
+
+function closeModuleModal(){document.getElementById('module-modal').classList.remove('open');}
+
+function showMTab(tab){
+  document.querySelectorAll('.m-tab').forEach((t,i)=>t.classList.toggle('active',['infos','contenu','quiz'][i]===tab));
+  document.querySelectorAll('.m-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('m-'+tab).classList.add('active');
+}
+
+function selectPhase(phase,el){
+  selectedPhase=phase;
+  document.querySelectorAll('.phase-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function saveModule(){
+  const titre=document.getElementById('m-titre').value.trim();
+  if(!titre){alert('Le titre est obligatoire.');return;}
+  const btn=document.getElementById('btn-save-module');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Enregistrement…';
+  const data={
+    titre,
+    description:document.getElementById('m-description').value.trim(),
+    duree_estimee:document.getElementById('m-duree').value.trim(),
+    phase_id:selectedPhase,
+    ordre:parseInt(document.getElementById('m-ordre').value)||1,
+    jour_debut:parseInt(document.getElementById('m-jour-debut').value)||null,
+    jour_fin:parseInt(document.getElementById('m-jour-fin').value)||null,
+    published:document.getElementById('m-statut').value==='published',
+    video_url:document.getElementById('m-video-url').value.trim(),
+    pdf_url:document.getElementById('m-pdf-url').value,
+    pdf_nom:document.getElementById('m-pdf-nom').value,
+    contenu:document.getElementById('m-contenu-text').value.trim(),
+    quiz:quizQuestions.filter(q=>q.texte.trim()),
+    score_minimum:parseInt(document.getElementById('m-score-min').value)||70,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    if(editingModuleId){
+      await db.collection("modules").doc(editingModuleId).update(data);
+      showAlert('Module mis à jour avec succès.');
+    }else{
+      data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection("modules").add(data);
+      showAlert('Module créé avec succès.');
+    }
+    closeModuleModal();
+  }catch(e){showAlertErr('Erreur : '+e.message);}
+  btn.disabled=false;btn.textContent='Enregistrer le module';
+}
+
+// ─── PDF Upload ───────────────────────────────────────────
+async function uploadPDF(file){
+  if(!file)return;
+  if(file.size>10*1024*1024){alert('Fichier trop grand (max 10 Mo)');return;}
+  const zone=document.getElementById('pdf-zone');
+  const progress=document.getElementById('pdf-progress');
+  const bar=document.getElementById('pdf-progress-bar');
+  const text=document.getElementById('pdf-zone-text');
+  progress.style.display='block';bar.style.width='0%';text.textContent='Upload en cours…';
+  const ref=storage.ref(`pdfs/${Date.now()}_${file.name}`);
+  const task=ref.put(file);
+  task.on('state_changed',snap=>{
+    bar.style.width=(snap.bytesTransferred/snap.totalBytes*100)+'%';
+  },err=>{
+    alert('Erreur upload : '+err.message);progress.style.display='none';
+  },async()=>{
+    const url=await task.snapshot.ref.getDownloadURL();
+    document.getElementById('m-pdf-url').value=url;
+    document.getElementById('m-pdf-nom').value=file.name;
+    text.textContent=`✅ ${file.name}`;
+    progress.style.display='none';
+  });
+}
+
+// Drag & drop
+document.getElementById('pdf-zone').addEventListener('dragover',e=>{e.preventDefault();e.currentTarget.classList.add('drag');});
+document.getElementById('pdf-zone').addEventListener('dragleave',e=>e.currentTarget.classList.remove('drag'));
+document.getElementById('pdf-zone').addEventListener('drop',e=>{e.preventDefault();e.currentTarget.classList.remove('drag');uploadPDF(e.dataTransfer.files[0]);});
+
+// ─── Quiz Builder ─────────────────────────────────────────
+function addQuestion(){
+  quizQuestions.push({texte:'',options:['','','',''],correct:0});
+  renderQuizQuestions();
+}
+
+function removeQuestion(i){
+  quizQuestions.splice(i,1);
+  renderQuizQuestions();
+}
+
+function renderQuizQuestions(){
+  const el=document.getElementById('quiz-questions');
+  const empty=document.getElementById('quiz-empty');
+  empty.style.display=quizQuestions.length?'none':'block';
+  el.innerHTML=quizQuestions.map((q,qi)=>`
+    <div class="quiz-question">
+      <div class="quiz-question-header">
+        <input type="text" value="${escHtml(q.texte)}" placeholder="Question ${qi+1}…" style="flex:1;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:14px;font-weight:600;outline:none" oninput="quizQuestions[${qi}].texte=this.value">
+        <button class="btn btn-danger btn-sm" style="margin-left:10px" onclick="removeQuestion(${qi})">🗑</button>
+      </div>
+      <div class="quiz-options">
+        ${q.options.map((opt,oi)=>`
+          <div class="quiz-option">
+            <label>${['A','B','C','D'][oi]}</label>
+            <input type="radio" name="correct-${qi}" ${q.correct===oi?'checked':''} onchange="quizQuestions[${qi}].correct=${oi}" title="Bonne réponse">
+            <input type="text" value="${escHtml(opt)}" placeholder="Option ${['A','B','C','D'][oi]}…" oninput="quizQuestions[${qi}].options[${oi}]=this.value">
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ─── Users ────────────────────────────────────────────────
+const ROLE_LABELS={student:'👤 Apprenant',csm:'🎯 Chargé suivi',admin:'⚙️ Admin'};
+const ROLE_COLORS={student:'badge-blue',csm:'badge-green',admin:'badge-purple'};
+
+function renderUsers(){
+  const el=document.getElementById('users-list');
+  if(!users.length){el.innerHTML='<div class="empty"><div class="e-icon">👥</div><div class="e-text">Aucun utilisateur</div></div>';return;}
+  el.innerHTML=users.map(u=>`
+    <div class="user-row">
+      <div class="user-ava">${(u.prenom||'?').charAt(0).toUpperCase()}</div>
+      <div class="user-details">
+        <div class="user-name-row">${u.prenom||''} ${u.nom||''}</div>
+        <div class="user-email-row">${u.email||'—'}</div>
+      </div>
+      <span class="badge ${ROLE_COLORS[u.role]||'badge-gray'}">${ROLE_LABELS[u.role]||u.role}</span>
+      <button class="btn btn-secondary btn-sm" onclick="changeRole('${u.id}','${u.role}','${escHtml(u.prenom+' '+u.nom)}')">Changer rôle</button>
+    </div>`).join('');
+}
+
+async function changeRole(uid,currentRole,name){
+  const roles=['student','csm','admin'];
+  const labels=['👤 Apprenant','🎯 Chargé suivi','⚙️ Admin'];
+  const next=roles[(roles.indexOf(currentRole)+1)%roles.length];
+  if(!confirm(`Changer le rôle de ${name} → ${labels[roles.indexOf(next)]} ?`))return;
+  await db.collection("users").doc(uid).update({role:next});
+  showAlert(`Rôle de ${name} mis à jour.`);
+}
+
+function openUserModal(){
+  document.getElementById('new-user-prenom').value='';
+  document.getElementById('new-user-nom').value='';
+  document.getElementById('new-user-email').value='';
+  document.getElementById('new-user-pwd').value='';
+  document.getElementById('new-user-role').value='student';
+  document.getElementById('user-modal-err').classList.remove('show');
+  document.getElementById('user-modal').classList.add('open');
+}
+function closeUserModal(){document.getElementById('user-modal').classList.remove('open');}
+
+async function createUser(){
+  const prenom=document.getElementById('new-user-prenom').value.trim();
+  const nom=document.getElementById('new-user-nom').value.trim();
+  const email=document.getElementById('new-user-email').value.trim();
+  const pwd=document.getElementById('new-user-pwd').value;
+  const role=document.getElementById('new-user-role').value;
+  const errEl=document.getElementById('user-modal-err');
+  const errMsg=document.getElementById('user-modal-err-msg');
+  const btn=document.getElementById('btn-save-user');
+  if(!prenom||!nom||!email||!pwd){errMsg.textContent='Remplissez tous les champs';errEl.classList.add('show');return;}
+  if(pwd.length<6){errMsg.textContent='Mot de passe minimum 6 caractères';errEl.classList.add('show');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Création…';
+
+  // Use a secondary auth instance to avoid logging out current admin
+  try{
+    const secondApp=firebase.apps.find(a=>a.name==='secondary')||firebase.initializeApp(FB,'secondary');
+    const secondAuth=secondApp.auth();
+    const cred=await secondAuth.createUserWithEmailAndPassword(email,pwd);
+    await db.collection("users").doc(cred.user.uid).set({
+      prenom,nom,email,role,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await secondAuth.signOut();
+    closeUserModal();
+    showAlert(`Compte créé pour ${prenom} ${nom} (${email}).`);
+  }catch(e){
+    const msgs={'auth/email-already-in-use':'Cet email est déjà utilisé.','auth/weak-password':'Mot de passe trop faible.'};
+    errMsg.textContent=msgs[e.code]||e.message;errEl.classList.add('show');
+  }
+  btn.disabled=false;btn.textContent='Créer le compte';
+}
+
+// ─── Apprenants ───────────────────────────────────────────
+function renderApprenants(){
+  const el=document.getElementById('apprenants-list');
+  if(!apprenants.length){el.innerHTML='<div class="empty"><div class="e-icon">🎯</div><div class="e-text">Aucun apprenant</div><div class="e-sub">Ajoutez des apprenants depuis le dashboard CSM</div></div>';return;}
+  el.innerHTML=`<table><thead><tr><th>Apprenant</th><th>Email</th><th>Cohorte</th><th>Statut</th><th>Progression</th><th>Compte lié</th></tr></thead><tbody>
+  ${apprenants.map(a=>{
+    const email=a.email||'—';
+    const linked=users.some(u=>u.email===a.email&&u.role==='student');
+    const score=a.modules_scores?Math.round(a.modules_scores.reduce((s,m)=>s+m,0)/Math.max(a.modules_scores.length,1)):'—';
+    return `<tr>
+      <td style="font-weight:600">${a.prenom||''} ${a.nom||''}</td>
+      <td style="color:#64748B;font-size:12px">${email}</td>
+      <td><span class="badge badge-blue">${a.cohorte||'—'}</span></td>
+      <td><span class="badge ${a.statut==='actif'?'badge-green':a.statut==='termine'?'badge-purple':'badge-gray'}">${a.statut||'—'}</span></td>
+      <td style="font-size:13px">${score!=='—'?score+'%':'—'}</td>
+      <td>${linked?'<span class="badge badge-green">✅ Oui</span>':'<span class="badge badge-gray">Non</span>'}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+// ─── Stats ────────────────────────────────────────────────
+function renderStatsPage(){
+  document.getElementById('gs-users').textContent=users.length;
+  document.getElementById('gs-apprenants').textContent=apprenants.length;
+  document.getElementById('gs-modules').textContent=modules.length;
+  document.getElementById('gs-progressions').textContent=progressions.length;
+
+  const el=document.getElementById('module-progress-table');
+  if(!modules.length){el.innerHTML='<div class="empty"><div class="e-icon">📊</div><div class="e-text">Aucun module</div></div>';return;}
+  el.innerHTML=`<table><thead><tr><th>Module</th><th>Phase</th><th>Apprenants ayant complété</th><th>Score moyen</th><th>Taux réussite</th></tr></thead><tbody>
+  ${modules.map(m=>{
+    const progs=progressions.filter(p=>p.id&&p.id.endsWith('_'+m.id));
+    const completed=progs.filter(p=>p.statut==='completed');
+    const scores=completed.filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
+    const avgScore=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+    const passed=scores.filter(s=>s>=(m.score_minimum||70)).length;
+    const ph=PHASES[m.phase_id]||{label:m.phase_id||'—',color:'badge-gray',icon:'📋'};
+    return `<tr>
+      <td style="font-weight:600">${m.titre}</td>
+      <td><span class="badge ${ph.color}">${ph.icon} ${ph.label}</span></td>
+      <td>${completed.length} / ${apprenants.length}</td>
+      <td>${avgScore!=null?avgScore+'%':'—'}</td>
+      <td>${scores.length?`${passed}/${scores.length} (${Math.round(passed/scores.length*100)}%)`:'—'}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+// ─── Alerts ───────────────────────────────────────────────
+function showAlert(msg){
+  const el=document.getElementById('alert-ok');
+  document.getElementById('alert-msg').textContent=msg;
+  el.classList.add('show');setTimeout(()=>el.classList.remove('show'),4000);
+}
+function showAlertErr(msg){
+  const el=document.getElementById('alert-err');
+  document.getElementById('alert-err-msg').textContent=msg;
+  el.classList.add('show');setTimeout(()=>el.classList.remove('show'),5000);
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denem Academy — Connexion</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1E1B4B 0%,#4F46E5 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,0.3)}
+.logo{text-align:center;margin-bottom:32px}
+.logo-icon{width:60px;height:60px;background:linear-gradient(135deg,#4F46E5,#7C3AED);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px}
+.logo-title{font-size:22px;font-weight:800;color:#1E293B}
+.logo-sub{font-size:13px;color:#64748B;margin-top:4px}
+.tabs{display:flex;background:#F1F5F9;border-radius:10px;padding:4px;margin-bottom:28px}
+.tab{flex:1;padding:8px;border:none;background:none;border-radius:7px;font-size:13px;font-weight:500;color:#64748B;cursor:pointer;transition:all .2s}
+.tab.active{background:#fff;color:#4F46E5;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
+.form-group input{width:100%;padding:10px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;color:#1E293B;outline:none;transition:border .2s;font-family:inherit}
+.form-group input:focus{border-color:#4F46E5;box-shadow:0 0 0 3px #EEF2FF}
+.btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-primary{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.4)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.error{background:#FEE2E2;color:#991B1B;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;display:none}
+.error.show{display:block}
+.divider{text-align:center;font-size:12px;color:#94A3B8;margin:20px 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#E2E8F0}
+.divider::before{left:0}.divider::after{right:0}
+.role-selector{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.role-btn{padding:10px;border:1.5px solid #E2E8F0;border-radius:8px;background:#fff;cursor:pointer;text-align:center;transition:all .2s;font-size:11px;font-weight:600;color:#64748B}
+.role-btn.selected{border-color:#4F46E5;background:#EEF2FF;color:#4F46E5}
+.role-btn .role-icon{font-size:20px;display:block;margin-bottom:4px}
+.form-section{display:none}.form-section.active{display:block}
+.footer-note{text-align:center;font-size:12px;color:#94A3B8;margin-top:20px}
+.footer-note a{color:#4F46E5;text-decoration:none;font-weight:500}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🎓</div>
+    <div class="logo-title">Denem Academy</div>
+    <div class="logo-sub">Connectez-vous à votre espace</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('login')">Se connecter</button>
+    <button class="tab" onclick="showTab('register')">Créer un compte</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="form-section active" id="section-login">
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="votre@email.fr" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="login-pwd" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Se connecter</button>
+    <div class="error" id="login-error"></div>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="form-section" id="section-register">
+    <div class="form-group">
+      <label>Rôle</label>
+      <div class="role-selector">
+        <div class="role-btn selected" onclick="selectRole('student',this)"><span class="role-icon">👤</span>Apprenant</div>
+        <div class="role-btn" onclick="selectRole('csm',this)"><span class="role-icon">🎯</span>Chargé suivi</div>
+        <div class="role-btn" onclick="selectRole('admin',this)"><span class="role-icon">⚙️</span>Admin</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Prénom</label>
+      <input type="text" id="reg-prenom" placeholder="Camille">
+    </div>
+    <div class="form-group">
+      <label>Nom</label>
+      <input type="text" id="reg-nom" placeholder="Dupont">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="reg-email" placeholder="votre@email.fr">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="reg-pwd" placeholder="Minimum 6 caractères">
+    </div>
+    <button class="btn btn-primary" id="btn-register" onclick="doRegister()">Créer mon compte</button>
+    <div class="error" id="reg-error"></div>
+  </div>
+
+  <div class="footer-note">
+    Problème de connexion ? <a href="mailto:contact@denemacademy.fr">Contactez-nous</a>
+  </div>
+</div>
+
+<script>
+const FB={apiKey:"AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",authDomain:"denem-academy-5de41.firebaseapp.com",projectId:"denem-academy-5de41",storageBucket:"denem-academy-5de41.firebasestorage.app",messagingSenderId:"570632584566",appId:"1:570632584566:web:ea9b964787b40805a7ce57"};
+firebase.initializeApp(FB);
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+let selectedRole='student';
+
+// Auto-redirect if already logged in
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    const doc=await db.collection("users").doc(user.uid).get();
+    const role=doc.exists?doc.data().role:"student";
+    redirect(role);
+  }
+});
+
+function redirect(role){
+  const base=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+  if(role==='student')location.href=base+'/student/';
+  else if(role==='admin')location.href=base+'/admin/';
+  else location.href=base+'/';
+}
+
+function showTab(tab){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(tab==='login'?i===0:i===1)));
+  document.getElementById('section-login').classList.toggle('active',tab==='login');
+  document.getElementById('section-register').classList.toggle('active',tab==='register');
+}
+
+function selectRole(role,el){
+  selectedRole=role;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pwd=document.getElementById('login-pwd').value;
+  const btn=document.getElementById('btn-login');
+  const err=document.getElementById('login-error');
+  if(!email||!pwd){showError(err,'Veuillez remplir tous les champs');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Connexion…';
+  try{
+    const cred=await auth.signInWithEmailAndPassword(email,pwd);
+    const doc=await db.collection("users").doc(cred.user.uid).get();
+    const role=doc.exists?doc.data().role:"student";
+    redirect(role);
+  }catch(e){
+    showError(err,getFrError(e.code));
+    btn.disabled=false;btn.textContent='Se connecter';
+  }
+}
+
+async function doRegister(){
+  const prenom=document.getElementById('reg-prenom').value.trim();
+  const nom=document.getElementById('reg-nom').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pwd=document.getElementById('reg-pwd').value;
+  const btn=document.getElementById('btn-register');
+  const err=document.getElementById('reg-error');
+  if(!prenom||!nom||!email||!pwd){showError(err,'Veuillez remplir tous les champs');return;}
+  if(pwd.length<6){showError(err,'Le mot de passe doit faire au moins 6 caractères');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Création…';
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email,pwd);
+    await db.collection("users").doc(cred.user.uid).set({
+      prenom,nom,email,role:selectedRole,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    redirect(selectedRole);
+  }catch(e){
+    showError(err,getFrError(e.code));
+    btn.disabled=false;btn.textContent='Créer mon compte';
+  }
+}
+
+function showError(el,msg){el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),4000);}
+function getFrError(code){
+  const m={'auth/user-not-found':'Aucun compte avec cet email.','auth/wrong-password':'Mot de passe incorrect.','auth/email-already-in-use':'Cet email est déjà utilisé.','auth/invalid-email':'Email invalide.','auth/weak-password':'Mot de passe trop faible (min. 6 caractères).','auth/too-many-requests':'Trop de tentatives. Réessayez plus tard.'};
+  return m[code]||'Une erreur est survenue. Réessayez.';
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){const s=document.getElementById('section-login');if(s.classList.contains('active'))doLogin();else doRegister();}});
+</script>
+</body>
+</html>

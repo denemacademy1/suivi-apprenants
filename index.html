@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Denem Academy — CSM Dashboard</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
 <style>
@@ -294,8 +295,9 @@ tbody tr:last-child td{border-bottom:none}
     <div class="sidebar-footer">
       <div class="sidebar-user">
         <div class="u-avatar-el" id="u-avatar">C</div>
-        <div><div class="u-name-el" id="u-name">Tous les chargés</div><div class="u-role-el">CSM · En ligne</div></div>
+        <div><div class="u-name-el" id="u-name">Chargé de suivi</div><div class="u-role-el">CSM · En ligne</div></div>
       </div>
+      <button onclick="doLogout()" style="width:100%;background:rgba(255,255,255,.06);border:none;border-radius:8px;color:rgba(255,255,255,.6);font-size:12px;padding:8px;cursor:pointer;text-align:left;padding-left:12px;margin-top:4px" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.6)'">🚪 Déconnexion</button>
     </div>
   </aside>
 
@@ -447,8 +449,34 @@ const S={
 //  FIREBASE INIT
 // ══════════════════════════════════════
 firebase.initializeApp(FB);
+const auth=firebase.auth();
 const db=firebase.firestore();
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
+
+// ══════════════════════════════════════
+//  AUTH GUARD (csm or admin only)
+// ══════════════════════════════════════
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    const base=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+    location.href=base+'/login/';return;
+  }
+  const doc=await db.collection("users").doc(user.uid).get();
+  const role=doc.exists?doc.data().role:"student";
+  if(role==='student'){
+    const base=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+    location.href=base+'/student/';return;
+  }
+  // Set sidebar user info
+  if(doc.exists){
+    const d=doc.data();
+    document.getElementById('u-name').textContent=`${d.prenom||''} ${d.nom||''}`.trim()||user.email;
+    document.getElementById('u-avatar').textContent=(d.prenom||user.email).charAt(0).toUpperCase();
+  }
+  startListeners();
+});
+
+function doLogout(){auth.signOut();}
 
 function startListeners(){
   db.collection("apprenants").orderBy("nom").onSnapshot(snap=>{
@@ -1093,8 +1121,6 @@ async function seedData(force){
 //  INIT
 // ══════════════════════════════════════
 document.getElementById("topbar-date").textContent=new Date().toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"long",year:"numeric"});
-startListeners();
-seedData(false);
 </script>
 </body>
 </html>
