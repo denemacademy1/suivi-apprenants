@@ -42,8 +42,14 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
 .suc-role{font-size:11px;color:var(--muted)}
 .suc-prog-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px}
 .suc-prog-pct{color:#818CF8;font-weight:700}
-.suc-track{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.suc-track{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-bottom:10px}
 .suc-fill{height:100%;background:linear-gradient(90deg,#6366F1,#8B5CF6);border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+/* XP bar in sidebar */
+.xp-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.xp-level-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.2);color:#FCD34D;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px}
+.xp-label{font-size:11px;color:var(--muted)}
+.xp-track{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,#F59E0B,#FBBF24);border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
 /* Nav */
 nav{padding:12px 8px;flex:1;overflow-y:auto}
 nav::-webkit-scrollbar{width:0}
@@ -74,6 +80,9 @@ nav::-webkit-scrollbar{width:0}
 .topbar-title{font-size:16px;font-weight:700;color:var(--text);flex:1}
 .topbar-actions{display:flex;align-items:center;gap:10px}
 .menu-btn{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer}
+/* Streak chip in topbar */
+.streak-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#FCA5A5;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;animation:pulseStreak 3s ease infinite}
+@keyframes pulseStreak{0%,100%{border-color:rgba(239,68,68,.2)}50%{border-color:rgba(239,68,68,.5)}}
 /* Content */
 .content-area{flex:1;overflow-y:auto}
 .content-area::-webkit-scrollbar{width:5px}
@@ -99,13 +108,14 @@ nav::-webkit-scrollbar{width:0}
 .hero-sub .highlight{color:rgba(255,255,255,.7);font-weight:500}
 
 /* Stats row */
-.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
 .stat-card:hover{transform:translateY(-2px);border-color:var(--border2)}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:16px 16px 0 0}
 .sc-modules::before{background:linear-gradient(90deg,#6366F1,#8B5CF6)}
 .sc-score::before{background:linear-gradient(90deg,#10B981,#34D399)}
 .sc-days::before{background:linear-gradient(90deg,#F59E0B,#FBBF24)}
+.sc-xp::before{background:linear-gradient(90deg,#EC4899,#F43F5E)}
 .stat-icon{font-size:22px;margin-bottom:10px}
 .stat-val{font-size:30px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px}
 .stat-lbl{font-size:12px;color:var(--muted);font-weight:500}
@@ -126,10 +136,22 @@ nav::-webkit-scrollbar{width:0}
 .btn-start{background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;border-radius:12px;padding:12px 22px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
 .btn-start:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.4)}
 
-/* Roadmap */
-.roadmap{margin-bottom:28px}
+/* ─── BADGES SECTION ─── */
+.badges-section{margin-bottom:28px}
 .section-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:10px}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.badges-grid{display:flex;gap:10px;flex-wrap:wrap}
+.badge-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:700;transition:all .2s;cursor:default;position:relative;overflow:hidden}
+.badge-pill.unlocked{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#A5B4FC}
+.badge-pill.unlocked::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,102,241,.08),transparent);pointer-events:none}
+.badge-pill.locked{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.2);filter:grayscale(1)}
+.badge-icon{font-size:16px;line-height:1}
+.badge-new{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#EC4899;border-radius:50%;border:1.5px solid var(--bg);animation:badgePing 1.5s ease infinite}
+@keyframes badgePing{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.badge-pill.unlocked:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(99,102,241,.2)}
+
+/* Roadmap */
+.roadmap{margin-bottom:28px}
 .roadmap-phases{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .rp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;transition:all .2s;cursor:pointer;position:relative;overflow:hidden}
 .rp-card:hover{border-color:var(--border2);transform:translateY(-2px)}
@@ -163,7 +185,6 @@ nav::-webkit-scrollbar{width:0}
 .module-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:all .15s;border-left:2px solid transparent;margin:1px 6px;border-radius:9px}
 .module-item:hover{background:rgba(255,255,255,.04)}
 .module-item.active{background:rgba(99,102,241,.12);border-left-color:transparent}
-.module-item.active::before{display:none}
 .mod-status-dot{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 .msd-done{background:rgba(16,185,129,.15);color:#10B981;border:1px solid rgba(16,185,129,.2)}
 .msd-cur{background:rgba(99,102,241,.2);color:#818CF8;border:1px solid rgba(99,102,241,.3);animation:glow 2s infinite}
@@ -270,6 +291,19 @@ nav::-webkit-scrollbar{width:0}
 .qdb-title{font-size:14px;font-weight:700;color:#34D399;margin-bottom:2px}
 .qdb-sub{font-size:12px;color:rgba(52,211,153,.6)}
 
+/* ─── XP TOAST ─── */
+#xp-toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.xp-toast{background:var(--surface2);border:1px solid rgba(99,102,241,.3);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:toastIn .4s cubic-bezier(.34,1.56,.64,1);min-width:240px;pointer-events:all}
+.xp-toast.out{animation:toastOut .3s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px) scale(.9)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(60px)}}
+.toast-icon{font-size:24px;line-height:1;flex-shrink:0}
+.toast-body{}
+.toast-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+.toast-sub{font-size:12px;color:var(--muted)}
+.toast-xp-badge{margin-left:auto;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0}
+.toast-badge-badge{margin-left:auto;background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#000;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0}
+
 /* ─── RESPONSIVE ─── */
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;backdrop-filter:blur(4px)}
 @media(max-width:900px){
@@ -297,6 +331,9 @@ nav::-webkit-scrollbar{width:0}
     <div class="load-title">Denem Academy</div>
   </div>
 
+  <!-- XP TOAST CONTAINER -->
+  <div id="xp-toast-container"></div>
+
   <!-- SIDEBAR OVERLAY -->
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -316,10 +353,16 @@ nav::-webkit-scrollbar{width:0}
           </div>
         </div>
         <div class="suc-prog-label">
-          <span>Progression globale</span>
+          <span>Progression</span>
           <span class="suc-prog-pct" id="suc-pct">0%</span>
         </div>
         <div class="suc-track"><div class="suc-fill" id="suc-fill" style="width:0%"></div></div>
+        <!-- XP bar -->
+        <div class="xp-row">
+          <div class="xp-level-badge" id="xp-level-badge">⚡ Niveau 1</div>
+          <span class="xp-label"><span id="xp-current">0</span> XP</span>
+        </div>
+        <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
       </div>
     </div>
 
@@ -349,6 +392,9 @@ nav::-webkit-scrollbar{width:0}
     <div class="topbar">
       <button class="menu-btn" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title" id="topbar-title">Accueil</div>
+      <div class="topbar-actions">
+        <div class="streak-chip" id="streak-chip" style="display:none">🔥 <span id="streak-count">0</span> jours</div>
+      </div>
     </div>
 
     <!-- CONTENT -->
@@ -383,7 +429,7 @@ nav::-webkit-scrollbar{width:0}
             <div class="stat-card sc-score">
               <div class="stat-icon">🏆</div>
               <div class="stat-val" id="stat-score">—</div>
-              <div class="stat-lbl">Score moyen aux quiz</div>
+              <div class="stat-lbl">Score moyen quiz</div>
               <div class="stat-sub">sur les modules validés</div>
             </div>
             <div class="stat-card sc-days">
@@ -392,10 +438,22 @@ nav::-webkit-scrollbar{width:0}
               <div class="stat-lbl">Jours de formation</div>
               <div class="stat-sub" id="stat-days-sub">depuis le début</div>
             </div>
+            <div class="stat-card sc-xp">
+              <div class="stat-icon">⚡</div>
+              <div class="stat-val" id="stat-xp">0</div>
+              <div class="stat-lbl">Points XP gagnés</div>
+              <div class="stat-sub" id="stat-level-sub">Niveau 1 — Débutant</div>
+            </div>
           </div>
 
           <!-- Next step -->
           <div id="next-step-section"></div>
+
+          <!-- Badges -->
+          <div class="badges-section">
+            <div class="section-title">🏅 Mes badges</div>
+            <div class="badges-grid" id="badges-grid"></div>
+          </div>
 
           <!-- Roadmap -->
           <div class="roadmap">
@@ -416,12 +474,10 @@ nav::-webkit-scrollbar{width:0}
       <!-- ── MODULES PAGE ── -->
       <div class="page" id="page-modules">
         <div class="modules-layout" style="height:calc(100vh - 56px)">
-          <!-- Modules sidebar -->
           <div class="modules-sidebar" id="modules-sidebar">
             <div class="mod-sidebar-head">📚 Mes modules</div>
             <div id="module-list"></div>
           </div>
-          <!-- Module content -->
           <div class="module-main" id="module-main">
             <div class="module-main-inner">
               <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;text-align:center">
@@ -446,7 +502,7 @@ const db=firebase.firestore();
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 const BASE=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
 
-let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home'};
+let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home',xp:0,streak:0,badges:[]};
 
 const PHASES={
   onboarding:{label:"Onboarding",icon:"🚀",color:"#8B5CF6"},
@@ -454,6 +510,7 @@ const PHASES={
   pratique:{label:"Mise en pratique",icon:"⚡",color:"#10B981"},
   finalisation:{label:"Finalisation",icon:"🏁",color:"#F59E0B"},
 };
+
 const QUOTES=[
   "La réussite appartient à ceux qui n'abandonnent jamais.",
   "Chaque expert a d'abord été un débutant.",
@@ -464,6 +521,31 @@ const QUOTES=[
   "La progression, pas la perfection.",
 ];
 
+// ── GAMIFICATION CONFIG ──
+const LEVELS=[
+  {min:0,   max:199,  num:1, label:"Débutant",      color:"#94A3B8"},
+  {min:200, max:499,  num:2, label:"Apprenti",       color:"#60A5FA"},
+  {min:500, max:999,  num:3, label:"Confirmé",       color:"#818CF8"},
+  {min:1000,max:1999, num:4, label:"Expert",         color:"#A78BFA"},
+  {min:2000,max:99999,num:5, label:"Maître",         color:"#F59E0B"},
+];
+
+const BADGES_DEF={
+  premier_pas:  {icon:"🚀",label:"Premier Pas",    desc:"Compléter son 1er module"},
+  studieux:     {icon:"📚",label:"Studieux",        desc:"5 modules complétés"},
+  perfectionniste:{icon:"🎯",label:"Perfectionniste",desc:"Quiz réussi à ≥ 90%"},
+  en_feu:       {icon:"🔥",label:"En Feu",          desc:"3 jours de connexion consécutifs"},
+  champion:     {icon:"🏆",label:"Champion",        desc:"Score moyen ≥ 80%"},
+  early_bird:   {icon:"🌅",label:"Early Bird",      desc:"5 jours de streak"},
+  finisseur:    {icon:"🏁",label:"Finisseur",       desc:"Tous les modules complétés"},
+};
+
+// XP par action
+const XP_MODULE=100;
+const XP_QUIZ_PERFECT=50;   // ≥90%
+const XP_QUIZ_GREAT=25;     // ≥80%
+const XP_DAILY=10;
+
 // ── AUTH ──
 auth.onAuthStateChanged(async user=>{
   if(!user){location.href=BASE+'/login/';return;}
@@ -473,11 +555,9 @@ auth.onAuthStateChanged(async user=>{
   if(ud.role!=='student'){location.href=ud.role==='admin'?BASE+'/admin/':BASE+'/';return;}
   S.user=user;S.userData=ud;
   const prenom=ud.prenom||user.email.split('@')[0];
-  // Update UI
   document.getElementById("hero-name").textContent=prenom;
   document.getElementById("suc-name").textContent=`${ud.prenom||''} ${ud.nom||''}`.trim()||user.email;
   document.getElementById("suc-avatar").textContent=prenom.charAt(0).toUpperCase();
-  // Daily quote
   document.getElementById("daily-quote").textContent=`"${QUOTES[new Date().getDay()%QUOTES.length]}"`;
   // Apprenant
   try{
@@ -491,6 +571,12 @@ auth.onAuthStateChanged(async user=>{
       document.getElementById("stat-days").textContent=`J${Math.min(days,90)}`;
       document.getElementById("stat-days-sub").textContent=`depuis le ${start.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}`;
     }
+    // Restore saved XP + badges + streak from Firestore
+    S.xp=S.apprenant.xp||0;
+    S.badges=S.apprenant.badges||[];
+    S.streak=S.apprenant.streak||0;
+    // Handle daily login streak + XP
+    await handleDailyLogin();
   } else {
     const w=document.createElement("div");
     w.style.cssText="position:fixed;top:16px;right:16px;background:#2D1B00;border:1px solid rgba(245,158,11,.2);color:#FCD34D;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:320px";
@@ -502,6 +588,33 @@ auth.onAuthStateChanged(async user=>{
   document.getElementById("main-app").style.display="flex";
   loadData();
 });
+
+// ── DAILY LOGIN STREAK ──
+async function handleDailyLogin(){
+  if(!S.apprenant)return;
+  const today=new Date().toISOString().split('T')[0];
+  const lastLogin=S.apprenant.lastLogin||'';
+  const yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  if(lastLogin===today)return; // Already logged in today
+  let newStreak=S.streak;
+  if(lastLogin===yesterday){
+    newStreak=S.streak+1; // Consecutive day
+  } else if(lastLogin!==today){
+    newStreak=1; // Reset or first login
+  }
+  S.streak=newStreak;
+  const xpEarned=XP_DAILY;
+  S.xp+=xpEarned;
+  // Update Firestore
+  await db.collection("apprenants").doc(S.apprenant.id).update({
+    lastLogin:today,streak:newStreak,xp:S.xp
+  });
+  S.apprenant.lastLogin=today;S.apprenant.streak=newStreak;S.apprenant.xp=S.xp;
+  showToast('☀️','Connexion du jour !',`+${xpEarned} XP`,false);
+  if(newStreak>=2)showToast('🔥',`Streak : ${newStreak} jours !`,'Continue comme ça !',true);
+  // Check streak badges
+  await checkAndAwardBadges();
+}
 
 // ── DATA ──
 function loadData(){
@@ -525,6 +638,9 @@ function renderAll(){
   renderHomePage();
   renderModulesSidebar();
   renderPhaseMini();
+  updateXPUI();
+  renderBadges();
+  updateStreakChip();
 }
 
 // ── PROGRESS ──
@@ -538,6 +654,99 @@ function updateProgress(){
   document.getElementById("stat-modules-sub").textContent=`sur ${total} au total`;
   const scores=Object.values(S.progressions).filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
   document.getElementById("stat-score").textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+"%":"—";
+}
+
+// ── XP UI ──
+function updateXPUI(){
+  const lvl=getLevel(S.xp);
+  const next=LEVELS[lvl.num]||lvl;
+  const pct=lvl.num>=5?100:Math.round(((S.xp-lvl.min)/(next.min-lvl.min))*100);
+  document.getElementById("xp-current").textContent=S.xp;
+  document.getElementById("xp-fill").style.width=pct+"%";
+  document.getElementById("xp-level-badge").textContent=`⚡ Niveau ${lvl.num}`;
+  document.getElementById("stat-xp").textContent=S.xp;
+  document.getElementById("stat-level-sub").textContent=`Niveau ${lvl.num} — ${lvl.label}`;
+}
+
+function getLevel(xp){
+  for(let i=LEVELS.length-1;i>=0;i--){if(xp>=LEVELS[i].min)return LEVELS[i];}
+  return LEVELS[0];
+}
+
+// ── STREAK CHIP ──
+function updateStreakChip(){
+  const chip=document.getElementById("streak-chip");
+  if(S.streak>=2){
+    chip.style.display="inline-flex";
+    document.getElementById("streak-count").textContent=S.streak;
+  } else {
+    chip.style.display="none";
+  }
+}
+
+// ── BADGES ──
+function renderBadges(){
+  const el=document.getElementById("badges-grid");
+  const newBadges=S._newBadges||[];
+  el.innerHTML=Object.entries(BADGES_DEF).map(([id,cfg])=>{
+    const unlocked=S.badges.includes(id);
+    const isNew=newBadges.includes(id);
+    return`<div class="badge-pill ${unlocked?"unlocked":"locked"}" title="${cfg.desc}">
+      ${isNew?'<div class="badge-new"></div>':''}
+      <span class="badge-icon">${cfg.icon}</span>
+      <span>${cfg.label}</span>
+    </div>`;
+  }).join('');
+}
+
+async function checkAndAwardBadges(){
+  if(!S.apprenant)return;
+  const newlyUnlocked=[];
+  const done=Object.values(S.progressions).filter(p=>p.statut==="termine");
+  const scores=done.filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
+  const avgScore=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
+  const allDone=S.modules.length>0&&done.length===S.modules.length;
+
+  const conditions={
+    premier_pas:done.length>=1,
+    studieux:done.length>=5,
+    perfectionniste:scores.some(s=>s>=90),
+    en_feu:S.streak>=3,
+    champion:avgScore>=80&&scores.length>0,
+    early_bird:S.streak>=5,
+    finisseur:allDone,
+  };
+
+  for(const [id,cond] of Object.entries(conditions)){
+    if(cond&&!S.badges.includes(id)){
+      S.badges.push(id);
+      newlyUnlocked.push(id);
+    }
+  }
+
+  if(newlyUnlocked.length){
+    S._newBadges=newlyUnlocked;
+    await db.collection("apprenants").doc(S.apprenant.id).update({badges:S.badges});
+    for(const id of newlyUnlocked){
+      const cfg=BADGES_DEF[id];
+      setTimeout(()=>showToast(cfg.icon,`Badge débloqué : ${cfg.label}`,cfg.desc,true),400);
+    }
+    renderBadges();
+  }
+}
+
+// ── XP TOAST ──
+function showToast(icon,title,sub,isBadge=false){
+  const container=document.getElementById("xp-toast-container");
+  const t=document.createElement("div");
+  t.className="xp-toast";
+  t.innerHTML=`<div class="toast-icon">${icon}</div><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-sub">${sub}</div></div>${isBadge?`<div class="toast-badge-badge">Badge</div>`:`<div class="toast-xp-badge">${sub}</div>`}`;
+  if(isBadge){t.innerHTML=`<div class="toast-icon">${icon}</div><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-sub">${sub}</div></div><div class="toast-badge-badge">Nouveau</div>`;}
+  container.appendChild(t);
+  setTimeout(()=>{
+    t.classList.add("out");
+    setTimeout(()=>t.remove(),350);
+  },3500);
 }
 
 // ── HOME ──
@@ -557,8 +766,9 @@ function renderHomePage(){
           <div class="ns-meta">
             ${next.video_url?`<span class="ns-chip">🎬 Vidéo</span>`:""}
             ${next.pdf_url?`<span class="ns-chip">📄 PDF</span>`:""}
-            ${next.quiz?.length?`<span class="ns-chip">📝 Quiz</span>`:""}
+            ${next.quiz?.length?`<span class="ns-chip">📝 Quiz · +${next.quiz.length>0?XP_MODULE:0} XP</span>`:""}
             ${next.duree_estimee?`<span class="ns-chip">⏱ ${next.duree_estimee}</span>`:""}
+            <span class="ns-chip">⚡ +${XP_MODULE} XP</span>
           </div>
         </div>
         <button class="btn-start" onclick="goToModule('${next.id}')">Commencer →</button>
@@ -583,9 +793,8 @@ function renderHomePage(){
     const done=mods.filter(m=>S.progressions[m.id]?.statut==="termine").length;
     const pct=mods.length?Math.round((done/mods.length)*100):0;
     const isDone=pct===100;
-    const isCur=pct>0&&pct<100||(done===0&&mods.length>0&&S.modules.findIndex(m=>m.phase_id===id)<S.modules.findIndex(m=>!S.progressions[m.id])||false);
     const cls=isDone?"done":pct>0?"current":"";
-    return`<div class="rp-card ${cls}" style="border-top-color:${cfg.color}" onclick="showPage('modules')">
+    return`<div class="rp-card ${cls}" onclick="showPage('modules')">
       <div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:${isDone?"#10B981":pct>0?cfg.color:"rgba(255,255,255,.06)"};border-radius:14px 0 0 14px"></div>
       <div class="rp-header">
         <div class="rp-icon" style="background:${cfg.color}18">${cfg.icon}</div>
@@ -697,6 +906,7 @@ function renderModuleContent(m){
       ${m.pdf_url?`<span class="mod-tag">📄 PDF</span>`:""}
       ${m.quiz?.length?`<span class="mod-tag">📝 ${m.quiz.length} question${m.quiz.length>1?"s":""}</span>`:""}
       ${m.duree_estimee?`<span class="mod-tag">⏱ ${m.duree_estimee}</span>`:""}
+      ${!isDone?`<span class="mod-tag score">⚡ +${XP_MODULE} XP</span>`:""}
       ${isDone?`<span class="mod-tag done">✅ Complété</span>`:""}
       ${isDone&&prog.score_quiz?`<span class="mod-tag score">🏆 ${prog.score_quiz}%</span>`:""}
     </div>
@@ -732,10 +942,9 @@ function renderModuleContent(m){
   if(m.quiz?.length){
     html+=renderQuizHTML(m,isDone,prog);
   } else if(!isDone){
-    html+=`<button class="complete-module-btn" onclick="completeModule('${m.id}',100)">✅ Marquer comme complété et continuer</button>`;
+    html+=`<button class="complete-module-btn" onclick="completeModule('${m.id}',100)">✅ Marquer comme complété — +${XP_MODULE} XP</button>`;
   }
 
-  // Next module
   if(isDone){
     const idx=S.modules.findIndex(x=>x.id===m.id);
     const nxt=S.modules[idx+1];
@@ -765,7 +974,7 @@ function renderQuizHTML(m,isDone,prog){
   let html=`<div class="quiz-wrap">
     <div class="quiz-header">
       <div class="quiz-header-title">📝 Quiz de validation</div>
-      <div class="quiz-header-meta">${m.quiz.length} question${m.quiz.length>1?"s":""} · min. ${m.score_minimum||70}%</div>
+      <div class="quiz-header-meta">${m.quiz.length} question${m.quiz.length>1?"s":""} · min. ${m.score_minimum||70}% · ⚡ +${XP_MODULE} XP</div>
     </div>
     <div class="quiz-body">`;
   m.quiz.forEach((q,qi)=>{
@@ -819,12 +1028,16 @@ async function submitQuiz(moduleId){
   const passed=score>=(m.score_minimum||70);
   document.querySelector('.btn-quiz-submit')?.remove();
   const area=document.getElementById("quiz-result-area");
+  // XP bonus for quiz performance
+  let bonusXP=0;
+  if(score>=90)bonusXP=XP_QUIZ_PERFECT;
+  else if(score>=80)bonusXP=XP_QUIZ_GREAT;
   if(passed){
     area.innerHTML=`<div class="qr-box qr-success">
       <div class="qr-icon">🎉</div>
       <div class="qr-score-num">${score}%</div>
-      <div class="qr-msg">${correct} / ${m.quiz.length} bonnes réponses — Félicitations !</div>
-      <button class="btn-qr-validate" onclick="completeModule('${moduleId}',${score})">Valider et continuer →</button>
+      <div class="qr-msg">${correct} / ${m.quiz.length} bonnes réponses${bonusXP?` · +${bonusXP} XP bonus !`:""} — Félicitations !</div>
+      <button class="btn-qr-validate" onclick="completeModule('${moduleId}',${score})">Valider et continuer → +${XP_MODULE+bonusXP} XP</button>
     </div>`;
   } else {
     area.innerHTML=`<div class="qr-box qr-fail">
@@ -844,13 +1057,35 @@ async function completeModule(moduleId,score){
   const progData={apprenant_id:S.apprenant.id,module_id:moduleId,statut:"termine",score_quiz:score,completed_at:TS(),updatedAt:TS()};
   await db.collection("progressions").doc(progId).set(progData,{merge:true});
   S.progressions[moduleId]=progData;
+  // Award XP
+  let xpEarned=XP_MODULE;
+  if(score>=90)xpEarned+=XP_QUIZ_PERFECT;
+  else if(score>=80)xpEarned+=XP_QUIZ_GREAT;
+  const prevLevel=getLevel(S.xp);
+  S.xp+=xpEarned;
+  const newLevel=getLevel(S.xp);
+  // Save XP to Firestore
   const m=S.modules.find(x=>x.id===moduleId);
   if(m&&S.apprenant){
     const scores=[...(S.apprenant.modules_scores||Array(9).fill(null))];
     const idx=S.modules.indexOf(m);if(idx>=0)scores[idx]=score;
-    await db.collection("apprenants").doc(S.apprenant.id).update({modules_scores:scores,jour:Math.min(90,Math.max(S.apprenant.jour||1,m.jour_fin||S.apprenant.jour||1)),updatedAt:TS()});
+    await db.collection("apprenants").doc(S.apprenant.id).update({
+      modules_scores:scores,
+      jour:Math.min(90,Math.max(S.apprenant.jour||1,m.jour_fin||S.apprenant.jour||1)),
+      xp:S.xp,
+      updatedAt:TS()
+    });
+    S.apprenant.xp=S.xp;
   }
-  renderAll();if(S.currentModule)renderModuleContent(S.currentModule);
+  // Show toast
+  showToast('⚡',`+${xpEarned} XP gagnés !`,m?m.titre:'Module complété');
+  if(newLevel.num>prevLevel.num){
+    setTimeout(()=>showToast('🎊',`Niveau ${newLevel.num} atteint !`,newLevel.label,true),600);
+  }
+  // Check badges
+  await checkAndAwardBadges();
+  renderAll();
+  if(S.currentModule)renderModuleContent(S.currentModule);
 }
 
 // ── HELPERS ──
