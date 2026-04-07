@@ -252,9 +252,10 @@ function updateGlobalProgress(){
 // ── SIDEBAR ──
 function renderSidebar(){
   const phases=[
-    {id:1,nom:"Onboarding",icon:"🚀"},{id:2,nom:"Fondamentaux",icon:"📚"},
-    {id:3,nom:"Pratique guidée",icon:"⚡"},{id:4,nom:"Approfondissement",icon:"🎯"},
-    {id:5,nom:"Projet final",icon:"🏗️"},{id:6,nom:"Certification",icon:"🎓"},
+    {id:"onboarding",nom:"Onboarding",icon:"🚀"},
+    {id:"formation",nom:"Formation",icon:"📚"},
+    {id:"pratique",nom:"Mise en pratique",icon:"⚡"},
+    {id:"finalisation",nom:"Finalisation",icon:"🏁"},
   ];
   let html='';
   phases.forEach(phase=>{
