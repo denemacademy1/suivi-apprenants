@@ -458,13 +458,13 @@ const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 // ══════════════════════════════════════
 auth.onAuthStateChanged(async user=>{
   if(!user){
-    const base=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+    const base=location.hostname.includes('github.io')?'/suivi-apprenants':'';
     location.href=base+'/login/';return;
   }
   const doc=await db.collection("users").doc(user.uid).get();
   const role=doc.exists?doc.data().role:"student";
   if(role==='student'){
-    const base=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+    const base=location.hostname.includes('github.io')?'/suivi-apprenants':'';
     location.href=base+'/student/';return;
   }
   // Set sidebar user info

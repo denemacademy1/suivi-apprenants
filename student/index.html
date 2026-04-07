@@ -186,7 +186,7 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 
-const BASE=location.pathname.includes('github.io')?'/suivi-apprenants':'';
+const BASE=location.hostname.includes('github.io')?'/suivi-apprenants':'';
 
 let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false};
 
