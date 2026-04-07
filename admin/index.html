@@ -437,13 +437,13 @@ let quizQuestions=[];
 // ─── Auth ─────────────────────────────────────────────────
 auth.onAuthStateChanged(async user=>{
   if(!user){
-    const base=location.hostname.includes('github.io')?'/suivi-apprenants':'';
+    const base=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
     location.href=base+'/login/';return;
   }
   const doc=await db.collection("users").doc(user.uid).get();
   const role=doc.exists?doc.data().role:"student";
   if(role!=='admin'){
-    const base=location.hostname.includes('github.io')?'/suivi-apprenants':'';
+    const base=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
     if(role==='student')location.href=base+'/student/';
     else location.href=base+'/';
     return;

@@ -122,7 +122,7 @@ auth.onAuthStateChanged(async user=>{
 });
 
 function redirect(role){
-  const base=location.hostname.includes('github.io')?'/suivi-apprenants':'';
+  const base=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
   if(role==='student')location.href=base+'/student/';
   else if(role==='admin')location.href=base+'/admin/';
   else location.href=base+'/';
