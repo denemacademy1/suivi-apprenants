@@ -199,11 +199,20 @@ auth.onAuthStateChanged(async user=>{
   if(userData.role!=='student'){location.href=userData.role==='admin'?BASE+'/admin/':BASE+'/';return;}
   S.user=user;S.userData=userData;
   document.getElementById("user-name").textContent=userData.prenom||userData.email;
-  // Find apprenant linked to this user
-  const appSnap=await db.collection("apprenants").where("email","==",user.email).limit(1).get();
-  if(!appSnap.empty){S.apprenant={id:appSnap.docs[0].id,...appSnap.docs[0].data()};}
+  // Find apprenant linked to this user by email
+  try{
+    const appSnap=await db.collection("apprenants").where("email","==",user.email).limit(1).get();
+    if(!appSnap.empty){S.apprenant={id:appSnap.docs[0].id,...appSnap.docs[0].data()};}
+  }catch(e){console.warn("Impossible de charger la fiche apprenant:",e);}
   document.getElementById("loading-screen").style.display="none";
   document.getElementById("main-app").style.display="flex";
+  // Show warning if no apprenant record linked
+  if(!S.apprenant){
+    const warn=document.createElement("div");
+    warn.style.cssText="position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#FEF3C7;color:#92400E;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.15);max-width:90vw;text-align:center";
+    warn.textContent="⚠️ Votre dossier apprenant n'est pas encore créé. Contactez votre chargé de suivi.";
+    document.body.appendChild(warn);
+  }
   loadData();
 });
 
