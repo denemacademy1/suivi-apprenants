@@ -346,7 +346,7 @@ nav::-webkit-scrollbar{width:0}
 .todo-cb.done{background:rgba(16,185,129,.2);border-color:#10B981;color:#10B981}
 .todo-text{flex:1;font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .todo-text.done{text-decoration:line-through;color:rgba(255,255,255,.4)}
-.todo-del{font-size:11px;color:rgba(255,255,255,.15);cursor:pointer;flex-shrink:0;padding:2px 4px;border-radius:4px;transition:.15s;opacity:0}
+.todo-del{font-size:11px;color:rgba(255,255,255,.45);cursor:pointer;flex-shrink:0;padding:2px 4px;border-radius:4px;transition:.15s;opacity:0}
 .todo-item:hover .todo-del{opacity:1}
 .todo-del:hover{color:#F87171;background:rgba(239,68,68,.1)}
 .todo-add-row{padding:6px 14px 10px;display:flex;gap:6px;flex-shrink:0}
@@ -362,7 +362,7 @@ nav::-webkit-scrollbar{width:0}
 .note-editor-wrap{max-width:760px;margin:0 auto;padding:32px 28px;width:100%;flex:1;display:flex;flex-direction:column}
 .note-editor-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;text-align:center;color:rgba(255,255,255,.4)}
 .note-title-input{width:100%;background:transparent;border:none;outline:none;font-size:26px;font-weight:800;color:var(--text);font-family:inherit;margin-bottom:12px;caret-color:#818CF8}
-.note-title-input::placeholder{color:rgba(255,255,255,.15)}
+.note-title-input::placeholder{color:rgba(255,255,255,.35)}
 .note-meta-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
 .note-module-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:rgba(255,255,255,.5);font-size:12px;padding:5px 10px;outline:none;cursor:pointer;font-family:inherit}
 .note-module-select:focus{border-color:rgba(99,102,241,.4)}
@@ -370,7 +370,7 @@ nav::-webkit-scrollbar{width:0}
 .note-save-status.saving{color:#818CF8}
 .note-save-status.saved{color:#10B981}
 .note-body-input{flex:1;width:100%;background:transparent;border:none;outline:none;font-size:15px;color:rgba(255,255,255,.75);font-family:inherit;resize:none;line-height:1.85;caret-color:#818CF8;min-height:400px}
-.note-body-input::placeholder{color:rgba(255,255,255,.12)}
+.note-body-input::placeholder{color:rgba(255,255,255,.32)}
 .note-del-btn{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);color:#F87171;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;transition:.15s}
 .note-del-btn:hover{background:rgba(239,68,68,.15)}
 /* Home widgets */
@@ -619,7 +619,7 @@ nav::-webkit-scrollbar{width:0}
               </div>
               <div id="note-editor" style="display:none;flex:1;display:none;flex-direction:column">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                  <div style="font-size:11px;color:rgba(255,255,255,.15)">Note</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,.45)">Note</div>
                   <button class="note-del-btn" onclick="deleteNote()">🗑 Supprimer</button>
                 </div>
                 <input class="note-title-input" id="note-title" placeholder="Titre de la note…" oninput="scheduleNoteSave()">
@@ -827,7 +827,7 @@ function renderAll(){
 // ── PROGRESS ──
 function updateProgress(){
   const total=S.modules.length;if(!total)return;
-  const done=Object.values(S.progressions).filter(p=>p.statut==="termine").length;
+  const done=Object.values(S.progressions).filter(p=>p.statut==="termine"||p.statut==="completed").length;
   const pct=Math.round((done/total)*100);
   document.getElementById("suc-fill").style.width=pct+"%";
   document.getElementById("suc-pct").textContent=pct+"%";
@@ -891,10 +891,11 @@ async function checkInitialBadges(){
 async function checkAndAwardBadges(silent=false){
   if(!S.apprenant)return;
   const newlyUnlocked=[];
-  const done=Object.values(S.progressions).filter(p=>p.statut==="termine");
+  const isDone=p=>p.statut==="termine"||p.statut==="completed";
+  const done=Object.values(S.progressions).filter(isDone);
   const scores=done.filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
   const avgScore=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
-  const allDone=S.modules.length>0&&done.length===S.modules.length;
+  const allDone=S.modules.length>0&&done.length>=S.modules.length;
 
   const conditions={
     premier_pas:done.length>=1,
@@ -981,7 +982,7 @@ function renderHomePage(){
   rpEl.innerHTML=phaseEntries.map(([id,cfg])=>{
     const mods=S.modules.filter(m=>m.phase_id===id);
     if(!mods.length)return'';
-    const done=mods.filter(m=>S.progressions[m.id]?.statut==="termine").length;
+    const done=mods.filter(m=>["termine","completed"].includes(S.progressions[m.id]?.statut)).length;
     const pct=mods.length?Math.round((done/mods.length)*100):0;
     const isDone=pct===100;
     const cls=isDone?"done":pct>0?"current":"";
@@ -993,7 +994,7 @@ function renderHomePage(){
           <div class="rp-phase-name">${cfg.label}</div>
           <div class="rp-status" style="color:${isDone?"#10B981":pct>0?cfg.color:"rgba(255,255,255,.2)"}">${isDone?"✓ Complété":pct>0?"En cours":"Non commencé"}</div>
         </div>
-        <div style="margin-left:auto;font-size:20px;font-weight:900;color:${isDone?"#10B981":pct>0?cfg.color:"rgba(255,255,255,.1)"}">${pct}%</div>
+        <div style="margin-left:auto;font-size:20px;font-weight:900;color:${isDone?"#10B981":pct>0?cfg.color:"rgba(255,255,255,.35)"}">${pct}%</div>
       </div>
       <div class="rp-progress-row">
         <div class="rp-track"><div class="rp-fill" style="width:${pct}%;background:${isDone?"#10B981":cfg.color}"></div></div>
@@ -1009,9 +1010,9 @@ function renderPhaseMini(){
   el.innerHTML=`<div class="phase-mini">${Object.entries(PHASES).map(([id,cfg])=>{
     const mods=S.modules.filter(m=>m.phase_id===id);
     if(!mods.length)return'';
-    const done=mods.filter(m=>S.progressions[m.id]?.statut==="termine").length;
+    const done=mods.filter(m=>["termine","completed"].includes(S.progressions[m.id]?.statut)).length;
     return`<div class="pm-phase">
-      <div class="pm-dot" style="background:${done===mods.length?"#10B981":done>0?cfg.color:"rgba(255,255,255,.1)"}"></div>
+      <div class="pm-dot" style="background:${done===mods.length?"#10B981":done>0?cfg.color:"rgba(255,255,255,.35)"}"></div>
       <div class="pm-name">${cfg.label}</div>
       <div class="pm-count">${done}/${mods.length}</div>
     </div>`;
@@ -1027,7 +1028,7 @@ function renderModulesSidebar(){
     html+=`<div class="phase-group">
       <div class="phase-label"><div class="phase-color-dot" style="background:${cfg.color}"></div>${cfg.icon} ${cfg.label}</div>`;
     mods.forEach(m=>{
-      const done=S.progressions[m.id]?.statut==="termine";
+      const done=["termine","completed"].includes(S.progressions[m.id]?.statut);
       const isCur=S.currentModule?.id===m.id;
       const cls=done?"msd-done":isCur?"msd-cur":"msd-lock";
       const ic=done?"✓":isCur?"▶":"○";
@@ -1075,7 +1076,7 @@ function selectModule(id){
 // ── RENDER MODULE ──
 function renderModuleContent(m){
   const prog=S.progressions[m.id];
-  const isDone=prog?.statut==="termine";
+  const isDone=["termine","completed"].includes(prog?.statut);
   const cfg=PHASES[m.phase_id]||{label:m.phase_id||"",color:"#6366F1",icon:"📋"};
   const embed=getVideoEmbed(m.video_url);
   let html=`<div style="animation:fadeUp .3s ease">`;
