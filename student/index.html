@@ -660,7 +660,7 @@ const db=firebase.firestore();
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 const BASE=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
 
-let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home',xp:0,streak:0,badges:[],notes:[],todos:[],currentNote:null,_noteSaveTimer:null};
+let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home',xp:0,streak:0,badges:[],notes:[],todos:[],currentNote:null,_noteSaveTimer:null,_modulesLoaded:false,_progressionsLoaded:false,_initialBadgesDone:false};
 
 const PHASES={
   onboarding:{label:"Onboarding",icon:"🚀",color:"#8B5CF6"},
@@ -731,7 +731,7 @@ auth.onAuthStateChanged(async user=>{
     }
     // Restore saved XP + badges + streak from Firestore
     S.xp=S.apprenant.xp||0;
-    S.badges=S.apprenant.badges||[];
+    S.badges=Array.isArray(S.apprenant.badges)?S.apprenant.badges:[];
     S.streak=S.apprenant.streak||0;
     // Handle daily login streak + XP
     await handleDailyLogin();
@@ -779,13 +779,17 @@ function loadData(){
   db.collection("modules").onSnapshot(snap=>{
     S.modules=snap.docs.map(d=>({id:d.id,...d.data()})).filter(m=>m.published).sort((a,b)=>(a.ordre||0)-(b.ordre||0));
     document.getElementById("nav-badge-modules").textContent=S.modules.length;
+    S._modulesLoaded=true;
     renderAll();
+    checkInitialBadges();
   });
   if(S.apprenant){
     db.collection("progressions").onSnapshot(snap=>{
       S.progressions={};
       snap.docs.filter(d=>d.data().apprenant_id===S.apprenant.id).forEach(d=>{S.progressions[d.data().module_id]=d.data();});
+      S._progressionsLoaded=true;
       renderAll();
+      checkInitialBadges();
       if(S.currentModule)renderModuleContent(S.currentModule);
     });
     db.collection("notes").onSnapshot(snap=>{
@@ -870,7 +874,14 @@ function renderBadges(){
   }).join('');
 }
 
-async function checkAndAwardBadges(){
+// Appelé une seule fois quand modules + progressions sont tous les deux chargés
+async function checkInitialBadges(){
+  if(S._initialBadgesDone||!S._modulesLoaded||!S._progressionsLoaded||!S.apprenant)return;
+  S._initialBadgesDone=true;
+  await checkAndAwardBadges(true); // silent=true : pas de toast pour les badges déjà mérités
+}
+
+async function checkAndAwardBadges(silent=false){
   if(!S.apprenant)return;
   const newlyUnlocked=[];
   const done=Object.values(S.progressions).filter(p=>p.statut==="termine");
@@ -898,9 +909,11 @@ async function checkAndAwardBadges(){
   if(newlyUnlocked.length){
     S._newBadges=newlyUnlocked;
     await db.collection("apprenants").doc(S.apprenant.id).update({badges:S.badges});
-    for(const id of newlyUnlocked){
-      const cfg=BADGES_DEF[id];
-      setTimeout(()=>showToast(cfg.icon,`Badge débloqué : ${cfg.label}`,cfg.desc,true),400);
+    if(!silent){
+      for(const id of newlyUnlocked){
+        const cfg=BADGES_DEF[id];
+        setTimeout(()=>showToast(cfg.icon,`Badge débloqué : ${cfg.label}`,cfg.desc,true),400);
+      }
     }
     renderBadges();
   }
@@ -1253,8 +1266,8 @@ async function completeModule(moduleId,score){
   if(newLevel.num>prevLevel.num){
     setTimeout(()=>showToast('🎊',`Niveau ${newLevel.num} atteint !`,newLevel.label,true),600);
   }
-  // Check badges
-  await checkAndAwardBadges();
+  // Check badges (avec toasts)
+  await checkAndAwardBadges(false);
   renderAll();
   if(S.currentModule)renderModuleContent(S.currentModule);
 }
