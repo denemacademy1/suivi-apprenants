@@ -141,6 +141,63 @@ tr:hover td{background:#FAFBFF}
 .empty .e-icon{font-size:48px;margin-bottom:12px}
 .empty .e-text{font-size:14px;font-weight:600;color:#64748B;margin-bottom:4px}
 .empty .e-sub{font-size:12px}
+/* ── Conversations ── */
+#page-conv{padding:0;display:none;height:calc(100vh - 60px);overflow:hidden}
+#page-conv.active{display:flex}
+.conv-layout{display:flex;width:100%;height:100%;overflow:hidden}
+.conv-list{width:300px;min-width:300px;border-right:1px solid #E2E8F0;background:#fff;display:flex;flex-direction:column;overflow:hidden}
+.conv-list-head{padding:16px 20px;border-bottom:1px solid #F1F5F9;flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.conv-list-title{font-size:13px;font-weight:700;color:#1E293B}
+.conv-total-unread{background:#EF4444;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px}
+.conv-search{padding:10px 14px;border-bottom:1px solid #F1F5F9;flex-shrink:0}
+.conv-search input{width:100%;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:13px;outline:none;color:#1E293B;font-family:inherit}
+.conv-search input:focus{border-color:#4F46E5;box-shadow:0 0 0 3px #EEF2FF}
+.conv-items{flex:1;overflow-y:auto}
+.conv-items::-webkit-scrollbar{width:4px}
+.conv-items::-webkit-scrollbar-thumb{background:#E2E8F0;border-radius:2px}
+.conv-item{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;border-bottom:1px solid #F8FAFC;transition:.15s;position:relative}
+.conv-item:hover{background:#F8FAFF}
+.conv-item.active{background:#EEF2FF;border-right:3px solid #4F46E5}
+.conv-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}
+.conv-info{flex:1;min-width:0}
+.conv-name{font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-preview{font-size:12px;color:#94A3B8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.conv-time{font-size:10px;color:#CBD5E1;white-space:nowrap}
+.conv-badge{background:#EF4444;color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:8px;min-width:18px;text-align:center}
+.conv-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:#94A3B8;padding:24px;text-align:center}
+/* Chat panel */
+.conv-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#F8FAFC}
+.conv-chat-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:#94A3B8;text-align:center}
+.conv-chat-header{background:#fff;border-bottom:1px solid #E2E8F0;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.conv-chat-ava{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.conv-chat-name{font-size:14px;font-weight:700;color:#1E293B}
+.conv-chat-sub{font-size:11px;color:#64748B;margin-top:1px}
+.conv-messages{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:10px}
+.conv-messages::-webkit-scrollbar{width:4px}
+.conv-messages::-webkit-scrollbar-thumb{background:#E2E8F0;border-radius:2px}
+.adm-day-sep{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:11px;color:#CBD5E1;font-weight:500}
+.adm-day-sep::before,.adm-day-sep::after{content:'';flex:1;height:1px;background:#E2E8F0}
+.adm-msg-row{display:flex;gap:8px;max-width:72%}
+.adm-msg-row.mine{align-self:flex-end;flex-direction:row-reverse}
+.adm-msg-row.theirs{align-self:flex-start}
+.adm-msg-ava{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-end}
+.adm-msg-body{display:flex;flex-direction:column;gap:3px}
+.adm-msg-row.mine .adm-msg-body{align-items:flex-end}
+.adm-msg-sender{font-size:10px;font-weight:600;color:#94A3B8;padding:0 4px}
+.adm-msg-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word}
+.adm-msg-row.mine .adm-msg-bubble{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px}
+.adm-msg-row.theirs .adm-msg-bubble{background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.adm-msg-time{font-size:10px;color:#CBD5E1;padding:0 4px}
+.conv-input-area{background:#fff;border-top:1px solid #E2E8F0;padding:14px 24px;display:flex;gap:10px;align-items:flex-end;flex-shrink:0}
+.conv-input-wrap{flex:1;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:10px 14px;transition:.2s}
+.conv-input-wrap:focus-within{border-color:#4F46E5;background:#fff;box-shadow:0 0 0 3px #EEF2FF}
+.conv-input{width:100%;background:transparent;border:none;outline:none;font-size:14px;color:#1E293B;font-family:inherit;resize:none;line-height:1.5;max-height:120px;overflow-y:auto}
+.conv-input::placeholder{color:#CBD5E1}
+.btn-conv-send{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.btn-conv-send:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(79,70,229,.35)}
+/* Nav unread badge */
+.nav-unread{min-width:18px;height:18px;background:#EF4444;color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;margin-left:auto}
 </style>
 </head>
 <body>
@@ -161,6 +218,8 @@ tr:hover td{background:#FAFBFF}
     <div class="nav-section">Utilisateurs</div>
     <div class="nav-item" onclick="showPage('users')"><span class="icon">👥</span>Comptes</div>
     <div class="nav-item" onclick="showPage('apprenants')"><span class="icon">🎯</span>Apprenants</div>
+    <div class="nav-section">Communication</div>
+    <div class="nav-item" id="nav-conv" onclick="showPage('conv')"><span class="icon">💬</span>Conversations<span class="nav-unread" id="nav-conv-badge" style="display:none">0</span></div>
     <div class="nav-section">Système</div>
     <div class="nav-item" onclick="showPage('stats')"><span class="icon">📊</span>Statistiques</div>
   </nav>
@@ -238,6 +297,47 @@ tr:hover td{background:#FAFBFF}
       </div>
       <div id="apprenants-list">
         <div class="empty"><div class="e-icon">🎯</div><div class="e-text">Chargement…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONVERSATIONS PAGE -->
+  <div class="page" id="page-conv">
+    <div class="conv-layout">
+      <!-- Left: conversation list -->
+      <div class="conv-list">
+        <div class="conv-list-head">
+          <div class="conv-list-title">💬 Messages apprenants</div>
+          <span class="conv-total-unread" id="conv-total-unread" style="display:none">0</span>
+        </div>
+        <div class="conv-search"><input type="text" id="conv-search-input" placeholder="Rechercher un apprenant…" oninput="renderConvList()"></div>
+        <div class="conv-items" id="conv-items">
+          <div class="conv-empty-state"><div style="font-size:36px">💬</div><div style="font-size:13px">Chargement…</div></div>
+        </div>
+      </div>
+      <!-- Right: chat panel -->
+      <div class="conv-chat" id="conv-chat">
+        <div class="conv-chat-placeholder" id="conv-placeholder">
+          <div style="font-size:52px">💬</div>
+          <div style="font-size:16px;font-weight:700;color:#475569">Sélectionnez une conversation</div>
+          <div style="font-size:13px;max-width:280px;line-height:1.6">Cliquez sur un apprenant à gauche pour lire ses messages et lui répondre.</div>
+        </div>
+        <div id="conv-chat-inner" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+          <div class="conv-chat-header" id="conv-chat-header">
+            <div class="conv-chat-ava" id="conv-chat-ava">?</div>
+            <div>
+              <div class="conv-chat-name" id="conv-chat-name">—</div>
+              <div class="conv-chat-sub" id="conv-chat-sub">—</div>
+            </div>
+          </div>
+          <div class="conv-messages" id="conv-messages"></div>
+          <div class="conv-input-area">
+            <div class="conv-input-wrap">
+              <textarea class="conv-input" id="conv-input" placeholder="Votre réponse…" rows="1" onkeydown="convKeydown(event)" oninput="convAutoResize(this)"></textarea>
+            </div>
+            <button class="btn-conv-send" onclick="sendConvReply()" title="Envoyer">➤</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -430,6 +530,11 @@ let modules=[];
 let users=[];
 let apprenants=[];
 let progressions=[];
+let convs=[];          // conversation meta docs
+let currentConvId=null;
+let _convListUnsub=null;
+let _convMsgUnsub=null;
+let _adminUser=null;   // current logged-in admin/csm user data
 let editingModuleId=null;
 let selectedPhase='onboarding';
 let quizQuestions=[];
@@ -449,6 +554,7 @@ auth.onAuthStateChanged(async user=>{
     return;
   }
   const d=doc.data();
+  _adminUser={id:user.uid,uid:user.uid,...d,email:user.email};
   document.getElementById('user-name').textContent=`${d.prenom||''} ${d.nom||''}`.trim()||'Admin';
   document.getElementById('user-email').textContent=user.email;
   document.getElementById('user-avatar').textContent=(d.prenom||'A').charAt(0).toUpperCase();
@@ -479,18 +585,19 @@ function initListeners(){
 }
 
 // ─── Navigation ───────────────────────────────────────────
-const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales'};
-const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../','_blank')"},stats:{text:'',fn:''}};
+const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales',conv:'Conversations'};
+const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../','_blank')"},stats:{text:'',fn:''},conv:{text:'',fn:''}};
 
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  document.getElementById(`page-${p}`).classList.add('active');
-  document.querySelector(`[onclick="showPage('${p}')"]`).classList.add('active');
+  document.getElementById(`page-${p}`)?.classList.add('active');
+  document.querySelector(`[onclick="showPage('${p}')"]`)?.classList.add('active');
   document.getElementById('page-title').textContent=pageTitles[p]||p;
   const btn=document.getElementById('topbar-btn');
   if(pageBtn[p]&&pageBtn[p].text){btn.textContent=pageBtn[p].text;btn.onclick=new Function(pageBtn[p].fn);btn.style.display='';}
   else btn.style.display='none';
+  if(p==='conv')initConvListener();
 }
 
 // ─── Modules ──────────────────────────────────────────────
@@ -835,6 +942,173 @@ function showAlertErr(msg){
   document.getElementById('alert-err-msg').textContent=msg;
   el.classList.add('show');setTimeout(()=>el.classList.remove('show'),5000);
 }
+
+// ─── Conversations ────────────────────────────────────────
+let _convListenerDone=false;
+
+function initConvListener(){
+  if(_convListenerDone)return;
+  _convListenerDone=true;
+  // Listen to all conversation meta docs
+  const setupListener=(ref)=>{
+    _convListUnsub=ref.onSnapshot(snap=>{
+      convs=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.timestamp?.seconds||0)-(a.timestamp?.seconds||0));
+      renderConvList();
+      updateConvNavBadge();
+    });
+  };
+  try{
+    setupListener(db.collection("conversations").orderBy("timestamp","desc"));
+  }catch(_){
+    setupListener(db.collection("conversations"));
+  }
+}
+
+function renderConvList(){
+  const el=document.getElementById("conv-items");
+  const search=(document.getElementById("conv-search-input")?.value||'').toLowerCase().trim();
+  let list=convs;
+  if(search)list=list.filter(c=>(c.apprenantName||c.apprenant_id||'').toLowerCase().includes(search));
+  if(!list.length){
+    el.innerHTML=`<div class="conv-empty-state"><div style="font-size:36px">💬</div><div style="font-size:13px">${convs.length?'Aucun résultat':'Aucune conversation pour l\'instant'}</div></div>`;
+    return;
+  }
+  el.innerHTML=list.map(c=>{
+    const name=c.apprenantName||c.apprenant_id||'Apprenant';
+    const initial=name.charAt(0).toUpperCase();
+    const preview=c.dernierMsg?truncate(c.dernierMsg,50):'Aucun message';
+    const unread=c.nonLusCSM||0;
+    const ts=c.timestamp?.seconds?formatConvTime(new Date(c.timestamp.seconds*1000)):'';
+    const isActive=c.id===currentConvId;
+    return`<div class="conv-item${isActive?' active':''}" onclick="openConversation('${c.id}')">
+      <div class="conv-avatar">${initial}</div>
+      <div class="conv-info">
+        <div class="conv-name">${escHtml(name)}</div>
+        <div class="conv-preview">${escHtml(preview)}</div>
+      </div>
+      <div class="conv-meta">
+        <div class="conv-time">${ts}</div>
+        ${unread>0?`<div class="conv-badge">${unread}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateConvNavBadge(){
+  const total=convs.reduce((s,c)=>s+(c.nonLusCSM||0),0);
+  const navBadge=document.getElementById("nav-conv-badge");
+  const topBadge=document.getElementById("conv-total-unread");
+  if(navBadge){if(total>0){navBadge.textContent=total;navBadge.style.display='inline-flex';}else navBadge.style.display='none';}
+  if(topBadge){if(total>0){topBadge.textContent=total;topBadge.style.display='';}else topBadge.style.display='none';}
+}
+
+function openConversation(appId){
+  currentConvId=appId;
+  const conv=convs.find(c=>c.id===appId);
+  renderConvList(); // re-render to show active state
+  // Show chat panel
+  document.getElementById("conv-placeholder").style.display="none";
+  const inner=document.getElementById("conv-chat-inner");
+  inner.style.display="flex";inner.style.flexDirection="column";
+  // Header
+  const name=conv?.apprenantName||appId;
+  const apprenant=apprenants.find(a=>a.id===appId);
+  const fullName=apprenant?(apprenant.prenom||'')+' '+(apprenant.nom||''):name;
+  const initial=fullName.trim().charAt(0).toUpperCase()||'?';
+  document.getElementById("conv-chat-ava").textContent=initial;
+  document.getElementById("conv-chat-name").textContent=fullName.trim()||name;
+  document.getElementById("conv-chat-sub").textContent=apprenant?.email||conv?.apprenant_id||'Apprenant';
+  // Reset unread in Firestore
+  db.collection("conversations").doc(appId).update({nonLusCSM:0}).catch(()=>{});
+  // Messages listener
+  if(_convMsgUnsub){_convMsgUnsub();_convMsgUnsub=null;}
+  document.getElementById("conv-messages").innerHTML=`<div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">Chargement…</div>`;
+  const setupMsgListener=(ref)=>{
+    _convMsgUnsub=ref.onSnapshot(snap=>{
+      const msgs=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+      renderConvMessages(msgs,appId);
+      // Mark student messages as read
+      msgs.filter(m=>m.role==='student'&&!m.lu).forEach(m=>{
+        db.collection("conversations").doc(appId).collection("messages").doc(m.id).update({lu:true}).catch(()=>{});
+      });
+    });
+  };
+  try{
+    setupMsgListener(db.collection("conversations").doc(appId).collection("messages").orderBy("timestamp","asc"));
+  }catch(_){
+    setupMsgListener(db.collection("conversations").doc(appId).collection("messages"));
+  }
+  document.getElementById("conv-input")?.focus();
+}
+
+function renderConvMessages(msgs,appId){
+  const el=document.getElementById("conv-messages");
+  const apprenant=apprenants.find(a=>a.id===appId);
+  const appName=apprenant?(apprenant.prenom||'Apprenant'):convs.find(c=>c.id===appId)?.apprenantName||'Apprenant';
+  const adminName=_adminUser?(_adminUser.prenom||'Coach'):'Coach';
+  if(!msgs.length){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:#94A3B8;text-align:center">
+      <div style="font-size:40px">💬</div>
+      <div style="font-size:14px;font-weight:600;color:#64748B">Aucun message</div>
+      <div style="font-size:12px">Envoyez le premier message à ${escHtml(appName)}</div>
+    </div>`;
+    return;
+  }
+  let html='';let lastDay='';
+  msgs.forEach(m=>{
+    const isMe=m.role!=='student'; // admin/csm = me (right side)
+    const ts=m.timestamp?.seconds?new Date(m.timestamp.seconds*1000):new Date();
+    const day=ts.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const time=ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if(day!==lastDay){lastDay=day;html+=`<div class="adm-day-sep">${day}</div>`;}
+    const name=isMe?adminName:appName;
+    const initial=name.charAt(0).toUpperCase();
+    const avatarBg=isMe?"linear-gradient(135deg,#4F46E5,#7C3AED)":"linear-gradient(135deg,#10B981,#059669)";
+    html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
+      <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
+      <div class="adm-msg-body">
+        <div class="adm-msg-sender">${escHtml(name)}</div>
+        <div class="adm-msg-bubble">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>
+        <div class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':isMe?' · Envoyé':''}</div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+  requestAnimationFrame(()=>{el.scrollTop=el.scrollHeight;});
+}
+
+async function sendConvReply(){
+  if(!currentConvId||!_adminUser)return;
+  const input=document.getElementById("conv-input");
+  const text=input?.value.trim();
+  if(!text)return;
+  input.value='';
+  convAutoResize(input);
+  const name=(_adminUser.prenom&&_adminUser.nom)?`${_adminUser.prenom} ${_adminUser.nom}`.trim():_adminUser.prenom||'Coach';
+  const msg={text,senderId:_adminUser.uid,senderName:name,role:_adminUser.role||'csm',timestamp:firebase.firestore.FieldValue.serverTimestamp(),lu:false};
+  await db.collection("conversations").doc(currentConvId).collection("messages").add(msg);
+  // Update meta
+  db.collection("conversations").doc(currentConvId).set({
+    dernierMsg:text,timestamp:firebase.firestore.FieldValue.serverTimestamp(),nonLusCSM:0
+  },{merge:true}).catch(()=>{});
+}
+
+function convKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendConvReply();}}
+function convAutoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+function formatConvTime(date){
+  const now=new Date();
+  const diff=now-date;
+  if(diff<60000)return'À l\'instant';
+  if(diff<3600000)return Math.floor(diff/60000)+'min';
+  if(diff<86400000)return date.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  if(diff<604800000)return date.toLocaleDateString('fr-FR',{weekday:'short'});
+  return date.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+}
+
+function truncate(str,n){return str.length>n?str.slice(0,n)+'…':str;}
 
 // Close modal on backdrop click
 document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
