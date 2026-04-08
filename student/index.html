@@ -400,6 +400,93 @@ nav::-webkit-scrollbar{width:0}
 .toast-xp-badge{margin-left:auto;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0}
 .toast-badge-badge{margin-left:auto;background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#000;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0}
 
+/* ─── CHAT ─── */
+.chat-layout{display:flex;height:calc(100vh - 56px);overflow:hidden}
+.chat-left{width:220px;min-width:220px;background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.chat-tabs{display:flex;flex-direction:column;gap:4px;padding:12px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.chat-tab{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:.15s;border:1px solid transparent}
+.chat-tab:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.chat-tab.active{background:rgba(99,102,241,.15);color:#818CF8;border-color:rgba(99,102,241,.2)}
+.chat-tab-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.chat-tab-unread{min-width:18px;height:18px;background:#EF4444;color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:auto}
+.chat-section-title{padding:10px 12px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px;flex-shrink:0}
+.chat-members-list{flex:1;overflow-y:auto;padding:0 8px 8px}
+.chat-members-list::-webkit-scrollbar{width:0}
+.chat-member{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px}
+.chat-member-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.chat-member-name{font-size:12px;color:rgba(255,255,255,.6);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-member-you{font-size:10px;color:#818CF8;font-weight:600;flex-shrink:0}
+.chat-info-card{margin:10px;padding:12px;background:var(--surface3);border-radius:10px;border:1px solid var(--border)}
+.chat-info-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;margin-bottom:8px}
+.chat-info-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.chat-info-name{font-size:13px;font-weight:600;color:var(--text)}
+/* Main chat area */
+.chat-right{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.chat-header{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.chat-header-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.chat-header-name{font-size:14px;font-weight:700;color:var(--text)}
+.chat-header-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+.chat-day-sep{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:11px;color:rgba(255,255,255,.35);font-weight:500;flex-shrink:0}
+.chat-day-sep::before,.chat-day-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+.msg-row{display:flex;gap:8px;max-width:78%;animation:fadeUp .2s ease}
+.msg-row.mine{align-self:flex-end;flex-direction:row-reverse}
+.msg-row.theirs{align-self:flex-start}
+.msg-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-end}
+.msg-content{display:flex;flex-direction:column;gap:3px}
+.msg-row.mine .msg-content{align-items:flex-end}
+.msg-sender{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);margin-bottom:1px;padding:0 4px}
+.msg-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;color:var(--text);word-break:break-word}
+.msg-row.mine .msg-bubble{background:linear-gradient(135deg,#6366F1,#8B5CF6);border-radius:14px 14px 4px 14px;color:#fff}
+.msg-row.theirs .msg-bubble{background:var(--surface2);border:1px solid var(--border);border-radius:14px 14px 14px 4px}
+.msg-time{font-size:10px;color:rgba(255,255,255,.3);padding:0 4px}
+/* Victory card */
+.msg-victory-row{align-self:stretch;max-width:100%;animation:fadeUp .3s ease}
+.msg-victory-card{background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(251,191,36,.05));border:1px solid rgba(245,158,11,.25);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.mvc-header{display:flex;align-items:center;gap:8px}
+.mvc-trophy{font-size:22px}
+.mvc-label{font-size:11px;font-weight:800;color:#FCD34D;text-transform:uppercase;letter-spacing:.5px;flex:1}
+.mvc-by{font-size:11px;color:rgba(255,255,255,.45)}
+.mvc-time{font-size:10px;color:rgba(255,255,255,.3)}
+.mvc-text{font-size:14px;font-weight:600;color:rgba(255,255,255,.85);line-height:1.55}
+.mvc-reactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.mvc-react{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer;transition:.15s;color:rgba(255,255,255,.55);font-family:inherit}
+.mvc-react:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.8)}
+.mvc-react.active{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.3);color:#FCD34D}
+/* Victory modal */
+.victory-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center}
+.victory-modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:28px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:fadeUp .3s ease}
+.vm-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.vm-icon{font-size:28px}
+.vm-title{font-size:18px;font-weight:800;color:var(--text)}
+.vm-sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.vm-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--text);font-family:inherit;resize:none;outline:none;min-height:100px;line-height:1.65;transition:.2s}
+.vm-textarea:focus{border-color:rgba(245,158,11,.4);box-shadow:0 0 0 3px rgba(245,158,11,.07)}
+.vm-textarea::placeholder{color:rgba(255,255,255,.35)}
+.vm-actions{display:flex;gap:10px;margin-top:14px}
+.btn-vm-cancel{flex:1;padding:12px;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+.btn-vm-cancel:hover{background:rgba(255,255,255,.04)}
+.btn-vm-post{flex:2;padding:12px;background:linear-gradient(135deg,#F59E0B,#FBBF24);border:none;border-radius:12px;color:#000;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-vm-post:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,158,11,.4)}
+/* Chat input */
+.chat-input-area{padding:14px 20px;border-top:1px solid var(--border);background:var(--surface);display:flex;gap:10px;align-items:flex-end;flex-shrink:0}
+.chat-input-wrap{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:10px 14px;transition:.2s;display:flex;align-items:flex-end}
+.chat-input-wrap:focus-within{border-color:rgba(99,102,241,.4);box-shadow:0 0 0 3px rgba(99,102,241,.07)}
+.chat-input{flex:1;background:transparent;border:none;outline:none;font-size:14px;color:var(--text);font-family:inherit;resize:none;line-height:1.5;max-height:120px;overflow-y:auto}
+.chat-input::placeholder{color:rgba(255,255,255,.35)}
+.btn-send{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#8B5CF6);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.btn-send:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.btn-victory-chat{padding:10px 14px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:14px;color:#FCD34D;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.btn-victory-chat:hover{background:rgba(245,158,11,.18);transform:translateY(-1px)}
+.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;text-align:center;color:rgba(255,255,255,.4);padding:40px}
+.chat-empty-icon{font-size:52px;opacity:.6}
+.chat-empty-title{font-size:16px;font-weight:700;color:rgba(255,255,255,.6)}
+.chat-empty-sub{font-size:13px;line-height:1.65;max-width:320px}
+/* Cohort no-access */
+.cohort-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;text-align:center;padding:40px;color:rgba(255,255,255,.4)}
+
 /* ─── RESPONSIVE ─── */
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;backdrop-filter:blur(4px)}
 @media(max-width:900px){
@@ -474,6 +561,10 @@ nav::-webkit-scrollbar{width:0}
       <div class="nav-item" id="nav-notes" onclick="showPage('notes')">
         <span class="nav-icon">📝</span>Notes & Tâches
         <span class="nav-badge" id="nav-badge-todos" style="display:none;background:rgba(239,68,68,.2);color:#F87171">0</span>
+      </div>
+      <div class="nav-item" id="nav-messages" onclick="showPage('messages')">
+        <span class="nav-icon">💬</span>Messages
+        <span class="nav-badge" id="nav-badge-messages" style="display:none;background:rgba(239,68,68,.2);color:#F87171">0</span>
       </div>
 
       <div class="nav-section" style="margin-top:8px">Ma progression</div>
@@ -636,6 +727,49 @@ nav::-webkit-scrollbar{width:0}
         </div>
       </div>
 
+      <!-- ── MESSAGES PAGE ── -->
+      <div class="page" id="page-messages">
+        <div class="chat-layout">
+          <!-- Left panel: tabs + info -->
+          <div class="chat-left">
+            <div class="chat-tabs">
+              <div class="chat-tab active" id="chat-tab-private" onclick="switchChatTab('private')">
+                <span class="chat-tab-icon">🔒</span>Mon CSM
+                <span class="chat-tab-unread" id="chat-unread-private" style="display:none">0</span>
+              </div>
+              <div class="chat-tab" id="chat-tab-cohort" onclick="switchChatTab('cohort')">
+                <span class="chat-tab-icon">👥</span>Ma Cohorte
+                <span class="chat-tab-unread" id="chat-unread-cohort" style="display:none">0</span>
+              </div>
+            </div>
+            <div id="chat-left-info" style="flex:1;overflow:hidden;display:flex;flex-direction:column"></div>
+          </div>
+          <!-- Right panel: messages -->
+          <div class="chat-right">
+            <div class="chat-header" id="chat-header">
+              <div class="chat-header-avatar" id="chat-header-avatar" style="background:linear-gradient(135deg,#10B981,#059669)">💬</div>
+              <div>
+                <div class="chat-header-name" id="chat-header-name">Messages</div>
+                <div class="chat-header-sub" id="chat-header-sub">Chargement…</div>
+              </div>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+              <div class="chat-empty">
+                <div class="chat-empty-icon">💬</div>
+                <div class="chat-empty-title">Chargement…</div>
+              </div>
+            </div>
+            <div class="chat-input-area" id="chat-input-area">
+              <button class="btn-victory-chat" id="btn-victory-chat" onclick="openVictoryModal()" style="display:none">🏆 Victoire</button>
+              <div class="chat-input-wrap">
+                <textarea class="chat-input" id="chat-input" placeholder="Votre message…" rows="1" onkeydown="chatKeydown(event)" oninput="chatAutoResize(this)"></textarea>
+              </div>
+              <button class="btn-send" onclick="sendChatMessage()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── MODULES PAGE ── -->
       <div class="page" id="page-modules">
         <div class="modules-layout" style="height:calc(100vh - 56px)">
@@ -667,7 +801,8 @@ const db=firebase.firestore();
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 const BASE=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
 
-let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home',xp:0,streak:0,badges:[],notes:[],todos:[],currentNote:null,_noteSaveTimer:null,_modulesLoaded:false,_progressionsLoaded:false,_initialBadgesDone:false};
+let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home',xp:0,streak:0,badges:[],notes:[],todos:[],currentNote:null,_noteSaveTimer:null,_modulesLoaded:false,_progressionsLoaded:false,_initialBadgesDone:false,
+  chatTab:'private',cohort:null,csmData:null,_chatPrivateUnsub:null,_chatCohortUnsub:null,_chatInitDone:false,_privateUnread:0,_cohortUnread:0};
 
 const PHASES={
   onboarding:{label:"Onboarding",icon:"🚀",color:"#8B5CF6"},
@@ -1087,10 +1222,12 @@ function renderModulesSidebar(){
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  document.getElementById(`page-${p}`).classList.add('active');
+  document.getElementById(`page-${p}`)?.classList.add('active');
   document.getElementById(`nav-${p}`)?.classList.add('active');
-  document.getElementById("topbar-title").textContent=p==='home'?'Accueil':p==='modules'?'Mes modules':'Notes & Tâches';
+  const titles={home:'Accueil',modules:'Mes modules',notes:'Notes & Tâches',messages:'Messages'};
+  document.getElementById("topbar-title").textContent=titles[p]||p;
   S.currentPage=p;
+  if(p==='messages')initChat();
   if(window.innerWidth<900)closeSidebar();
 }
 
@@ -1488,6 +1625,405 @@ async function saveTodos(){
   if(!S.apprenant)return;
   await db.collection("apprenants").doc(S.apprenant.id).update({todos:S.todos,updatedAt:TS()});
   if(S.apprenant)S.apprenant.todos=S.todos;
+}
+
+// ── CHAT ──
+
+async function initChat(){
+  if(!S._chatInitDone){
+    S._chatInitDone=true;
+    // Find CSM from apprenant's csm_id or users collection
+    await loadCsmData();
+    await loadCohortInfo();
+  }
+  // Reset unread for current tab
+  if(S.chatTab==='private')S._privateUnread=0;
+  else S._cohortUnread=0;
+  updateChatNavBadge();
+  renderChatLeft();
+  if(S.chatTab==='private')setupPrivateChat();
+  else setupCohortChat();
+}
+
+async function loadCsmData(){
+  if(!S.apprenant)return;
+  const csmId=S.apprenant.csm_id||S.apprenant.charge_id||null;
+  if(csmId){
+    try{
+      const doc=await db.collection("users").doc(csmId).get();
+      if(doc.exists)S.csmData={id:doc.id,...doc.data()};
+    }catch(_){}
+  }
+  // Fallback: find any admin/csm user
+  if(!S.csmData){
+    try{
+      const snap=await db.collection("users").where("role","in",["admin","csm"]).limit(1).get();
+      if(!snap.empty)S.csmData={id:snap.docs[0].id,...snap.docs[0].data()};
+    }catch(_){
+      try{
+        const all=await db.collection("users").get();
+        const found=all.docs.find(d=>["admin","csm"].includes(d.data().role));
+        if(found)S.csmData={id:found.id,...found.data()};
+      }catch(_){}
+    }
+  }
+}
+
+async function loadCohortInfo(){
+  if(!S.apprenant)return;
+  try{
+    // Try array-contains first
+    const snap=await db.collection("cohorts").where("membres","array-contains",S.apprenant.id).limit(1).get();
+    if(!snap.empty){S.cohort={id:snap.docs[0].id,...snap.docs[0].data()};return;}
+  }catch(_){}
+  // Fallback: client-side scan
+  try{
+    const all=await db.collection("cohorts").get();
+    const found=all.docs.find(d=>(d.data().membres||[]).includes(S.apprenant.id));
+    if(found)S.cohort={id:found.id,...found.data()};
+  }catch(_){}
+}
+
+function renderChatLeft(){
+  const el=document.getElementById("chat-left-info");
+  if(S.chatTab==='private'){
+    const csm=S.csmData;
+    const name=csm?(csm.prenom&&csm.nom?`${csm.prenom} ${csm.nom}`:csm.prenom||csm.nom||csm.email||'CSM'):'Chargé de suivi';
+    const initial=name.charAt(0).toUpperCase();
+    el.innerHTML=`<div class="chat-info-card">
+      <div class="chat-info-avatar" style="background:linear-gradient(135deg,#10B981,#059669)">${initial}</div>
+      <div class="chat-info-label">Votre accompagnateur</div>
+      <div class="chat-info-name">${name}</div>
+    </div>
+    <div style="padding:12px;font-size:12px;color:rgba(255,255,255,.4);line-height:1.6">Messages privés entre vous et votre chargé de suivi. Posez vos questions, partagez vos blocages…</div>`;
+    document.getElementById("chat-header-avatar").style.background="linear-gradient(135deg,#10B981,#059669)";
+    document.getElementById("chat-header-avatar").textContent=initial;
+    document.getElementById("chat-header-name").textContent=name;
+    document.getElementById("chat-header-sub").textContent="Chargé de suivi · Réponse sous 24h";
+    document.getElementById("btn-victory-chat").style.display="none";
+  } else {
+    const cohort=S.cohort;
+    if(!cohort){
+      el.innerHTML=`<div class="cohort-placeholder"><div style="font-size:36px">👥</div><div style="font-size:13px;color:rgba(255,255,255,.5)">Vous n'êtes dans aucune cohorte pour l'instant.</div></div>`;
+      document.getElementById("chat-header-name").textContent="Ma Cohorte";
+      document.getElementById("chat-header-sub").textContent="Aucune cohorte assignée";
+      document.getElementById("chat-header-avatar").textContent="👥";
+      document.getElementById("chat-header-avatar").style.background="rgba(255,255,255,.08)";
+      document.getElementById("btn-victory-chat").style.display="none";
+      return;
+    }
+    const color=cohort.couleur||"#6366F1";
+    // Render member list
+    const membres=cohort.membres||[];
+    document.getElementById("chat-header-avatar").style.background=color;
+    document.getElementById("chat-header-avatar").textContent="👥";
+    document.getElementById("chat-header-name").textContent=cohort.nom||"Ma Cohorte";
+    document.getElementById("chat-header-sub").textContent=`${membres.length} membre${membres.length>1?"s":""}`;
+    document.getElementById("btn-victory-chat").style.display="flex";
+    // Build members UI — we only have IDs, show initials + highlight self
+    const prenom=S.userData?.prenom||S.user?.email?.split('@')[0]||'?';
+    const selfId=S.apprenant?.id;
+    el.innerHTML=`<div class="chat-section-title">Membres</div>
+    <div class="chat-members-list">
+      ${membres.map(mid=>{
+        const isSelf=mid===selfId;
+        const initials=isSelf?(prenom.charAt(0).toUpperCase()):'?';
+        const displayName=isSelf?prenom:'Apprenant';
+        return`<div class="chat-member">
+          <div class="chat-member-avatar" style="background:${isSelf?"linear-gradient(135deg,#6366F1,#8B5CF6)":"rgba(255,255,255,.1)"}">${initials}</div>
+          <div class="chat-member-name">${displayName}${isSelf?" (vous)":""}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+}
+
+function setupPrivateChat(){
+  // Unsubscribe previous cohort listener
+  if(S._chatCohortUnsub){S._chatCohortUnsub();S._chatCohortUnsub=null;}
+  if(!S.apprenant){
+    showChatEmpty("Dossier non lié","Contactez votre chargé de suivi pour accéder aux messages.");
+    return;
+  }
+  const msgEl=document.getElementById("chat-messages");
+  msgEl.innerHTML=`<div class="chat-empty"><div class="chat-empty-icon">🔒</div><div class="chat-empty-title">Chargement…</div></div>`;
+  // If already subscribed, keep it
+  if(S._chatPrivateUnsub)S._chatPrivateUnsub();
+  const convRef=db.collection("conversations").doc(S.apprenant.id).collection("messages");
+  S._chatPrivateUnsub=convRef.orderBy("timestamp","asc").onSnapshot(snap=>{
+    const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderPrivateMessages(msgs);
+    // Count unread (from CSM, not read)
+    if(S.chatTab==='private'){
+      S._privateUnread=0;
+      updateChatNavBadge();
+      // Mark as read
+      msgs.filter(m=>m.role!=='student'&&!m.lu).forEach(m=>{
+        convRef.doc(m.id).update({lu:true}).catch(()=>{});
+      });
+    } else {
+      S._privateUnread=msgs.filter(m=>m.role!=='student'&&!m.lu).length;
+      updateChatNavBadge();
+    }
+  },err=>{
+    // orderBy may be blocked by CSP — retry without ordering
+    if(S._chatPrivateUnsub)S._chatPrivateUnsub();
+    S._chatPrivateUnsub=db.collection("conversations").doc(S.apprenant.id).collection("messages")
+      .onSnapshot(snap=>{
+        const msgs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+        renderPrivateMessages(msgs);
+      });
+  });
+}
+
+function setupCohortChat(){
+  if(S._chatPrivateUnsub){S._chatPrivateUnsub();S._chatPrivateUnsub=null;}
+  if(!S.cohort){
+    document.getElementById("chat-messages").innerHTML=`<div class="chat-empty"><div class="chat-empty-icon">👥</div><div class="chat-empty-title">Aucune cohorte</div><div class="chat-empty-sub">Votre chargé de suivi vous ajoutera à une cohorte prochainement.</div></div>`;
+    return;
+  }
+  const msgEl=document.getElementById("chat-messages");
+  msgEl.innerHTML=`<div class="chat-empty"><div class="chat-empty-icon">👥</div><div class="chat-empty-title">Chargement…</div></div>`;
+  if(S._chatCohortUnsub)S._chatCohortUnsub();
+  const cohortRef=db.collection("cohorts").doc(S.cohort.id).collection("messages");
+  const setupListener=(ref)=>{
+    S._chatCohortUnsub=ref.onSnapshot(snap=>{
+      const msgs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+      renderCohortMessages(msgs);
+      if(S.chatTab==='cohort'){S._cohortUnread=0;updateChatNavBadge();}
+    });
+  };
+  try{setupListener(cohortRef.orderBy("timestamp","asc"));}
+  catch(_){setupListener(cohortRef);}
+}
+
+function renderPrivateMessages(msgs){
+  const el=document.getElementById("chat-messages");
+  if(!msgs.length){
+    el.innerHTML=`<div class="chat-empty">
+      <div class="chat-empty-icon">🔒</div>
+      <div class="chat-empty-title">Démarrez la conversation</div>
+      <div class="chat-empty-sub">Posez vos questions à votre chargé de suivi. Il vous répondra dans les meilleurs délais.</div>
+    </div>`;
+    return;
+  }
+  const prenom=S.userData?.prenom||S.user?.email?.split('@')[0]||'?';
+  const csmName=S.csmData?(S.csmData.prenom||S.csmData.email?.split('@')[0]||'CSM'):'CSM';
+  let html='';
+  let lastDay='';
+  msgs.forEach(m=>{
+    const isMe=m.role==='student';
+    const ts=m.timestamp?.seconds?new Date(m.timestamp.seconds*1000):new Date();
+    const day=ts.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const time=ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if(day!==lastDay){
+      lastDay=day;
+      html+=`<div class="chat-day-sep">${day}</div>`;
+    }
+    const name=isMe?prenom:csmName;
+    const initial=name.charAt(0).toUpperCase();
+    const avatarBg=isMe?"linear-gradient(135deg,#6366F1,#8B5CF6)":"linear-gradient(135deg,#10B981,#059669)";
+    html+=`<div class="msg-row ${isMe?'mine':'theirs'}">
+      <div class="msg-avatar" style="background:${avatarBg}">${initial}</div>
+      <div class="msg-content">
+        <div class="msg-sender">${name}</div>
+        <div class="msg-bubble">${escHtml(m.text||'')}</div>
+        <div class="msg-time">${time}</div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+  scrollChatBottom();
+}
+
+function renderCohortMessages(msgs){
+  const el=document.getElementById("chat-messages");
+  if(!msgs.length){
+    el.innerHTML=`<div class="chat-empty">
+      <div class="chat-empty-icon">👥</div>
+      <div class="chat-empty-title">Bienvenue dans la cohorte !</div>
+      <div class="chat-empty-sub">Partagez vos progrès, posez vos questions, et célébrez vos victoires ensemble 🚀</div>
+    </div>`;
+    return;
+  }
+  const selfId=S.apprenant?.id;
+  let html='';
+  let lastDay='';
+  msgs.forEach(m=>{
+    const ts=m.timestamp?.seconds?new Date(m.timestamp.seconds*1000):new Date();
+    const day=ts.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const time=ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if(day!==lastDay){
+      lastDay=day;
+      html+=`<div class="chat-day-sep">${day}</div>`;
+    }
+    if(m.type==='victory'){
+      // Victory card — full width
+      const reactions=m.reactions||{};
+      const emojis=['🔥','👏','💪','🚀'];
+      html+=`<div class="msg-victory-row">
+        <div class="msg-victory-card">
+          <div class="mvc-header">
+            <span class="mvc-trophy">🏆</span>
+            <span class="mvc-label">Victoire partagée</span>
+            <span class="mvc-by">${escHtml(m.senderName||'Apprenant')}</span>
+            <span class="mvc-time">${time}</span>
+          </div>
+          <div class="mvc-text">${escHtml(m.text||'')}</div>
+          <div class="mvc-reactions">
+            ${emojis.map(e=>{
+              const count=reactions[e]||0;
+              const active=(reactions[e+'_voters']||[]).includes(selfId)?'active':'';
+              return`<button class="mvc-react ${active}" onclick="reactVictory('${m.id}','${e}')">${e}${count>0?' '+count:''}</button>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
+    } else {
+      const isMe=m.senderId===selfId;
+      const name=m.senderName||'Apprenant';
+      const initial=name.charAt(0).toUpperCase();
+      const isCSM=m.role==='csm'||m.role==='admin';
+      const avatarBg=isCSM?"linear-gradient(135deg,#10B981,#059669)":isMe?"linear-gradient(135deg,#6366F1,#8B5CF6)":"linear-gradient(135deg,#8B5CF6,#EC4899)";
+      html+=`<div class="msg-row ${isMe?'mine':'theirs'}">
+        <div class="msg-avatar" style="background:${avatarBg}">${initial}</div>
+        <div class="msg-content">
+          <div class="msg-sender">${name}${isCSM?' · CSM':''}</div>
+          <div class="msg-bubble">${escHtml(m.text||'')}</div>
+          <div class="msg-time">${time}</div>
+        </div>
+      </div>`;
+    }
+  });
+  el.innerHTML=html;
+  scrollChatBottom();
+}
+
+async function sendChatMessage(){
+  const input=document.getElementById("chat-input");
+  const text=input?.value.trim();
+  if(!text||!S.apprenant||!S.user)return;
+  input.value='';
+  chatAutoResize(input);
+  const prenom=S.userData?.prenom||S.user.email.split('@')[0]||'?';
+  const nom=S.userData?.nom||'';
+  const senderName=nom?`${prenom} ${nom}`.trim():prenom;
+  const msg={text,senderId:S.user.uid,senderName,role:'student',timestamp:TS(),lu:false};
+  if(S.chatTab==='private'){
+    if(!S.apprenant)return;
+    await db.collection("conversations").doc(S.apprenant.id).collection("messages").add(msg);
+    // Update conversation meta
+    db.collection("conversations").doc(S.apprenant.id).set({
+      apprenant_id:S.apprenant.id,
+      apprenantName:senderName,
+      csm_id:S.csmData?.id||null,
+      dernierMsg:text,timestamp:TS(),nonLusCSM:firebase.firestore.FieldValue.increment(1)
+    },{merge:true}).catch(()=>{});
+  } else if(S.chatTab==='cohort'&&S.cohort){
+    await db.collection("cohorts").doc(S.cohort.id).collection("messages").add({...msg,type:'message'});
+  }
+}
+
+function openVictoryModal(){
+  const overlay=document.createElement("div");
+  overlay.className="victory-modal-overlay";
+  overlay.id="victory-modal-overlay";
+  overlay.innerHTML=`<div class="victory-modal" onclick="event.stopPropagation()">
+    <div class="vm-header"><span class="vm-icon">🏆</span><div class="vm-title">Partager une victoire</div></div>
+    <div class="vm-sub">Célébrez votre progrès et inspirez vos coéquipiers ! Qu'avez-vous accompli ?</div>
+    <textarea class="vm-textarea" id="victory-text" placeholder="Ex : J'ai terminé le module Prompt Engineering et réussi le quiz à 95% ! 🚀&#10;&#10;Ex : J'ai créé mon premier GPT personnalisé !" rows="4"></textarea>
+    <div class="vm-actions">
+      <button class="btn-vm-cancel" onclick="closeVictoryModal()">Annuler</button>
+      <button class="btn-vm-post" onclick="postVictory()">🏆 Partager</button>
+    </div>
+  </div>`;
+  overlay.onclick=closeVictoryModal;
+  document.body.appendChild(overlay);
+  setTimeout(()=>document.getElementById("victory-text")?.focus(),100);
+}
+
+function closeVictoryModal(){
+  document.getElementById("victory-modal-overlay")?.remove();
+}
+
+async function postVictory(){
+  const text=document.getElementById("victory-text")?.value.trim();
+  if(!text){document.getElementById("victory-text")?.focus();return;}
+  if(!S.cohort||!S.apprenant||!S.user)return;
+  const prenom=S.userData?.prenom||S.user.email.split('@')[0]||'?';
+  const nom=S.userData?.nom||'';
+  const senderName=nom?`${prenom} ${nom}`.trim():prenom;
+  await db.collection("cohorts").doc(S.cohort.id).collection("messages").add({
+    text,senderId:S.user.uid,senderName,role:'student',timestamp:TS(),type:'victory',reactions:{}
+  });
+  closeVictoryModal();
+  showToast('🏆','Victoire partagée !','Votre cohorte va adorer 🚀',true);
+}
+
+async function reactVictory(msgId,emoji){
+  if(!S.cohort||!S.apprenant)return;
+  const ref=db.collection("cohorts").doc(S.cohort.id).collection("messages").doc(msgId);
+  const doc=await ref.get();
+  if(!doc.exists)return;
+  const reactions=doc.data().reactions||{};
+  const votersKey=emoji+'_voters';
+  const voters=reactions[votersKey]||[];
+  const selfId=S.apprenant.id;
+  let count=reactions[emoji]||0;
+  if(voters.includes(selfId)){
+    // Remove reaction
+    count=Math.max(0,count-1);
+    await ref.update({[`reactions.${emoji}`]:count,[`reactions.${votersKey}`]:firebase.firestore.FieldValue.arrayRemove(selfId)});
+  } else {
+    // Add reaction
+    count++;
+    await ref.update({[`reactions.${emoji}`]:count,[`reactions.${votersKey}`]:firebase.firestore.FieldValue.arrayUnion(selfId)});
+  }
+}
+
+function switchChatTab(tab){
+  S.chatTab=tab;
+  document.getElementById("chat-tab-private").classList.toggle("active",tab==='private');
+  document.getElementById("chat-tab-cohort").classList.toggle("active",tab==='cohort');
+  // Reset unread
+  if(tab==='private')S._privateUnread=0;
+  else S._cohortUnread=0;
+  updateChatNavBadge();
+  renderChatLeft();
+  if(tab==='private')setupPrivateChat();
+  else setupCohortChat();
+}
+
+function updateChatNavBadge(){
+  const total=S._privateUnread+S._cohortUnread;
+  const navBadge=document.getElementById("nav-badge-messages");
+  if(navBadge){
+    if(total>0){navBadge.textContent=total;navBadge.style.display='flex';}
+    else{navBadge.style.display='none';}
+  }
+  // Tab unread indicators
+  const pu=document.getElementById("chat-unread-private");
+  if(pu){if(S._privateUnread>0){pu.textContent=S._privateUnread;pu.style.display='flex';}else pu.style.display='none';}
+  const cu=document.getElementById("chat-unread-cohort");
+  if(cu){if(S._cohortUnread>0){cu.textContent=S._cohortUnread;cu.style.display='flex';}else cu.style.display='none';}
+}
+
+function scrollChatBottom(){
+  const el=document.getElementById("chat-messages");
+  if(el)requestAnimationFrame(()=>{el.scrollTop=el.scrollHeight;});
+}
+
+function chatKeydown(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMessage();}
+}
+
+function chatAutoResize(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+
+function escHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\n/g,'<br>');
 }
 
 // ── HELPERS ──
