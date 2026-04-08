@@ -163,16 +163,28 @@ async function checkEmail(){
   btn.innerHTML='<span class="spinner"></span>Vérification…';
 
   try{
-    // Récupérer tous les apprenants et comparer en insensible à la casse
-    // (le CSM peut avoir saisi l'email en majuscules/minuscules)
-    const allSnap=await db.collection("apprenants").get();
-    const matchDoc=allSnap.docs.find(d=>{
-      const stored=(d.data().email||'').toLowerCase().trim();
-      return stored===emailLower;
-    });
+    // Essai 1 : requête directe sur email en minuscules
+    let matchDoc=null;
+    try{
+      const snap1=await db.collection("apprenants").where("email","==",emailLower).limit(1).get();
+      if(!snap1.empty)matchDoc=snap1.docs[0];
+    }catch(_){}
+
+    // Essai 2 : requête sur email tel que saisi (casse originale)
+    if(!matchDoc&&emailRaw!==emailLower){
+      try{
+        const snap2=await db.collection("apprenants").where("email","==",emailRaw).limit(1).get();
+        if(!snap2.empty)matchDoc=snap2.docs[0];
+      }catch(_){}
+    }
+
+    // Essai 3 : scan complet insensible à la casse (fallback)
+    if(!matchDoc){
+      const allSnap=await db.collection("apprenants").get();
+      matchDoc=allSnap.docs.find(d=>(d.data().email||'').toLowerCase().trim()===emailLower)||null;
+    }
 
     if(!matchDoc){
-      // Email non trouvé → accès refusé
       showError(err,'type-blocked',
         '⛔ Cet email n\'est pas dans notre système.<br>Contactez votre chargé de suivi pour être inscrit avant de créer votre compte.');
       btn.disabled=false;
@@ -202,8 +214,15 @@ async function checkEmail(){
     document.getElementById('reg-pwd').focus();
 
   }catch(e){
-    console.error(e);
-    showError(err,'type-warn','Erreur réseau. Vérifiez votre connexion.');
+    console.error('Register checkEmail error:',e);
+    const msg=e?.code||e?.message||String(e)||'';
+    if(msg.includes('permission')||msg.includes('PERMISSION')){
+      showError(err,'type-warn','Erreur de permissions Firestore. Contactez le support.');
+    } else if(msg.includes('network')||msg.includes('unavailable')){
+      showError(err,'type-warn','Erreur réseau. Vérifiez votre connexion.');
+    } else {
+      showError(err,'type-warn',`Erreur : ${msg||'inconnue'}. Réessayez.`);
+    }
     btn.disabled=false;
     btn.textContent='Vérifier mon email →';
   }
