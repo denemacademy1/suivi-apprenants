@@ -208,7 +208,7 @@ async function checkEmail(){
     const prenom=foundApprenant.prenom||'';
     const nom=foundApprenant.nom||'';
     document.getElementById('verified-name').textContent=`${prenom} ${nom}`.trim()||'Apprenant';
-    document.getElementById('verified-email').textContent=email;
+    document.getElementById('verified-email').textContent=emailRaw;
     document.getElementById('step-email').classList.add('hidden');
     document.getElementById('step-register').classList.remove('hidden');
     document.getElementById('reg-pwd').focus();
