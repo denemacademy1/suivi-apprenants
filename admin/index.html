@@ -601,6 +601,7 @@ function initListeners(){
   db.collection("cohorts").onSnapshot(snap=>{
     cohorts=snap.docs.map(d=>({id:d.id,...d.data()}));
     if(_adminMsgTab==='cohort')renderAdminCohortList();
+    renderApprenants();
   });
 }
 
@@ -916,7 +917,7 @@ function renderApprenants(){
     return `<tr>
       <td style="font-weight:600">${a.prenom||''} ${a.nom||''}</td>
       <td style="color:#64748B;font-size:12px">${email}</td>
-      <td><span class="badge badge-blue">${a.cohorte||'—'}</span></td>
+      <td>${(()=>{const c=cohorts.find(x=>x.id===(a.cohort_id||null));return c?`<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:${c.couleur||'#4F46E5'};flex-shrink:0;display:inline-block"></span><strong>${c.nom}</strong></span>`:`<span class="badge badge-gray">${a.cohorte||'—'}</span>`;})()}</td>
       <td><span class="badge ${a.statut==='actif'?'badge-green':a.statut==='termine'?'badge-purple':'badge-gray'}">${a.statut||'—'}</span></td>
       <td style="font-size:13px">${score!=='—'?score+'%':'—'}</td>
       <td>${linked?'<span class="badge badge-green">✅ Oui</span>':'<span class="badge badge-gray">Non</span>'}</td>

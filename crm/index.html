@@ -996,7 +996,7 @@ function renderDashboard(){
 function renderApprenants(){
   let data=byCharge(S.apprenants);
   if(S.filterStatut!=="all")data=data.filter(a=>a.statut===S.filterStatut);
-  if(S.filterCohorte!=="all")data=data.filter(a=>a.cohorte===S.filterCohorte);
+  if(S.filterCohorte!=="all")data=data.filter(a=>(a.cohort_id||a.cohorte)===S.filterCohorte);
   if(S.search)data=data.filter(a=>`${a.prenom} ${a.nom} ${a.email||""}`.toLowerCase().includes(S.search.toLowerCase()));
 
   document.getElementById("page-apprenants").innerHTML=`
@@ -1011,7 +1011,7 @@ function renderApprenants(){
       </select>
       <select class="filter-select" onchange="S.filterCohorte=this.value;renderApprenants()">
         <option value="all">Toutes les cohortes</option>
-        ${S.cohortes.map(c=>`<option value="${c}" ${S.filterCohorte===c?"selected":""}>${c}</option>`).join("")}
+        ${S.cohorts.map(c=>`<option value="${c.id}" ${S.filterCohorte===c.id?"selected":""}>${c.nom||c.id}</option>`).join("")}
       </select>
       <span style="font-size:12px;color:var(--muted)">${data.length} apprenant(s)</span>
     </div>
@@ -1025,7 +1025,7 @@ function renderApprenants(){
             const dots=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const cls=done?"cdot-ok":jj>=ct.jour+5?"cdot-late":"cdot-no";return`<div class="cdot ${cls}" title="${ct.nom}"></div>`;}).join("");
             return`<tr onclick="openStudentPanel('${a.id}')">
               <td><div class="stu-cell"><div class="avatar" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div><div><div class="stu-name">${a.prenom} ${a.nom}</div><div class="stu-email">${a.email||""}</div></div></div></td>
-              <td style="font-size:12px;color:var(--muted)">${a.cohorte||"—"}</td>
+              <td>${(()=>{const c=S.cohorts.find(x=>x.id===(a.cohort_id||null));return c?`<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:${c.couleur||'#4F46E5'};flex-shrink:0;display:inline-block"></span>${c.nom}</span>`:`<span style="font-size:12px;color:var(--muted)">${a.cohorte||"—"}</span>`;})()}</td>
               <td><span class="day-badge">J${jj}</span></td>
               <td style="font-size:13px">${ph.icon} ${ph.nom}</td>
               <td><div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${pColor(p)}"></div></div><span class="prog-pct">${p}%</span></div></td>
@@ -1322,7 +1322,7 @@ function renderRapports(){
     if(S.charts.stat)S.charts.stat.destroy();
     S.charts.stat=new Chart(document.getElementById("ch-stat").getContext("2d"),{type:"doughnut",data:{labels:Object.keys(sc),datasets:[{data:Object.values(sc),backgroundColor:["#10B981CC","#3B82F6CC","#F59E0BCC","#EF4444CC","#94A3B8CC"],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:"60%",plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:10,font:{size:12}}}}}});
 
-    const cc={};S.cohortes.forEach(c=>cc[c]=data.filter(a=>a.cohorte===c).length);
+    const cc={};S.cohorts.forEach(c=>cc[c.nom||c.id]=(c.membres||[]).filter(id=>data.some(a=>a.id===id)).length);
     if(S.charts.coh)S.charts.coh.destroy();
     S.charts.coh=new Chart(document.getElementById("ch-coh").getContext("2d"),{type:"bar",data:{labels:Object.keys(cc),datasets:[{label:"Apprenants",data:Object.values(cc),backgroundColor:"#4F46E5CC",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}}}}});
 
@@ -1344,7 +1344,7 @@ function renderReglages(){
       </div>
       <div class="card">
         <div class="section-title">Cohortes actives</div>
-        ${S.cohortes.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:18px">🎓</span><span style="flex:1;font-weight:500">${c}</span><span style="font-size:12px;color:var(--muted)">${S.apprenants.filter(a=>a.cohorte===c).length} apprenant(s)</span></div>`).join("")||`<p style="color:var(--muted);padding:12px 0;font-size:13px">Aucune cohorte.</p>`}
+        ${S.cohorts.map(c=>{const count=(c.membres||[]).length;return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="width:12px;height:12px;border-radius:50%;background:${c.couleur||'#4F46E5'};flex-shrink:0;display:inline-block"></span><span style="flex:1;font-weight:500">${c.nom||c.id}</span><span style="font-size:12px;color:var(--muted)">${count} apprenant(s)</span></div>`;}).join("")||`<p style="color:var(--muted);padding:12px 0;font-size:13px">Aucune cohorte.</p>`}
       </div>
     </div>
     <div class="card mb">
@@ -1500,7 +1500,10 @@ function openStudentModal(student){
       <div class="form-group"><label>Nom *</label><input id="f-nom" value="${a.nom||""}" placeholder="Dupont"></div>
       <div class="form-group"><label>Email *</label><input id="f-email" type="email" value="${a.email||""}" placeholder="c.dupont@email.fr"></div>
       <div class="form-group"><label>Téléphone</label><input id="f-tel" value="${a.telephone||""}" placeholder="+33 6 00 00 00 00"></div>
-      <div class="form-group"><label>Cohorte *</label><input id="f-cohorte" list="dl-coh" value="${a.cohorte||""}" placeholder="Cohorte Jan 2025"><datalist id="dl-coh">${S.cohortes.map(c=>`<option value="${c}">`).join("")}</datalist></div>
+      <div class="form-group"><label>Cohorte</label><select id="f-cohorte" id="f-cohorte-sel">
+        <option value="">— Aucune cohorte —</option>
+        ${(()=>{const cur=S.cohorts.find(c=>(c.membres||[]).includes(a.id));return S.cohorts.map(c=>{const count=(c.membres||[]).length;const isMember=(c.membres||[]).includes(a.id);const full=count>=COHORT_MAX&&!isMember;const sel=cur?.id===c.id?"selected":"";return`<option value="${c.id}" data-nom="${c.nom||''}" ${sel} ${full?"disabled":""} style="color:${c.couleur||'inherit'}">${c.nom||'Cohorte'} (${count}/${COHORT_MAX})${full?" — Pleine":""}</option>`;}).join("");})()}
+      </select></div>
       <div class="form-group"><label>Date de début</label><input id="f-debut" type="date" value="${a.date_debut||""}"></div>
       <div class="form-group"><label>Jour dans le parcours *</label><input id="f-jour" type="number" min="1" max="90" value="${a.jour||1}"></div>
       <div class="form-group"><label>Statut *</label><select id="f-statut">${STATUTS.map(s=>`<option value="${s}" ${a.statut===s?"selected":""}>${s}</option>`).join("")}</select></div>
@@ -1523,33 +1526,55 @@ function openStudentModal(student){
   document.getElementById("mo-student").classList.add("active");
 }
 function closeStudentModal(){document.getElementById("mo-student").classList.remove("active");}
-function saveStudent(){
+async function saveStudent(){
   const prenom=document.getElementById("f-prenom").value.trim();
   const nom=document.getElementById("f-nom").value.trim();
   const email=document.getElementById("f-email").value.trim();
   if(!prenom||!nom||!email){toast("Prénom, nom et email sont requis","error");return;}
-  // Resolve coach UID + display name from select
   const chargeSelect=document.getElementById("f-charge");
   const csm_id=chargeSelect.value||null;
   const chargeOpt=chargeSelect.options[chargeSelect.selectedIndex];
   const charge=csm_id?(chargeOpt.getAttribute("data-name")||chargeOpt.textContent.trim()):"";
+  // Cohort from select
+  const cohortSel=document.getElementById("f-cohorte");
+  const newCohortId=cohortSel.value||null;
+  const newCohortOpt=cohortSel.options[cohortSel.selectedIndex];
+  const cohorte=newCohortId?(newCohortOpt.getAttribute("data-nom")||newCohortOpt.textContent.split(" (")[0].trim()):"";
   const data={
     prenom,nom,email,
     telephone:document.getElementById("f-tel").value.trim(),
-    cohorte:document.getElementById("f-cohorte").value.trim(),
-    charge,          // nom affiché (ex: "Sophie Martin")
-    csm_id,          // UID Firebase du coach
+    cohorte,          // nom lisible de la cohorte
+    cohort_id:newCohortId, // ID du doc cohorts
+    charge,csm_id,
     jour:parseInt(document.getElementById("f-jour").value)||1,
     date_debut:document.getElementById("f-debut").value,
     statut:document.getElementById("f-statut").value,
     objectif:document.getElementById("f-obj").value.trim(),
     notes:document.getElementById("f-notes").value.trim(),
-    couleur:AVC[Math.floor(Math.random()*AVC.length)],
     updatedAt:TS()
   };
-  const col=db.collection("apprenants");
-  const p=S.editStudentId?col.doc(S.editStudentId).update(data):col.add({...data,modules_scores:Array(9).fill(null),createdAt:TS()});
-  p.then(()=>{toast(S.editStudentId?"Apprenant mis à jour ✅":"Apprenant ajouté ✅","success");closeStudentModal();}).catch(e=>toast("Erreur: "+e.message,"error"));
+  try{
+    const col=db.collection("apprenants");
+    let studentId=S.editStudentId;
+    if(studentId){
+      await col.doc(studentId).update(data);
+    } else {
+      const ref=await col.add({...data,couleur:AVC[Math.floor(Math.random()*AVC.length)],modules_scores:Array(9).fill(null),createdAt:TS()});
+      studentId=ref.id;
+    }
+    // Sync cohort membership
+    const oldCohort=S.cohorts.find(c=>(c.membres||[]).includes(studentId));
+    if(oldCohort&&oldCohort.id!==newCohortId){
+      // Remove from old cohort
+      db.collection("cohorts").doc(oldCohort.id).update({membres:firebase.firestore.FieldValue.arrayRemove(studentId)}).catch(()=>{});
+    }
+    if(newCohortId){
+      // Add to new cohort (arrayUnion is idempotent)
+      db.collection("cohorts").doc(newCohortId).update({membres:firebase.firestore.FieldValue.arrayUnion(studentId)}).catch(()=>{});
+    }
+    toast(S.editStudentId?"Apprenant mis à jour ✅":"Apprenant ajouté ✅","success");
+    closeStudentModal();
+  }catch(e){toast("Erreur: "+e.message,"error");}
 }
 
 // ══════════════════════════════════════
