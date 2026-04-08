@@ -159,6 +159,84 @@ tbody tr:last-child td{border-bottom:none}
 .modal-close:hover{background:var(--border)}
 .modal-body{padding:24px}
 
+/* ── PLANNING CRM ── */
+#page-planning{padding:0}
+.planning-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.planning-topbar{padding:16px 24px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:16px;flex-shrink:0;flex-wrap:wrap}
+.week-nav{display:flex;align-items:center;gap:8px}
+.week-nav-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:.15s;color:var(--muted)}
+.week-nav-btn:hover{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
+.week-label{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;min-width:200px;text-align:center}
+.btn-today{padding:5px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit}
+.btn-today:hover{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
+.planning-kpis{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+.pl-kpi{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;white-space:nowrap}
+.pl-kpi-val{font-size:18px;font-weight:900;line-height:1}
+/* Body = week grid + sidebar */
+.planning-body{display:flex;flex:1;overflow:hidden}
+/* Week grid */
+.week-grid{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.week-header{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:2px solid var(--border);background:var(--card);flex-shrink:0}
+.wh-day{padding:10px 8px;text-align:center;border-right:1px solid var(--border)}
+.wh-day:last-child{border-right:none}
+.wh-day-name{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.wh-day-num{font-size:20px;font-weight:900;color:var(--text);line-height:1.1;margin-top:2px}
+.wh-day.today .wh-day-name{color:var(--primary)}
+.wh-day.today .wh-day-num{color:#fff;background:var(--primary);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:2px auto 0}
+.wh-day.today .wh-rdv-count{color:var(--primary)}
+.wh-rdv-count{font-size:10px;font-weight:600;color:var(--light);margin-top:3px}
+.week-cols{display:grid;grid-template-columns:repeat(7,1fr);flex:1;overflow-y:auto;align-items:start;background:var(--bg)}
+.week-cols::-webkit-scrollbar{width:4px}
+.week-cols::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.day-col{border-right:1px solid var(--border);padding:8px 6px;min-height:200px;background:var(--bg);transition:.15s}
+.day-col:last-child{border-right:none}
+.day-col.today{background:#FAFBFF}
+.day-col.weekend{background:#F8FAFC;opacity:.7}
+/* RDV mini card in grid */
+.rdv-mini{background:var(--card);border-radius:10px;padding:8px 10px;margin-bottom:6px;border-left:3px solid var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;transition:all .15s;position:relative}
+.rdv-mini:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.rdv-mini.done{border-left-color:var(--success);opacity:.7}
+.rdv-mini.cancelled{border-left-color:var(--light);opacity:.5}
+.rdv-mini.has-meet{border-left-color:#10B981}
+.rdv-mini-time{font-size:10px;font-weight:700;color:var(--primary);margin-bottom:2px}
+.rdv-mini.done .rdv-mini-time{color:var(--success)}
+.rdv-mini-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rdv-mini-type{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rdv-mini-badges{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.rdv-mini-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600}
+.rdv-mini-meet{background:#D1FAE5;color:#065F46}
+.rdv-mini-status{background:#EEF2FF;color:#4F46E5}
+.rdv-mini-status.done{background:#D1FAE5;color:#065F46}
+.rdv-mini-status.cancelled{background:#F1F5F9;color:#64748B}
+.btn-add-rdv-day{width:100%;padding:6px;border:1.5px dashed var(--border);border-radius:8px;background:none;font-size:11px;color:var(--light);cursor:pointer;transition:.15s;font-family:inherit;margin-top:2px}
+.btn-add-rdv-day:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+/* Sidebar: sans RDV */
+.planning-sidebar{width:280px;min-width:280px;border-left:1px solid var(--border);background:var(--card);display:flex;flex-direction:column;overflow:hidden}
+.ps-head{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ps-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.ps-sub{font-size:11px;color:var(--muted)}
+.ps-body{flex:1;overflow-y:auto;padding:8px}
+.ps-body::-webkit-scrollbar{width:3px}
+.ps-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ps-cohort{margin-bottom:12px}
+.ps-cohort-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;display:flex;align-items:center;gap:6px}
+.ps-cohort-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ps-student-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;transition:.15s;cursor:pointer}
+.ps-student-row:hover{background:var(--bg)}
+.ps-student-row.ok{opacity:.45}
+.ps-ava{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.ps-name{flex:1;font-size:12px;font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-action{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;border:none;cursor:pointer;transition:.15s;font-family:inherit;white-space:nowrap}
+.ps-action.missing{background:var(--warning-light);color:#92400E}
+.ps-action.missing:hover{background:#FDE68A}
+.ps-action.ok{background:var(--success-light);color:#065F46;pointer-events:none}
+.ps-empty{padding:20px 8px;text-align:center;font-size:12px;color:var(--light)}
+/* RDV detail popover */
+.rdv-detail-pop{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:500;animation:fadeUp .15s ease}
+.rdv-pop-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.rdv-pop-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin-bottom:3px}
+.rdv-pop-actions{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+
 /* ── COHORTES ── */
 .cohorte-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px}
 .cohorte-card{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:box-shadow .15s}
@@ -641,7 +719,7 @@ const S={
   apprenants:[],rdvs:[],contacts:[],modules:[],progressions:[],cohorts:[],csmUsers:[],
   page:"dashboard",student:null,panelTab:0,
   filterCharge:"all",filterStatut:"all",filterCohorte:"all",search:"",
-  editStudentId:null,editRdvId:null,editCohortId:null,
+  editStudentId:null,editRdvId:null,editCohortId:null,_planWeekOffset:0,
   charts:{},charges:[],cohortes:[],
   _cohortColor:"#4F46E5",_cohortMembers:[],
 };
@@ -946,44 +1024,226 @@ function renderApprenants(){
 // ══════════════════════════════════════
 //  PAGE: PLANNING
 // ══════════════════════════════════════
-function renderPlanning(){
-  let rdvs=byCharge(S.rdvs);
-  const groups={};
-  rdvs.forEach(r=>{const k=r.date||"zzz";if(!groups[k])groups[k]=[];groups[k].push(r);});
-  const keys=Object.keys(groups).sort();
-  const futur=keys.filter(k=>k>=today());
-  const passe=keys.filter(k=>k<today());
+// ── Planning helpers ──
+function getWeekDays(offset){
+  const now=new Date();
+  const dow=now.getDay()||7; // 1=Mon…7=Sun
+  const mon=new Date(now);
+  mon.setDate(now.getDate()-dow+1+offset*7);
+  mon.setHours(0,0,0,0);
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(mon);d.setDate(mon.getDate()+i);
+    return{date:d,iso:d.toISOString().split('T')[0],isWeekend:i>=5};
+  });
+}
+function isoToDate(iso){const[y,m,d]=iso.split('-');return new Date(y,m-1,d);}
+function planToday(){return new Date().toISOString().split('T')[0];}
 
-  const renderGroup=(dateKey,items)=>`
-    <div class="rdv-group">
-      <div class="rdv-date-label">${dateKey==="zzz"?"Sans date":fDateLong(dateKey)}</div>
-      ${items.map(r=>`<div class="rdv-item">
-        <div style="font-size:20px">${r.statut==="Réalisé"?"✅":r.statut==="Annulé"?"❌":"🕐"}</div>
-        <div class="rdv-time">${r.heure||"—"}</div>
-        <div class="rdv-content">
-          <div class="rdv-name">${r.apprenant_nom}</div>
-          <div class="rdv-type">${r.type} · ${r.charge_suivi}</div>
-          ${r.notes?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${r.notes}</div>`:""}
-        </div>
-        ${sBadge(r.statut)}
-        <div style="display:flex;gap:4px">
-          ${r.statut==="Planifié"?`
-            <button class="icon-btn" onclick="event.stopPropagation();markRdv('${r.id}','Réalisé')" title="Réalisé">✅</button>
-            <button class="icon-btn" onclick="event.stopPropagation();markRdv('${r.id}','Annulé')" title="Annuler">❌</button>`:""}
-          <button class="icon-btn" onclick="event.stopPropagation();openRdvModal(S.rdvs.find(x=>x.id==='${r.id}'))" title="Modifier">✏️</button>
-          <button class="icon-btn" onclick="event.stopPropagation();confirmDelete('rdvs','${r.id}','ce RDV')" title="Supprimer">🗑️</button>
-        </div>
-      </div>`).join("")}
-    </div>`;
+function renderPlanning(){
+  const allRdvs=byCharge(S.rdvs);
+  const apprenants=byCharge(S.apprenants);
+  const days=getWeekDays(S._planWeekOffset);
+  const weekStart=days[0].iso;
+  const weekEnd=days[6].iso;
+  const todayIso=planToday();
+
+  // KPIs for this week
+  const weekRdvs=allRdvs.filter(r=>r.date>=weekStart&&r.date<=weekEnd);
+  const weekPlanned=weekRdvs.filter(r=>r.statut==="Planifié").length;
+  const weekDone=weekRdvs.filter(r=>r.statut==="Réalisé").length;
+
+  // Coverage: apprenants with at least 1 non-cancelled RDV this week
+  const coveredIds=new Set(weekRdvs.filter(r=>r.statut!=="Annulé").map(r=>r.apprenant_id));
+  const missingCount=apprenants.filter(a=>!coveredIds.has(a.id)).length;
+  const coverPct=apprenants.length?Math.round((coveredIds.size/apprenants.length)*100):100;
+
+  // Week label
+  const fmt=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  const weekLabel=`${fmt(days[0].date)} — ${fmt(days[6].date)}`;
+
+  // Sidebar: group students without RDV this week by cohort
+  const missing=apprenants.filter(a=>!coveredIds.has(a.id));
+  const cohortMap={};
+  // Students assigned to a named cohort (from S.cohorts)
+  S.cohorts.forEach(c=>{
+    const members=missing.filter(a=>(c.membres||[]).includes(a.id));
+    if(members.length)cohortMap[c.id]={nom:c.nom,couleur:c.couleur||'#4F46E5',members};
+  });
+  // Students not in any cohort
+  const inAnyCohort=new Set(S.cohorts.flatMap(c=>c.membres||[]));
+  const orphans=missing.filter(a=>!inAnyCohort.has(a.id));
+  if(orphans.length)cohortMap['__none']={nom:'Sans cohorte',couleur:'#94A3B8',members:orphans};
+
+  const sidebarGroups=Object.values(cohortMap);
 
   document.getElementById("page-planning").innerHTML=`
-    <div class="grid-2 mb">
-      <div class="kpi-card" style="border-left-color:var(--primary)"><div class="kpi-icon" style="background:var(--primary-light)">📅</div><div><div class="kpi-label">Planifiés</div><div class="kpi-value" style="color:var(--primary)">${rdvs.filter(r=>r.statut==="Planifié").length}</div></div></div>
-      <div class="kpi-card" style="border-left-color:var(--success)"><div class="kpi-icon" style="background:var(--success-light)">✅</div><div><div class="kpi-label">Réalisés</div><div class="kpi-value" style="color:var(--success)">${rdvs.filter(r=>r.statut==="Réalisé").length}</div></div></div>
+  <div class="planning-wrap">
+    <!-- Topbar -->
+    <div class="planning-topbar">
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="planNavWeek(-1)" title="Semaine précédente">‹</button>
+        <div class="week-label">📅 ${weekLabel}</div>
+        <button class="week-nav-btn" onclick="planNavWeek(1)" title="Semaine suivante">›</button>
+        ${S._planWeekOffset!==0?`<button class="btn-today" onclick="planNavWeek(0,true)">Aujourd'hui</button>`:''}
+      </div>
+      <div class="planning-kpis">
+        <div class="pl-kpi" style="background:var(--primary-light)">
+          <div class="pl-kpi-val" style="color:var(--primary)">${weekPlanned}</div>
+          <div style="font-size:11px;color:var(--primary);font-weight:600">Planifiés</div>
+        </div>
+        <div class="pl-kpi" style="background:var(--success-light)">
+          <div class="pl-kpi-val" style="color:var(--success)">${weekDone}</div>
+          <div style="font-size:11px;color:var(--success);font-weight:600">Réalisés</div>
+        </div>
+        <div class="pl-kpi" style="background:${missingCount>0?'var(--warning-light)':'var(--success-light)'}">
+          <div class="pl-kpi-val" style="color:${missingCount>0?'#92400E':'var(--success)'}">
+            ${coverPct}%
+          </div>
+          <div style="font-size:11px;color:${missingCount>0?'#92400E':'var(--success)'};font-weight:600">Couverture</div>
+        </div>
+        ${missingCount>0?`<div class="pl-kpi" style="background:var(--danger-light)">
+          <div class="pl-kpi-val" style="color:var(--danger)">${missingCount}</div>
+          <div style="font-size:11px;color:var(--danger);font-weight:600">Sans RDV</div>
+        </div>`:''}
+        <button class="btn btn-primary btn-sm" onclick="openRdvModal()">+ RDV</button>
+      </div>
     </div>
-    ${futur.length?`<div style="font-size:12px;font-weight:700;color:var(--primary);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px">À VENIR</div>${futur.map(k=>renderGroup(k,groups[k])).join("")}`:""}
-    ${passe.length?`<div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:20px 0 12px">PASSÉS</div>${passe.reverse().map(k=>renderGroup(k,groups[k])).join("")}`:""}
-    ${!rdvs.length?`<div class="empty"><div class="empty-icon">📅</div><h3>Aucun RDV planifié</h3><p>Commencez par planifier un premier rendez-vous.</p><button class="btn btn-primary" style="margin-top:16px" onclick="openRdvModal()">+ Planifier un RDV</button></div>`:""}`;
+
+    <!-- Body: grid + sidebar -->
+    <div class="planning-body">
+      <!-- Week grid -->
+      <div class="week-grid">
+        <div class="week-header">
+          ${days.map(d=>{
+            const rdvCount=allRdvs.filter(r=>r.date===d.iso&&r.statut!=="Annulé").length;
+            const isTd=d.iso===todayIso;
+            return`<div class="wh-day${isTd?' today':''}${d.isWeekend?' weekend':''}">
+              <div class="wh-day-name">${d.date.toLocaleDateString('fr-FR',{weekday:'short'})}</div>
+              <div class="wh-day-num">${d.date.getDate()}</div>
+              <div class="wh-rdv-count">${rdvCount>0?rdvCount+' rdv':''}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="week-cols">
+          ${days.map(d=>{
+            const dayRdvs=allRdvs.filter(r=>r.date===d.iso).sort((a,b)=>(a.heure||'').localeCompare(b.heure||''));
+            const isTd=d.iso===todayIso;
+            return`<div class="day-col${isTd?' today':''}${d.isWeekend?' weekend':''}">
+              ${dayRdvs.map(r=>{
+                const isDone=r.statut==="Réalisé";
+                const isCancelled=r.statut==="Annulé";
+                const hasMeet=!!r.meet_url;
+                const statusCls=isDone?'done':isCancelled?'cancelled':'';
+                const meetCls=hasMeet&&!isDone&&!isCancelled?'has-meet':'';
+                return`<div class="rdv-mini ${statusCls} ${meetCls}" onclick="showRdvPop(event,'${r.id}')">
+                  ${r.heure?`<div class="rdv-mini-time">${r.heure}</div>`:''}
+                  <div class="rdv-mini-name">${r.apprenant_nom||'—'}</div>
+                  <div class="rdv-mini-type">${r.type||''}</div>
+                  <div class="rdv-mini-badges">
+                    ${hasMeet&&!isCancelled?`<span class="rdv-mini-badge rdv-mini-meet">📹 Meet</span>`:''}
+                    <span class="rdv-mini-badge rdv-mini-status ${statusCls}">${r.statut}</span>
+                  </div>
+                </div>`;
+              }).join('')}
+              ${!d.isWeekend?`<button class="btn-add-rdv-day" onclick="openRdvForDate('${d.iso}')">＋</button>`:''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Sidebar: coverage -->
+      <div class="planning-sidebar">
+        <div class="ps-head">
+          <div class="ps-title">
+            ${missingCount>0?'⚠️':'✅'}
+            ${missingCount>0?`${missingCount} sans RDV cette semaine`:'Tous couverts !'}
+          </div>
+          <div class="ps-sub">1 RDV/semaine requis par apprenant</div>
+        </div>
+        <div class="ps-body">
+          ${missingCount===0?`<div class="ps-empty">🎉 Tous les apprenants ont un RDV planifié cette semaine.</div>`:''}
+          ${sidebarGroups.map(g=>`
+            <div class="ps-cohort">
+              <div class="ps-cohort-label">
+                <div class="ps-cohort-dot" style="background:${g.couleur}"></div>
+                ${g.nom}
+                <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--danger)">${g.members.length}</span>
+              </div>
+              ${g.members.map(a=>`
+                <div class="ps-student-row" onclick="openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">
+                  <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
+                  <div class="ps-name">${a.prenom} ${a.nom}</div>
+                  <button class="ps-action missing" onclick="event.stopPropagation();openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">+ RDV</button>
+                </div>`).join('')}
+            </div>`).join('')}
+          ${apprenants.filter(a=>coveredIds.has(a.id)).length>0?`
+            <div class="ps-cohort" style="margin-top:8px">
+              <div class="ps-cohort-label">
+                <div class="ps-cohort-dot" style="background:var(--success)"></div>
+                Couverts cette semaine
+                <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--success)">${coveredIds.size}</span>
+              </div>
+              ${apprenants.filter(a=>coveredIds.has(a.id)).map(a=>`
+                <div class="ps-student-row ok">
+                  <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
+                  <div class="ps-name">${a.prenom} ${a.nom}</div>
+                  <span class="ps-action ok">✓</span>
+                </div>`).join('')}
+            </div>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function planNavWeek(delta,reset=false){
+  S._planWeekOffset=reset?0:S._planWeekOffset+delta;
+  renderPlanning();
+}
+
+function openRdvForDate(isoDate){
+  openRdvModal();
+  // Pre-fill date after modal renders
+  setTimeout(()=>{const el=document.getElementById("r-date");if(el)el.value=isoDate;},50);
+}
+
+function openRdvForStudent(appId,nom){
+  openRdvModal();
+  setTimeout(()=>{
+    const sel=document.getElementById("r-app");
+    if(sel)sel.value=appId;
+    // Also pre-fill date to today if current week
+    if(S._planWeekOffset===0){
+      const el=document.getElementById("r-date");if(el)el.value=planToday();
+    }
+  },50);
+}
+
+function showRdvPop(e,rdvId){
+  e.stopPropagation();
+  document.querySelectorAll('.rdv-detail-pop').forEach(p=>p.remove());
+  const r=S.rdvs.find(x=>x.id===rdvId);if(!r)return;
+  const pop=document.createElement('div');
+  pop.className='rdv-detail-pop';
+  pop.innerHTML=`
+    <div class="rdv-pop-name">${r.apprenant_nom||'—'}</div>
+    <div class="rdv-pop-row">📋 ${r.type||'—'}</div>
+    ${r.heure?`<div class="rdv-pop-row">🕐 ${r.heure}</div>`:''}
+    <div class="rdv-pop-row">👤 ${r.charge_suivi||'—'}</div>
+    ${r.meet_url?`<div class="rdv-pop-row">📹 <a href="${r.meet_url}" target="_blank" style="color:var(--primary);font-weight:600">Ouvrir Google Meet</a></div>`:''}
+    ${r.notes?`<div class="rdv-pop-row" style="font-style:italic">💬 ${r.notes}</div>`:''}
+    <div class="rdv-pop-actions">
+      ${r.statut==="Planifié"?`
+        <button class="btn btn-success btn-sm" onclick="markRdv('${r.id}','Réalisé');document.querySelectorAll('.rdv-detail-pop').forEach(p=>p.remove())">✅ Réalisé</button>
+        <button class="btn btn-outline btn-sm" onclick="markRdv('${r.id}','Annulé');document.querySelectorAll('.rdv-detail-pop').forEach(p=>p.remove())">❌ Annuler</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="openRdvModal(S.rdvs.find(x=>x.id==='${r.id}'));document.querySelectorAll('.rdv-detail-pop').forEach(p=>p.remove())">✏️</button>
+    </div>`;
+  // Position near click
+  const x=Math.min(e.clientX,window.innerWidth-280);
+  const y=Math.min(e.clientY+10,window.innerHeight-300);
+  pop.style.left=x+'px';pop.style.top=y+'px';
+  document.body.appendChild(pop);
+  setTimeout(()=>document.addEventListener('click',()=>pop.remove(),{once:true}),10);
 }
 
 // ══════════════════════════════════════
