@@ -506,9 +506,9 @@ nav::-webkit-scrollbar{width:0}
 
           <!-- Hero -->
           <div class="hero">
-            <div class="hero-greeting">
-              <div class="hero-greeting-dot"></div>
-              Formation en cours
+            <div class="hero-greeting" id="hero-status-badge">
+              <div class="hero-greeting-dot" id="hero-status-dot"></div>
+              <span id="hero-status-text">Formation en cours</span>
             </div>
             <div class="hero-title">
               <span class="plain" id="hero-greeting-text">Bonjour </span><br>
@@ -848,12 +848,30 @@ function updateProgress(){
   const total=S.modules.length;if(!total)return;
   const done=Object.values(S.progressions).filter(p=>p.statut==="termine"||p.statut==="completed").length;
   const pct=Math.round((done/total)*100);
+  const allDone=done>=total;
   document.getElementById("suc-fill").style.width=pct+"%";
   document.getElementById("suc-pct").textContent=pct+"%";
   document.getElementById("stat-modules-done").textContent=done;
   document.getElementById("stat-modules-sub").textContent=`sur ${total} au total`;
   const scores=Object.values(S.progressions).filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
   document.getElementById("stat-score").textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+"%":"—";
+  // Mise à jour du badge statut hero
+  const badge=document.getElementById("hero-status-badge");
+  const dot=document.getElementById("hero-status-dot");
+  const txt=document.getElementById("hero-status-text");
+  if(badge&&dot&&txt){
+    if(allDone){
+      badge.style.color="#10B981";
+      dot.style.background="#10B981";
+      dot.style.animation="none";
+      txt.textContent="🎓 Formation terminée !";
+    } else {
+      badge.style.color="#818CF8";
+      dot.style.background="#818CF8";
+      dot.style.animation="dotPulse 2s infinite";
+      txt.textContent=`Formation en cours · ${pct}%`;
+    }
+  }
 }
 
 // ── XP UI ──
