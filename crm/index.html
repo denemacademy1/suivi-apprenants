@@ -343,13 +343,15 @@ tbody tr:last-child td{border-bottom:none}
 .adm-msg-row.mine .adm-msg-bubble{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;border-radius:14px 14px 4px 14px}
 .adm-msg-row.theirs .adm-msg-bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .adm-msg-time{font-size:10px;color:var(--light);padding:0 4px}
-.msg-reactions-wrap{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:5px;min-height:22px}
+.msg-bubble-row{display:flex;align-items:center;gap:5px}
+.adm-msg-row.mine .msg-bubble-row{flex-direction:row-reverse}
+.msg-chips-wrap{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
 .msg-react-chip{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.15);border-radius:12px;padding:2px 8px;font-size:12px;cursor:pointer;transition:.12s;font-family:inherit;line-height:1.5;color:var(--text)}
 .msg-react-chip:hover{background:rgba(99,102,241,.13)}
 .msg-react-chip.me{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.3);color:var(--primary);font-weight:600}
-.msg-react-add{background:transparent;border:1px dashed var(--border);border-radius:12px;padding:2px 7px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--light);line-height:1.5;transition:.12s;opacity:0}
+.msg-react-add{background:transparent;border:1px dashed var(--border);border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--light);line-height:1;transition:.12s;opacity:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .adm-msg-row:hover .msg-react-add{opacity:1}
-.msg-react-add:hover{background:var(--bg);color:var(--muted);border-color:var(--muted)}
+.msg-react-add:hover{background:var(--bg);color:var(--muted)}
 .crm-react-picker{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:8px 10px;display:flex;gap:4px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500}
 .crm-react-picker button{background:none;border:none;font-size:22px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:.1s;line-height:1}
 .crm-react-picker button:hover{background:var(--bg);transform:scale(1.15)}
@@ -2076,9 +2078,12 @@ function renderCSMCohortMessages(msgs,cohortId){
         <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
         <div class="adm-msg-body">
           <div class="adm-msg-sender">${csmEsc(name)}${isCoach&&!isMe?' · Coach':''}</div>
-          <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+          <div class="msg-bubble-row">
+            <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+            <button class="msg-react-add" onclick="csmToggleReactPicker(this,'${m.id}','cohorts','${cohortId}')">😊</button>
+          </div>
           <div class="adm-msg-time">${time}</div>
-          ${csmBuildReactRow(m,'cohorts',cohortId)}
+          ${csmBuildReactChips(m,'cohorts',cohortId)}
         </div>
       </div>`;
     }
@@ -2232,9 +2237,12 @@ function renderCSMMessages(msgs,appId){
       <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
       <div class="adm-msg-body">
         <div class="adm-msg-sender">${csmEsc(name)}</div>
-        <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+        <div class="msg-bubble-row">
+          <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+          <button class="msg-react-add" onclick="csmToggleReactPicker(this,'${m.id}','conversations','${appId}')">😊</button>
+        </div>
         <div class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':''}</div>
-        ${csmBuildReactRow(m,'conversations',appId)}
+        ${csmBuildReactChips(m,'conversations',appId)}
       </div>
     </div>`;
   });
@@ -2244,7 +2252,7 @@ function renderCSMMessages(msgs,appId){
 
 const REACT_EMOJIS=['👍','❤️','😂','🔥','👏','💯'];
 
-function csmBuildReactRow(m,coll,parentId){
+function csmBuildReactChips(m,coll,parentId){
   const selfId=_csmUser?.uid;
   const r=m.reactions||{};
   const chips=REACT_EMOJIS.filter(e=>(r[e]||0)>0).map(e=>{
@@ -2252,7 +2260,7 @@ function csmBuildReactRow(m,coll,parentId){
     const me=(r[e+'_voters']||[]).includes(selfId)?'me':'';
     return`<button class="msg-react-chip ${me}" onclick="csmDoReact('${m.id}','${e}','${coll}','${parentId}')">${e} ${count}</button>`;
   }).join('');
-  return`<div class="msg-reactions-wrap">${chips}<button class="msg-react-add" onclick="csmToggleReactPicker(this,'${m.id}','${coll}','${parentId}')">😊+</button></div>`;
+  return chips?`<div class="msg-chips-wrap">${chips}</div>`:'';
 }
 
 function csmToggleReactPicker(btn,msgId,coll,parentId){

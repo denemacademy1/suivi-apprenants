@@ -476,13 +476,15 @@ nav::-webkit-scrollbar{width:0}
 .mvc-react{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer;transition:.15s;color:rgba(255,255,255,.55);font-family:inherit}
 .mvc-react:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.8)}
 .mvc-react.active{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.3);color:#FCD34D}
-.msg-reactions-wrap{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:5px;min-height:22px}
+.msg-bubble-row{display:flex;align-items:center;gap:5px}
+.msg-row.mine .msg-bubble-row{flex-direction:row-reverse}
+.msg-chips-wrap{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
 .msg-react-chip{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:2px 8px;font-size:12px;cursor:pointer;transition:.12s;font-family:inherit;line-height:1.5;color:rgba(255,255,255,.6)}
 .msg-react-chip:hover{background:rgba(255,255,255,.12)}
 .msg-react-chip.me{background:rgba(99,102,241,.25);border-color:rgba(99,102,241,.45);color:#A5B4FC;font-weight:600}
-.msg-react-add{background:transparent;border:1px dashed rgba(255,255,255,.12);border-radius:12px;padding:2px 7px;font-size:11px;cursor:pointer;font-family:inherit;color:rgba(255,255,255,.18);line-height:1.5;transition:.12s;opacity:0}
+.msg-react-add{background:transparent;border:1px dashed rgba(255,255,255,.15);border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;font-family:inherit;color:rgba(255,255,255,.2);line-height:1;transition:.12s;opacity:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .msg-row:hover .msg-react-add{opacity:1}
-.msg-react-add:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.45);border-color:rgba(255,255,255,.22)}
+.msg-react-add:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.3)}
 .react-picker{position:fixed;background:#1E1B3A;border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:8px 10px;display:flex;gap:4px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:500}
 .react-picker button{background:none;border:none;font-size:22px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:.1s;line-height:1}
 .react-picker button:hover{background:rgba(255,255,255,.1);transform:scale(1.15)}
@@ -1888,9 +1890,12 @@ function renderPrivateMessages(msgs){
       <div class="msg-avatar" style="background:${avatarBg}">${initial}</div>
       <div class="msg-content">
         <div class="msg-sender">${name}</div>
-        <div class="msg-bubble">${escHtml(m.text||'')}</div>
+        <div class="msg-bubble-row">
+          <div class="msg-bubble">${escHtml(m.text||'')}</div>
+          <button class="msg-react-add" onclick="toggleReactPicker(this,'${m.id}','conversations','${S.apprenant.id}')">😊</button>
+        </div>
         <div class="msg-time">${time}</div>
-        ${buildReactRow(m,selfId,'conversations',S.apprenant.id)}
+        ${buildReactChips(m,selfId,'conversations',S.apprenant.id)}
       </div>
     </div>`;
   });
@@ -1951,9 +1956,12 @@ function renderCohortMessages(msgs){
         <div class="msg-avatar" style="background:${avatarBg}">${initial}</div>
         <div class="msg-content">
           <div class="msg-sender">${name}${isCSM?' · Coach':''}</div>
-          <div class="msg-bubble">${escHtml(m.text||'')}</div>
+          <div class="msg-bubble-row">
+            <div class="msg-bubble">${escHtml(m.text||'')}</div>
+            <button class="msg-react-add" onclick="toggleReactPicker(this,'${m.id}','cohorts','${S.cohort.id}')">😊</button>
+          </div>
           <div class="msg-time">${time}</div>
-          ${buildReactRow(m,selfId,'cohorts',S.cohort.id)}
+          ${buildReactChips(m,selfId,'cohorts',S.cohort.id)}
         </div>
       </div>`;
     }
@@ -2025,14 +2033,14 @@ async function postVictory(){
 
 const REACT_EMOJIS=['👍','❤️','😂','🔥','👏','💯'];
 
-function buildReactRow(m,selfId,coll,parentId){
+function buildReactChips(m,selfId,coll,parentId){
   const r=m.reactions||{};
   const chips=REACT_EMOJIS.filter(e=>(r[e]||0)>0).map(e=>{
     const count=r[e]||0;
     const me=(r[e+'_voters']||[]).includes(selfId)?'me':'';
     return`<button class="msg-react-chip ${me}" onclick="doReact('${m.id}','${e}','${coll}','${parentId}')">${e} ${count}</button>`;
   }).join('');
-  return`<div class="msg-reactions-wrap">${chips}<button class="msg-react-add" onclick="toggleReactPicker(this,'${m.id}','${coll}','${parentId}')">😊+</button></div>`;
+  return chips?`<div class="msg-chips-wrap">${chips}</div>`:'';
 }
 
 function toggleReactPicker(btn,msgId,coll,parentId){
