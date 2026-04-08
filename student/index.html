@@ -2110,8 +2110,8 @@ function renderHomeRdv(){
       </div>
     </div>
     ${hasMeet
-      ?`<a href="${next.meet_url}" target="_blank" rel="noopener" class="rdv-meet-btn">
-          <span style="font-size:18px">📹</span> Rejoindre Meet
+      ?`<a href="${escHtml(next.meet_url)}" target="_blank" rel="noopener noreferrer" class="rdv-meet-btn">
+          <span style="font-size:18px">📹</span> Rejoindre maintenant
         </a>`
       :`<div class="rdv-meet-btn disabled">📹 Lien à venir</div>`
     }
