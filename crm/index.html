@@ -806,6 +806,8 @@ function startListeners(){
 //  HELPERS
 // ══════════════════════════════════════
 const ini=(p,n)=>((p||"?")[0]+(n||"?")[0]).toUpperCase();
+// Calcule le jour réel depuis date_debut ; fallback sur a.jour si pas de date
+const calcJour=(a)=>{if(a.date_debut){const d=Math.floor((Date.now()-new Date(a.date_debut))/86400000)+1;return Math.max(1,Math.min(90,d));}return a.jour||1;};
 const avp=(j)=>Math.min(100,Math.round((j/90)*100));
 const phaseOf=(j)=>PHASES.find(p=>j>=p.debut&&j<=p.fin)||PHASES[5];
 const pColor=(p)=>p>=70?"#10B981":p>=40?"#F59E0B":"#EF4444";
@@ -818,7 +820,7 @@ const isPast=(d)=>{if(!d)return false;return new Date(d)<new Date(today());};
 const stuProgs=(appId)=>S.progressions.filter(p=>p.apprenant_id===appId&&p.statut==="completed");
 const modulesOk=(a)=>stuProgs(a.id).length;
 const totalModules=()=>S.modules.length||MODULES.length;
-const moduleProgress=(a)=>{const t=totalModules();return t?Math.round((modulesOk(a)/t)*100):avp(a.jour);};
+const moduleProgress=(a)=>{const t=totalModules();return t?Math.round((modulesOk(a)/t)*100):avp(calcJour(a));};
 const scoreTotal=(a)=>stuProgs(a.id).reduce((t,p)=>t+(p.score_quiz||0),0);
 const stuContacts=(id)=>S.contacts.filter(c=>c.apprenant_id===id);
 function byCharge(arr){if(S.filterCharge==="all")return arr;return arr.filter(a=>a.csm_id===S.filterCharge||a.charge===S.filterCharge||a.charge_suivi===S.filterCharge);}
@@ -827,11 +829,11 @@ function computeAlerts(){
   const al=[];
   byCharge(S.apprenants).forEach(a=>{
     if(a.statut==="À risque")al.push({type:"danger",icon:"⚠️",title:`${a.prenom} ${a.nom} — À risque`,desc:`Statut critique. Contact chargé recommandé en urgence.`,aid:a.id,p:1});
-    if(a.statut==="En retard")al.push({type:"warning",icon:"🔴",title:`${a.prenom} ${a.nom} — En retard`,desc:`Plan de rattrapage nécessaire. Actuellement J${a.jour}.`,aid:a.id,p:2});
+    if(a.statut==="En retard")al.push({type:"warning",icon:"🔴",title:`${a.prenom} ${a.nom} — En retard`,desc:`Plan de rattrapage nécessaire. Actuellement J${calcJour(a)}.`,aid:a.id,p:2});
     CT.forEach(ct=>{
-      if(a.jour>=ct.jour+5){
+      if(calcJour(a)>=ct.jour+5){
         const done=S.contacts.find(c=>c.apprenant_id===a.id&&c.type_id===ct.id);
-        if(!done)al.push({type:"warning",icon:"📞",title:`Contact manqué — ${ct.nom}`,desc:`${a.prenom} ${a.nom} (J${a.jour}) — contact prévu J${ct.jour} non effectué.`,aid:a.id,p:3});
+        if(!done)al.push({type:"warning",icon:"📞",title:`Contact manqué — ${ct.nom}`,desc:`${a.prenom} ${a.nom} (J${calcJour(a)}) — contact prévu J${ct.jour} non effectué.`,aid:a.id,p:3});
       }
     });
   });
@@ -911,7 +913,7 @@ function renderDashboard(){
   const total=data.length,enCours=data.filter(a=>a.statut==="En cours").length;
   const aRisque=data.filter(a=>a.statut==="À risque"||a.statut==="En retard").length;
   const termines=data.filter(a=>a.statut==="Terminé").length;
-  const avgAv=total?Math.round(data.reduce((s,a)=>s+avp(a.jour),0)/total):0;
+  const avgAv=total?Math.round(data.reduce((s,a)=>s+avp(calcJour(a)),0)/total):0;
   const alerts=computeAlerts().slice(0,4);
   const upRdvs=S.rdvs.filter(r=>r.statut==="Planifié"&&isUpcoming(r.date,7)).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
   const recentC=S.contacts.slice(0,5);
@@ -926,7 +928,7 @@ function renderDashboard(){
     </div>
 
     <div class="phase-progress mb">
-      ${PHASES.map(p=>{const count=data.filter(a=>a.jour>=p.debut&&a.jour<=p.fin).length;const pct=total?Math.round((count/total)*100):0;
+      ${PHASES.map(p=>{const count=data.filter(a=>calcJour(a)>=p.debut&&calcJour(a)<=p.fin).length;const pct=total?Math.round((count/total)*100):0;
         return`<div class="phase-chip" style="border-color:${count>0?p.c:'transparent'}">
           <div class="phase-chip-icon">${p.icon}</div>
           <div class="phase-chip-name" style="color:${p.c}">${p.nom}</div>
@@ -997,12 +999,12 @@ function renderApprenants(){
           <thead><tr><th>Apprenant</th><th>Cohorte</th><th>Jour</th><th>Phase</th><th>Avancement</th><th>Contacts</th><th>Dernier contact</th><th>Chargé</th><th>Statut</th><th></th></tr></thead>
           <tbody>
           ${data.length?data.map(a=>{
-            const ph=phaseOf(a.jour),p=moduleProgress(a),sc=stuContacts(a.id),last=sc[0];
-            const dots=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const cls=done?"cdot-ok":a.jour>=ct.jour+5?"cdot-late":"cdot-no";return`<div class="cdot ${cls}" title="${ct.nom}"></div>`;}).join("");
+            const jj=calcJour(a),ph=phaseOf(jj),p=moduleProgress(a),sc=stuContacts(a.id),last=sc[0];
+            const dots=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const cls=done?"cdot-ok":jj>=ct.jour+5?"cdot-late":"cdot-no";return`<div class="cdot ${cls}" title="${ct.nom}"></div>`;}).join("");
             return`<tr onclick="openStudentPanel('${a.id}')">
               <td><div class="stu-cell"><div class="avatar" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div><div><div class="stu-name">${a.prenom} ${a.nom}</div><div class="stu-email">${a.email||""}</div></div></div></td>
               <td style="font-size:12px;color:var(--muted)">${a.cohorte||"—"}</td>
-              <td><span class="day-badge">J${a.jour}</span></td>
+              <td><span class="day-badge">J${jj}</span></td>
               <td style="font-size:13px">${ph.icon} ${ph.nom}</td>
               <td><div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${pColor(p)}"></div></div><span class="prog-pct">${p}%</span></div></td>
               <td><div class="cdots">${dots}</div></td>
@@ -1302,7 +1304,7 @@ function renderRapports(){
     if(S.charts.coh)S.charts.coh.destroy();
     S.charts.coh=new Chart(document.getElementById("ch-coh").getContext("2d"),{type:"bar",data:{labels:Object.keys(cc),datasets:[{label:"Apprenants",data:Object.values(cc),backgroundColor:"#4F46E5CC",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}}}}});
 
-    const chData=S.charges.map(c=>{const d=data.filter(a=>a.charge===c);return{c,avg:d.length?Math.round(d.reduce((s,a)=>s+avp(a.jour),0)/d.length):0};});
+    const chData=S.charges.map(c=>{const d=data.filter(a=>a.charge===c);return{c,avg:d.length?Math.round(d.reduce((s,a)=>s+avp(calcJour(a)),0)/d.length):0};});
     if(S.charts.ch)S.charts.ch.destroy();
     S.charts.ch=new Chart(document.getElementById("ch-ch").getContext("2d"),{type:"bar",data:{labels:chData.map(c=>c.c),datasets:[{label:"Avancement %",data:chData.map(c=>c.avg),backgroundColor:"#10B981CC",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}},x:{grid:{display:false}}}}});
   },50);
@@ -1369,7 +1371,7 @@ function renderPanelTab(){
 function renderPanelProfil(a){
   document.getElementById("panel-body").innerHTML=`
     <div class="stat-boxes">
-      <div class="stat-box"><div class="stat-val" style="color:var(--primary)">J${a.jour}/90</div><div class="stat-lbl">Jour parcours</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--primary)">J${calcJour(a)}/90</div><div class="stat-lbl">Jour parcours</div></div>
       <div class="stat-box"><div class="stat-val" style="color:var(--success)">${moduleProgress(a)}%</div><div class="stat-lbl">Modules complétés</div></div>
       <div class="stat-box"><div class="stat-val" style="color:var(--warning)">${modulesOk(a)}/${totalModules()}</div><div class="stat-lbl">Modules OK</div></div>
     </div>
@@ -1377,7 +1379,7 @@ function renderPanelProfil(a){
 }
 function renderPanelParcours(a){
   document.getElementById("panel-body").innerHTML=`<div class="journey-wrap">${PHASES.map(p=>{
-    const done=a.jour>p.fin,cur=a.jour>=p.debut&&a.jour<=p.fin;
+    const jj=calcJour(a),done=jj>p.fin,cur=jj>=p.debut&&jj<=p.fin;
     const dc=done?"jdot-done":cur?"jdot-cur":"";
     const mods=MODULES.filter(m=>m.phase===p.id).map(m=>{const s=(a.modules_scores||[])[m.id-1];const ok=s!=null;return`<span class="chip ${ok?"chip-done":cur?"chip-cur":"chip-up"}">${m.nom}${ok?" — "+s+" pts":""}</span>`;}).join("");
     return`<div class="journey-step">
@@ -1438,7 +1440,7 @@ function saveModScores(id){
   db.collection("apprenants").doc(id).update({modules_scores:scores,updatedAt:TS()}).then(()=>toast("Scores enregistrés ✅","success")).catch(e=>toast("Erreur: "+e.message,"error"));
 }
 function renderPanelContacts(a,sc){
-  const enriched=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const status=done?"done":a.jour>=ct.jour+5?"overdue":"planned";return{...ct,status,date:done?.date||null,note:done?.note||null};});
+  const enriched=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const status=done?"done":calcJour(a)>=ct.jour+5?"overdue":"planned";return{...ct,status,date:done?.date||null,note:done?.note||null};});
   document.getElementById("panel-body").innerHTML=`
     <div style="margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="openContactModal('${a.id}','${a.prenom} ${a.nom}')">+ Ajouter un contact</button></div>
     <div>${enriched.map(c=>`<div class="contact-item ${c.status==="overdue"?"overdue":c.status==="planned"?"planned":""}">
