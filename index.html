@@ -159,6 +159,58 @@ tbody tr:last-child td{border-bottom:none}
 .modal-close:hover{background:var(--border)}
 .modal-body{padding:24px}
 
+/* ── COHORTES ── */
+.cohorte-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px}
+.cohorte-card{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:box-shadow .15s}
+.cohorte-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.cohorte-card-top{height:5px}
+.cohorte-card-body{padding:16px 18px}
+.cohorte-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.cohorte-card-name{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
+.cohorte-card-count{font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-left:8px}
+.cohorte-members{display:flex;flex-wrap:wrap;gap:6px;min-height:32px;margin-bottom:14px}
+.cohorte-chip{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px 3px 3px;font-size:12px;font-weight:500;color:var(--text)}
+.cohorte-chip-ava{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.cohorte-empty-slots{font-size:12px;color:var(--light);font-style:italic}
+.cohorte-card-actions{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--bg)}
+.btn-cohorte-manage{flex:1;padding:7px 12px;background:var(--primary-light);color:var(--primary);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+.btn-cohorte-manage:hover{background:#DDD6FE;color:#4338CA}
+.btn-cohorte-del{padding:7px 10px;background:var(--danger-light);color:var(--danger);border:none;border-radius:8px;font-size:12px;cursor:pointer;transition:.15s;font-family:inherit}
+.btn-cohorte-del:hover{background:#FECACA}
+.cohorte-add-card{background:var(--card);border-radius:12px;border:2px dashed var(--border);padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.15s;color:var(--light)}
+.cohorte-add-card:hover{border-color:var(--primary);color:var(--primary);background:#FAFBFF}
+/* Cohort modal */
+.cohort-modal-layout{display:flex;gap:16px;min-height:340px}
+.cohort-col{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cohort-col-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;display:flex;align-items:center;justify-content:space-between}
+.cohort-col-count{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px}
+.cohort-member-list{flex:1;overflow-y:auto;max-height:260px;border:1px solid var(--border);border-radius:10px;background:var(--bg)}
+.cohort-member-list::-webkit-scrollbar{width:3px}
+.cohort-member-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.cohort-member-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--card)}
+.cohort-member-row:last-child{border-bottom:none}
+.cohort-member-row:hover{background:#F8FAFF}
+.cohort-m-ava{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.cohort-m-name{flex:1;font-size:13px;font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cohort-m-sub{font-size:11px;color:var(--muted)}
+.btn-cohort-remove{width:24px;height:24px;border-radius:6px;border:none;background:var(--danger-light);color:var(--danger);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-family:inherit}
+.btn-cohort-remove:hover{background:#FECACA}
+.btn-cohort-add{width:24px;height:24px;border-radius:6px;border:none;background:var(--success-light);color:#065F46;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-family:inherit}
+.btn-cohort-add:hover{background:#A7F3D0}
+.btn-cohort-add:disabled{opacity:.35;cursor:not-allowed}
+.cohort-search{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none;width:100%;font-family:inherit;background:var(--bg);color:var(--text)}
+.cohort-search:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light)}
+.cohort-empty-state{display:flex;align-items:center;justify-content:center;padding:24px;font-size:12px;color:var(--light);font-style:italic}
+.cohort-full-warning{background:var(--warning-light);color:#92400E;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;text-align:center;display:none}
+.cohort-full-warning.show{display:block}
+/* Color picker */
+.color-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.color-chip{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.15s}
+.color-chip.selected{border-color:#1E293B;transform:scale(1.1)}
+.color-chip:hover{transform:scale(1.1)}
+/* KPI cohortes */
+.cohorte-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+
 /* ── CONVERSATIONS ── */
 #page-messages{margin:-20px -24px;height:calc(100vh - 60px);overflow:hidden}
 .conv-layout{display:flex;width:100%;height:100%}
@@ -343,6 +395,7 @@ tbody tr:last-child td{border-bottom:none}
       <div class="nav-item" data-page="apprenants" onclick="nav('apprenants')"><span class="nav-icon">👥</span><span class="nav-label">Apprenants</span><span class="nav-badge" id="badge-apprenants"></span></div>
       <div class="nav-item" data-page="planning" onclick="nav('planning')"><span class="nav-icon">📅</span><span class="nav-label">Planning RDVs</span><span class="nav-badge" id="badge-planning"></span></div>
       <div class="nav-item" data-page="alertes" onclick="nav('alertes')"><span class="nav-icon">⚠️</span><span class="nav-label">Alertes</span><span class="nav-badge danger" id="badge-alertes"></span></div>
+      <div class="nav-item" data-page="cohortes" onclick="nav('cohortes')"><span class="nav-icon">🎓</span><span class="nav-label">Cohortes</span><span class="nav-badge" id="badge-cohortes"></span></div>
       <div class="nav-item" data-page="messages" onclick="nav('messages')"><span class="nav-icon">💬</span><span class="nav-label">Messages</span><span class="nav-badge danger" id="badge-messages" style="display:none">0</span></div>
       <div class="nav-section-label" style="margin-top:12px">Analyse</div>
       <div class="nav-item" data-page="rapports" onclick="nav('rapports')"><span class="nav-icon">📊</span><span class="nav-label">Rapports</span></div>
@@ -380,6 +433,7 @@ tbody tr:last-child td{border-bottom:none}
       <div id="page-alertes" class="page"></div>
       <div id="page-rapports" class="page"></div>
       <div id="page-reglages" class="page"></div>
+      <div id="page-cohortes" class="page"></div>
       <div id="page-messages" class="page">
         <div class="conv-layout">
           <div class="conv-list">
@@ -442,6 +496,51 @@ tbody tr:last-child td{border-bottom:none}
     <button class="panel-tab" onclick="switchTab(4)">Notes</button>
   </div>
   <div class="panel-body" id="panel-body"></div>
+</div>
+
+<!-- MODAL COHORTE -->
+<div class="modal-overlay" id="mo-cohort" onclick="if(event.target===this)closeCohortModal()">
+  <div class="modal" style="max-width:680px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="cohort-modal-title">Nouvelle cohorte</h3>
+      <button class="modal-close" onclick="closeCohortModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Nom de la cohorte *</label>
+          <input type="text" id="cohort-nom" placeholder="Ex : Promo Janvier, Groupe Alpha…" maxlength="40">
+        </div>
+        <div class="form-group">
+          <label>Couleur</label>
+          <div class="color-chips" id="cohort-color-chips"></div>
+        </div>
+      </div>
+      <div class="cohort-full-warning" id="cohort-full-warning">⚠️ Cohorte complète — 8 membres maximum</div>
+      <div class="cohort-modal-layout" id="cohort-modal-layout">
+        <div class="cohort-col">
+          <div class="cohort-col-title">
+            <span>Membres assignés</span>
+            <span class="cohort-col-count" id="cohort-member-count" style="background:var(--primary-light);color:var(--primary)">0/8</span>
+          </div>
+          <div class="cohort-member-list" id="cohort-members-list">
+            <div class="cohort-empty-state">Aucun membre pour l'instant</div>
+          </div>
+        </div>
+        <div class="cohort-col">
+          <div class="cohort-col-title"><span>Ajouter des apprenants</span></div>
+          <input type="text" class="cohort-search" id="cohort-avail-search" placeholder="Rechercher…" oninput="renderCohortAvailable()">
+          <div class="cohort-member-list" id="cohort-avail-list">
+            <div class="cohort-empty-state">Chargement…</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeCohortModal()">Annuler</button>
+        <button class="btn btn-primary" onclick="saveCohort()">Enregistrer la cohorte</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL APPRENANT -->
@@ -526,6 +625,7 @@ const PAGE_INFO={
   alertes:{title:"Alertes",sub:"Apprenants nécessitant une attention immédiate",action:null},
   rapports:{title:"Rapports & Analyses",sub:"Statistiques de la formation",action:null},
   reglages:{title:"Réglages",sub:"Configuration du dashboard",action:null},
+  cohortes:{title:"Cohortes",sub:"Groupes d'apprenants — 8 membres max",action:"+ Cohorte"},
   messages:{title:"Messages",sub:"Conversations avec les apprenants",action:null},
 };
 
@@ -533,11 +633,12 @@ const PAGE_INFO={
 //  STATE
 // ══════════════════════════════════════
 const S={
-  apprenants:[],rdvs:[],contacts:[],modules:[],progressions:[],
+  apprenants:[],rdvs:[],contacts:[],modules:[],progressions:[],cohorts:[],
   page:"dashboard",student:null,panelTab:0,
   filterCharge:"all",filterStatut:"all",filterCohorte:"all",search:"",
-  editStudentId:null,editRdvId:null,
+  editStudentId:null,editRdvId:null,editCohortId:null,
   charts:{},charges:[],cohortes:[],
+  _cohortColor:"#4F46E5",_cohortMembers:[],
 };
 
 // ══════════════════════════════════════
@@ -601,6 +702,15 @@ function startListeners(){
     updateBadges();renderCurrent();
     if(S.student)renderPanelTab();
   });
+  db.collection("cohorts").onSnapshot(snap=>{
+    S.cohorts=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(S.page==="cohortes")renderCohortes();
+    updateBadges();
+  },_=>{
+    // Fallback if no cohorts yet
+    S.cohorts=[];
+    if(S.page==="cohortes")renderCohortes();
+  });
 }
 
 // ══════════════════════════════════════
@@ -659,7 +769,7 @@ function nav(page){
   if(info.action){ab.textContent=info.action;ab.style.display="flex";}else{ab.style.display="none";}
   renderCurrent();
 }
-function topbarAction(){if(S.page==="apprenants")openStudentModal();else if(S.page==="planning")openRdvModal();}
+function topbarAction(){if(S.page==="apprenants")openStudentModal();else if(S.page==="planning")openRdvModal();else if(S.page==="cohortes")openCohortModal();}
 function renderCurrent(){
   switch(S.page){
     case"dashboard":renderDashboard();break;
@@ -668,6 +778,7 @@ function renderCurrent(){
     case"alertes":renderAlertes();break;
     case"rapports":renderRapports();break;
     case"reglages":renderReglages();break;
+    case"cohortes":renderCohortes();break;
     case"messages":initCSMConvListener();break;
   }
 }
@@ -678,6 +789,7 @@ function updateBadges(){
   document.getElementById("badge-apprenants").textContent=S.apprenants.length||"";
   document.getElementById("badge-alertes").textContent=alerts||"";
   document.getElementById("badge-planning").textContent=upRdvs||"";
+  document.getElementById("badge-cohortes").textContent=S.cohorts.length||"";
 }
 function refreshChargeSelect(){
   const gc=document.getElementById("global-charge"),cur=gc.value;
@@ -1260,6 +1372,196 @@ async function seedData(force){
     await db.collection("rdvs").add({...r,apprenant_id:aid,date,createdAt:TS(),updatedAt:TS()});
   }
   toast("Données de démo chargées ✅","success");
+}
+
+// ══════════════════════════════════════
+//  COHORTES
+// ══════════════════════════════════════
+const COHORT_COLORS=["#4F46E5","#7C3AED","#DB2777","#EA580C","#16A34A","#0891B2","#CA8A04","#9333EA","#DC2626","#059669","#F59E0B","#3B82F6"];
+const COHORT_MAX=8;
+
+function renderCohortes(){
+  const el=document.getElementById("page-cohortes");
+  const cohorts=S.cohorts;
+  const totalMembers=cohorts.reduce((s,c)=>(s+(c.membres||[]).length),0);
+  const totalSlots=cohorts.length*COHORT_MAX;
+  const freeSlots=Math.max(0,totalSlots-totalMembers);
+  const unassigned=S.apprenants.filter(a=>!cohorts.some(c=>(c.membres||[]).includes(a.id))).length;
+
+  el.innerHTML=`
+    <div class="cohorte-kpis">
+      ${kpiCard("🎓","Cohortes",cohorts.length,"groupes actifs","#4F46E5")}
+      ${kpiCard("👥","Membres assignés",totalMembers,"sur "+S.apprenants.length+" apprenants","#10B981")}
+      ${kpiCard("🔓","Places libres",freeSlots,"dans les cohortes existantes","#F59E0B")}
+      ${kpiCard("⏳","Non assignés",unassigned,"apprenants sans cohorte","#EF4444")}
+    </div>
+    <div class="cohorte-grid" id="cohorte-grid">${renderCohortCards()}</div>`;
+}
+
+function kpiCard(icon,label,val,sub,color){
+  return`<div class="kpi-card" style="border-left-color:${color}">
+    <div class="kpi-icon" style="background:${color}18">${icon}</div>
+    <div><div class="kpi-label">${label}</div><div class="kpi-value" style="color:${color}">${val}</div><div class="kpi-sub">${sub}</div></div>
+  </div>`;
+}
+
+function renderCohortCards(){
+  const cohorts=S.cohorts;
+  let html=cohorts.map(c=>{
+    const membres=c.membres||[];
+    const count=membres.length;
+    const isFull=count>=COHORT_MAX;
+    const countColor=isFull?"background:#FEE2E2;color:#991B1B":"background:var(--primary-light);color:var(--primary)";
+    // Get apprenant data for each member
+    const memberHtml=membres.map(mid=>{
+      const a=S.apprenants.find(x=>x.id===mid);
+      if(!a)return'';
+      const bg=a.couleur||AVC[0];
+      return`<div class="cohorte-chip"><div class="cohorte-chip-ava" style="background:${bg}">${ini(a.prenom,a.nom)}</div>${a.prenom||'?'}</div>`;
+    }).join('');
+    const emptySlots=COHORT_MAX-count;
+    return`<div class="cohorte-card">
+      <div class="cohorte-card-top" style="background:${c.couleur||'#4F46E5'}"></div>
+      <div class="cohorte-card-body">
+        <div class="cohorte-card-header">
+          <div class="cohorte-card-name">${csmEsc(c.nom||'Sans nom')}</div>
+          <span class="cohorte-card-count" style="${countColor}">${count}/${COHORT_MAX}</span>
+        </div>
+        <div class="cohorte-members">
+          ${memberHtml||'<div class="cohorte-empty-slots">Aucun membre</div>'}
+        </div>
+        <div class="cohorte-card-actions">
+          <button class="btn-cohorte-manage" onclick="openCohortModal('${c.id}')">✏️ Gérer les membres</button>
+          <button class="btn-cohorte-del" onclick="deleteCohort('${c.id}','${csmEsc(c.nom||'')}')" title="Supprimer">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // Add card
+  html+=`<div class="cohorte-add-card" onclick="openCohortModal()">
+    <div style="font-size:32px">＋</div>
+    <div style="font-size:13px;font-weight:600">Nouvelle cohorte</div>
+    <div style="font-size:12px">Nommez et assignez jusqu'à 8 apprenants</div>
+  </div>`;
+  return html;
+}
+
+function openCohortModal(id){
+  S.editCohortId=id||null;
+  const cohort=id?S.cohorts.find(c=>c.id===id):null;
+  S._cohortColor=cohort?.couleur||COHORT_COLORS[0];
+  S._cohortMembers=Array.from(cohort?.membres||[]);
+  document.getElementById("cohort-modal-title").textContent=id?"Gérer la cohorte":"Nouvelle cohorte";
+  document.getElementById("cohort-nom").value=cohort?.nom||'';
+  // Color chips
+  document.getElementById("cohort-color-chips").innerHTML=COHORT_COLORS.map(c=>`
+    <div class="color-chip${c===S._cohortColor?' selected':''}" style="background:${c}" onclick="selectCohortColor('${c}')" title="${c}"></div>`).join('');
+  renderCohortMembers();
+  renderCohortAvailable();
+  document.getElementById("cohort-avail-search").value='';
+  document.getElementById("mo-cohort").classList.add("active");
+  setTimeout(()=>document.getElementById("cohort-nom").focus(),100);
+}
+
+function closeCohortModal(){
+  document.getElementById("mo-cohort").classList.remove("active");
+}
+
+function selectCohortColor(c){
+  S._cohortColor=c;
+  document.querySelectorAll(".color-chip").forEach(el=>{
+    el.classList.toggle("selected",el.style.background===c||el.getAttribute("onclick").includes(c));
+  });
+}
+
+function renderCohortMembers(){
+  const el=document.getElementById("cohort-members-list");
+  const countEl=document.getElementById("cohort-member-count");
+  const warnEl=document.getElementById("cohort-full-warning");
+  const count=S._cohortMembers.length;
+  countEl.textContent=`${count}/${COHORT_MAX}`;
+  countEl.style.background=count>=COHORT_MAX?"#FEE2E2":"var(--primary-light)";
+  countEl.style.color=count>=COHORT_MAX?"#991B1B":"var(--primary)";
+  warnEl.classList.toggle("show",count>=COHORT_MAX);
+  if(!count){el.innerHTML='<div class="cohort-empty-state">Aucun membre — ajoutez des apprenants →</div>';return;}
+  el.innerHTML=S._cohortMembers.map(mid=>{
+    const a=S.apprenants.find(x=>x.id===mid);
+    if(!a)return'';
+    const bg=a.couleur||AVC[0];
+    return`<div class="cohort-member-row">
+      <div class="cohort-m-ava" style="background:${bg}">${ini(a.prenom,a.nom)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="cohort-m-name">${csmEsc(a.prenom||'')} ${csmEsc(a.nom||'')}</div>
+        <div class="cohort-m-sub">${csmEsc(a.cohorte||'Aucune cohorte')}</div>
+      </div>
+      <button class="btn-cohort-remove" onclick="removeCohortMember('${mid}')" title="Retirer">−</button>
+    </div>`;
+  }).join('');
+}
+
+function renderCohortAvailable(){
+  const el=document.getElementById("cohort-avail-list");
+  const search=(document.getElementById("cohort-avail-search")?.value||'').toLowerCase();
+  const isFull=S._cohortMembers.length>=COHORT_MAX;
+  // All apprenants not already in current member list
+  let available=S.apprenants.filter(a=>!S._cohortMembers.includes(a.id));
+  if(search)available=available.filter(a=>`${a.prenom||''} ${a.nom||''}`.toLowerCase().includes(search)||`${a.email||''}`.toLowerCase().includes(search));
+  if(!available.length){el.innerHTML='<div class="cohort-empty-state">Aucun apprenant disponible</div>';return;}
+  // Show which cohort they're currently in
+  el.innerHTML=available.map(a=>{
+    const currentCohort=S.cohorts.find(c=>c.id!==S.editCohortId&&(c.membres||[]).includes(a.id));
+    const bg=a.couleur||AVC[0];
+    return`<div class="cohort-member-row">
+      <div class="cohort-m-ava" style="background:${bg}">${ini(a.prenom,a.nom)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="cohort-m-name">${csmEsc(a.prenom||'')} ${csmEsc(a.nom||'')}</div>
+        <div class="cohort-m-sub">${currentCohort?`📌 ${csmEsc(currentCohort.nom||'')}`:'Sans cohorte'}</div>
+      </div>
+      <button class="btn-cohort-add" onclick="addCohortMember('${a.id}')" ${isFull?'disabled title="Cohorte complète"':''}>＋</button>
+    </div>`;
+  }).join('');
+}
+
+function addCohortMember(appId){
+  if(S._cohortMembers.length>=COHORT_MAX)return;
+  if(!S._cohortMembers.includes(appId))S._cohortMembers.push(appId);
+  renderCohortMembers();
+  renderCohortAvailable();
+}
+
+function removeCohortMember(appId){
+  S._cohortMembers=S._cohortMembers.filter(id=>id!==appId);
+  renderCohortMembers();
+  renderCohortAvailable();
+}
+
+async function saveCohort(){
+  const nom=document.getElementById("cohort-nom").value.trim();
+  if(!nom){document.getElementById("cohort-nom").focus();toast("Le nom est obligatoire","error");return;}
+  const data={
+    nom,
+    couleur:S._cohortColor,
+    membres:S._cohortMembers,
+    csm_id:_csmUser?.uid||null,
+    updatedAt:TS(),
+  };
+  try{
+    if(S.editCohortId){
+      await db.collection("cohorts").doc(S.editCohortId).update(data);
+      toast(`Cohorte "${nom}" mise à jour ✅`,"success");
+    } else {
+      data.createdAt=TS();
+      await db.collection("cohorts").add(data);
+      toast(`Cohorte "${nom}" créée ✅`,"success");
+    }
+    closeCohortModal();
+  }catch(e){toast("Erreur : "+e.message,"error");}
+}
+
+async function deleteCohort(id,nom){
+  if(!confirm(`Supprimer la cohorte "${nom}" ? Les messages du groupe seront conservés.`))return;
+  await db.collection("cohorts").doc(id).delete();
+  toast(`Cohorte "${nom}" supprimée`,"success");
 }
 
 // ══════════════════════════════════════
