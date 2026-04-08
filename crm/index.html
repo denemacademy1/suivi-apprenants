@@ -332,20 +332,22 @@ tbody tr:last-child td{border-bottom:none}
 .conv-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .adm-day-sep{display:flex;align-items:center;gap:10px;margin:4px 0;font-size:11px;color:var(--light);font-weight:500}
 .adm-day-sep::before,.adm-day-sep::after{content:'';flex:1;height:1px;background:var(--border)}
-.adm-msg-row{display:flex;gap:8px;max-width:72%}
+.adm-msg-row{display:flex;gap:10px;max-width:72%}
 .adm-msg-row.mine{align-self:flex-end;flex-direction:row-reverse}
 .adm-msg-row.theirs{align-self:flex-start}
-.adm-msg-ava{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-end}
-.adm-msg-body{display:flex;flex-direction:column;gap:3px}
+.adm-msg-ava{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-start;margin-top:2px}
+.adm-msg-body{display:flex;flex-direction:column;gap:2px}
 .adm-msg-row.mine .adm-msg-body{align-items:flex-end}
-.adm-msg-sender{font-size:10px;font-weight:600;color:var(--light);padding:0 4px}
+.adm-msg-header{display:flex;align-items:center;gap:6px;padding:0 4px}
+.adm-msg-row.mine .adm-msg-header{flex-direction:row-reverse}
+.adm-msg-sender{font-size:11px;font-weight:600;color:var(--muted)}
+.adm-msg-time{font-size:10px;color:var(--light)}
 .adm-msg-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word}
 .adm-msg-row.mine .adm-msg-bubble{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;border-radius:14px 14px 4px 14px}
 .adm-msg-row.theirs .adm-msg-bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.adm-msg-time{font-size:10px;color:var(--light);padding:0 4px}
 .msg-bubble-row{display:flex;align-items:center;gap:5px}
 .adm-msg-row.mine .msg-bubble-row{flex-direction:row-reverse}
-.msg-chips-wrap{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.msg-chips-wrap{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;padding:0 4px}
 .msg-react-chip{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.15);border-radius:12px;padding:2px 8px;font-size:12px;cursor:pointer;transition:.12s;font-family:inherit;line-height:1.5;color:var(--text)}
 .msg-react-chip:hover{background:rgba(99,102,241,.13)}
 .msg-react-chip.me{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.3);color:var(--primary);font-weight:600}
@@ -2077,12 +2079,14 @@ function renderCSMCohortMessages(msgs,cohortId){
       html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
         <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
         <div class="adm-msg-body">
-          <div class="adm-msg-sender">${csmEsc(name)}${isCoach&&!isMe?' · Coach':''}</div>
+          <div class="adm-msg-header">
+            <span class="adm-msg-sender">${csmEsc(name)}${isCoach&&!isMe?' · Coach':''}</span>
+            <span class="adm-msg-time">${time}</span>
+          </div>
           <div class="msg-bubble-row">
             <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
             <button class="msg-react-add" onclick="csmToggleReactPicker(this,'${m.id}','cohorts','${cohortId}')">😊</button>
           </div>
-          <div class="adm-msg-time">${time}</div>
           ${csmBuildReactChips(m,'cohorts',cohortId)}
         </div>
       </div>`;
@@ -2236,12 +2240,14 @@ function renderCSMMessages(msgs,appId){
     html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
       <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
       <div class="adm-msg-body">
-        <div class="adm-msg-sender">${csmEsc(name)}</div>
+        <div class="adm-msg-header">
+          <span class="adm-msg-sender">${csmEsc(name)}</span>
+          <span class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':''}</span>
+        </div>
         <div class="msg-bubble-row">
           <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
           <button class="msg-react-add" onclick="csmToggleReactPicker(this,'${m.id}','conversations','${appId}')">😊</button>
         </div>
-        <div class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':''}</div>
         ${csmBuildReactChips(m,'conversations',appId)}
       </div>
     </div>`;
