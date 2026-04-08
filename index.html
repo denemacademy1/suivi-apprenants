@@ -633,7 +633,7 @@ const PAGE_INFO={
 //  STATE
 // ══════════════════════════════════════
 const S={
-  apprenants:[],rdvs:[],contacts:[],modules:[],progressions:[],cohorts:[],
+  apprenants:[],rdvs:[],contacts:[],modules:[],progressions:[],cohorts:[],csmUsers:[],
   page:"dashboard",student:null,panelTab:0,
   filterCharge:"all",filterStatut:"all",filterCohorte:"all",search:"",
   editStudentId:null,editRdvId:null,editCohortId:null,
@@ -707,10 +707,16 @@ function startListeners(){
     if(S.page==="cohortes")renderCohortes();
     updateBadges();
   },_=>{
-    // Fallback if no cohorts yet
     S.cohorts=[];
     if(S.page==="cohortes")renderCohortes();
   });
+  // Load all coaches/admins for the charge selector
+  db.collection("users").onSnapshot(snap=>{
+    S.csmUsers=snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .filter(u=>["csm","admin"].includes(u.role))
+      .sort((a,b)=>(`${a.prenom||""} ${a.nom||""}`).localeCompare(`${b.prenom||""} ${b.nom||""}`));
+  },_=>{});
 }
 
 // ══════════════════════════════════════
@@ -732,7 +738,7 @@ const totalModules=()=>S.modules.length||MODULES.length;
 const moduleProgress=(a)=>{const t=totalModules();return t?Math.round((modulesOk(a)/t)*100):avp(a.jour);};
 const scoreTotal=(a)=>stuProgs(a.id).reduce((t,p)=>t+(p.score_quiz||0),0);
 const stuContacts=(id)=>S.contacts.filter(c=>c.apprenant_id===id);
-function byCharge(arr){if(S.filterCharge==="all")return arr;return arr.filter(a=>a.charge===S.filterCharge||a.charge_suivi===S.filterCharge);}
+function byCharge(arr){if(S.filterCharge==="all")return arr;return arr.filter(a=>a.csm_id===S.filterCharge||a.charge===S.filterCharge||a.charge_suivi===S.filterCharge);}
 
 function computeAlerts(){
   const al=[];
@@ -793,14 +799,25 @@ function updateBadges(){
 }
 function refreshChargeSelect(){
   const gc=document.getElementById("global-charge"),cur=gc.value;
-  gc.innerHTML=`<option value="all">Tous les chargés</option>`;
-  S.charges.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;gc.appendChild(o);});
-  if(S.charges.includes(cur))gc.value=cur;
+  gc.innerHTML=`<option value="all">Tous les coaches</option>`;
+  // Use real coach users if loaded, fallback to names from apprenants
+  const coaches=S.csmUsers.length
+    ?S.csmUsers.map(u=>({id:u.id,label:`${u.prenom||""} ${u.nom||""}`.trim()||u.email}))
+    :S.charges.map(c=>({id:c,label:c}));
+  coaches.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.label;gc.appendChild(o);});
+  if(coaches.some(c=>c.id===cur))gc.value=cur;
 }
 function updateUserDisplay(){
   const v=S.filterCharge;
-  document.getElementById("u-name").textContent=v==="all"?"Tous les chargés":v;
-  document.getElementById("u-avatar").textContent=v==="all"?"C":v[0];
+  if(v==="all"){
+    document.getElementById("u-name").textContent="Tous les coaches";
+    document.getElementById("u-avatar").textContent="C";
+  } else {
+    const coach=S.csmUsers.find(u=>u.id===v);
+    const name=coach?`${coach.prenom||""} ${coach.nom||""}`.trim()||coach.email:v;
+    document.getElementById("u-name").textContent=name;
+    document.getElementById("u-avatar").textContent=name.charAt(0).toUpperCase()||"C";
+  }
 }
 
 // ══════════════════════════════════════
@@ -1198,7 +1215,14 @@ function openStudentModal(student){
       <div class="form-group"><label>Date de début</label><input id="f-debut" type="date" value="${a.date_debut||""}"></div>
       <div class="form-group"><label>Jour dans le parcours *</label><input id="f-jour" type="number" min="1" max="90" value="${a.jour||1}"></div>
       <div class="form-group"><label>Statut *</label><select id="f-statut">${STATUTS.map(s=>`<option value="${s}" ${a.statut===s?"selected":""}>${s}</option>`).join("")}</select></div>
-      <div class="form-group form-full"><label>Chargé de suivi *</label><input id="f-charge" list="dl-ch" value="${a.charge||""}" placeholder="Sophie Martin"><datalist id="dl-ch">${S.charges.map(c=>`<option value="${c}">`).join("")}</datalist></div>
+      <div class="form-group form-full"><label>Coach attribué *</label><select id="f-charge">
+        <option value="">— Sélectionner un coach —</option>
+        ${S.csmUsers.map(u=>{
+          const name=`${u.prenom||""} ${u.nom||""}`.trim()||u.email||u.id;
+          const selected=(a.csm_id===u.id)||(a.charge===name&&!a.csm_id);
+          return`<option value="${u.id}" data-name="${name}" ${selected?"selected":""}>${name}</option>`;
+        }).join("")}
+      </select></div>
       <div class="form-group form-full"><label>Objectif</label><input id="f-obj" value="${a.objectif||""}" placeholder="Reconversion, montée en compétences…"></div>
       <div class="form-group form-full"><label>Notes</label><textarea id="f-notes">${a.notes||""}</textarea></div>
     </div>
@@ -1215,7 +1239,25 @@ function saveStudent(){
   const nom=document.getElementById("f-nom").value.trim();
   const email=document.getElementById("f-email").value.trim();
   if(!prenom||!nom||!email){toast("Prénom, nom et email sont requis","error");return;}
-  const data={prenom,nom,email,telephone:document.getElementById("f-tel").value.trim(),cohorte:document.getElementById("f-cohorte").value.trim(),charge:document.getElementById("f-charge").value.trim(),jour:parseInt(document.getElementById("f-jour").value)||1,date_debut:document.getElementById("f-debut").value,statut:document.getElementById("f-statut").value,objectif:document.getElementById("f-obj").value.trim(),notes:document.getElementById("f-notes").value.trim(),couleur:AVC[Math.floor(Math.random()*AVC.length)],updatedAt:TS()};
+  // Resolve coach UID + display name from select
+  const chargeSelect=document.getElementById("f-charge");
+  const csm_id=chargeSelect.value||null;
+  const chargeOpt=chargeSelect.options[chargeSelect.selectedIndex];
+  const charge=csm_id?(chargeOpt.getAttribute("data-name")||chargeOpt.textContent.trim()):"";
+  const data={
+    prenom,nom,email,
+    telephone:document.getElementById("f-tel").value.trim(),
+    cohorte:document.getElementById("f-cohorte").value.trim(),
+    charge,          // nom affiché (ex: "Sophie Martin")
+    csm_id,          // UID Firebase du coach
+    jour:parseInt(document.getElementById("f-jour").value)||1,
+    date_debut:document.getElementById("f-debut").value,
+    statut:document.getElementById("f-statut").value,
+    objectif:document.getElementById("f-obj").value.trim(),
+    notes:document.getElementById("f-notes").value.trim(),
+    couleur:AVC[Math.floor(Math.random()*AVC.length)],
+    updatedAt:TS()
+  };
   const col=db.collection("apprenants");
   const p=S.editStudentId?col.doc(S.editStudentId).update(data):col.add({...data,modules_scores:Array(9).fill(null),createdAt:TS()});
   p.then(()=>{toast(S.editStudentId?"Apprenant mis à jour ✅":"Apprenant ajouté ✅","success");closeStudentModal();}).catch(e=>toast("Erreur: "+e.message,"error"));
