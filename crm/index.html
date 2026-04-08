@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denem Academy — CSM Dashboard</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sw:240px;
+  --primary:#4F46E5;--primary-light:#EEF2FF;
+  --success:#10B981;--success-light:#D1FAE5;
+  --warning:#F59E0B;--warning-light:#FEF3C7;
+  --danger:#EF4444;--danger-light:#FEE2E2;
+  --info:#3B82F6;--info-light:#DBEAFE;
+  --purple:#8B5CF6;--purple-light:#EDE9FE;
+  --bg:#F1F5F9;--card:#fff;--border:#E2E8F0;
+  --text:#1E293B;--muted:#64748B;--light:#94A3B8;
+  --r:10px;--gap:16px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;overflow:hidden;height:100vh}
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sw);min-width:var(--sw);background:#1E1B4B;display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+.sidebar-logo{display:flex;align-items:center;gap:12px;padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:8px}
+.logo-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.logo-title{font-size:14px;font-weight:700;color:#fff}
+.logo-sub{font-size:11px;color:rgba(255,255,255,0.55)}
+.sidebar-nav{flex:1;padding:0 8px}
+.nav-section-label{font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;padding:12px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:all .15s;color:rgba(255,255,255,0.65);margin-bottom:2px}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:#fff}
+.nav-item.active{background:var(--primary);color:#fff}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-label{font-size:13px;font-weight:500;flex:1}
+.nav-badge{min-width:20px;height:20px;border-radius:10px;background:rgba(255,255,255,0.2);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.nav-badge.danger{background:var(--danger)}
+.nav-badge:empty{display:none}
+.sidebar-footer{padding:8px;border-top:1px solid rgba(255,255,255,0.08);margin-top:auto}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:10px;margin-top:4px}
+.u-avatar-el{width:32px;height:32px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.u-name-el{font-size:12px;font-weight:600;color:#fff}
+.u-role-el{font-size:11px;color:rgba(255,255,255,0.55)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:16px}
+.topbar-left{display:flex;align-items:baseline;gap:12px}
+.page-title{font-size:17px;font-weight:700}
+.page-subtitle{font-size:12px;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar-select{padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;color:var(--text);cursor:pointer;outline:none}
+.topbar-date{font-size:12px;color:var(--muted);white-space:nowrap}
+.pages{flex:1;overflow-y:auto;padding:20px 24px}
+.page{display:none}.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(0,0,0,.07);padding:20px 24px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap)}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--gap)}
+.mb{margin-bottom:var(--gap)}
+.section-title{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+
+/* KPI */
+.kpi-card{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.07);border-left:3px solid transparent;display:flex;align-items:flex-start;gap:12px}
+.kpi-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.kpi-value{font-size:26px;font-weight:700;line-height:1.2;margin:2px 0}
+.kpi-sub{font-size:11px;color:var(--muted)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-success{background:var(--success-light);color:#065F46}
+.b-warning{background:var(--warning-light);color:#92400E}
+.b-danger{background:var(--danger-light);color:#991B1B}
+.b-info{background:var(--info-light);color:#1E40AF}
+.b-gray{background:#F1F5F9;color:#475569}
+
+/* PROGRESS */
+.prog{display:flex;align-items:center;gap:8px}
+.prog-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;min-width:50px}
+.prog-fill{height:100%;border-radius:3px}
+.prog-pct{font-size:12px;font-weight:600;min-width:28px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:9px 12px;border-bottom:2px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{color:var(--text)}
+tbody td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:hover{background:#F8FAFC;cursor:pointer}
+tbody tr:last-child td{border-bottom:none}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.stu-cell{display:flex;align-items:center;gap:10px}
+.stu-name{font-weight:600;color:var(--text)}
+.stu-email{font-size:11px;color:var(--muted)}
+.day-badge{font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 7px;border-radius:6px}
+
+/* DOTS */
+.cdots{display:flex;gap:4px;align-items:center}
+.cdot{width:9px;height:9px;border-radius:50%}
+.cdot-ok{background:var(--success)}
+.cdot-no{background:var(--border);border:1px solid var(--light)}
+.cdot-late{background:var(--danger)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#4338CA}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#DC2626}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border)}.btn-outline:hover{background:var(--bg)}
+.btn-ghost{background:none;color:var(--muted);border:none;padding:6px 8px}.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.form-group input,.form-group select,.form-group textarea{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border .15s;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--border);margin-top:16px}
+
+/* SEARCH */
+.search-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;flex:1;min-width:200px}
+.search-box input{border:none;background:none;font-size:13px;color:var(--text);outline:none;width:100%}
+.filter-select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;cursor:pointer;outline:none}
+
+/* DETAIL PANEL */
+.panel-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:200}
+.panel-overlay.active{display:block}
+.detail-panel{position:fixed;right:0;top:0;bottom:0;width:480px;background:var(--card);box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease}
+.detail-panel.open{transform:translateX(0)}
+.panel-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.panel-header-left{display:flex;align-items:center;gap:12px}
+.panel-avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;flex-shrink:0}
+.panel-name{font-size:16px;font-weight:700}
+.panel-meta{font-size:12px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.panel-tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-tab{flex:1;padding:10px 4px;border:none;background:none;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.panel-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.panel-body{flex:1;overflow-y:auto;padding:20px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:300;overflow-y:auto;padding:24px;align-items:flex-start;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--card);border-radius:14px;width:100%;max-width:640px;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-sm{max-width:420px}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:16px;font-weight:700}
+.modal-close{background:var(--bg);border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--border)}
+.modal-body{padding:24px}
+
+/* ── PLANNING CRM ── */
+#page-planning{padding:0}
+.planning-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.planning-topbar{padding:16px 24px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:16px;flex-shrink:0;flex-wrap:wrap}
+.week-nav{display:flex;align-items:center;gap:8px}
+.week-nav-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:.15s;color:var(--muted)}
+.week-nav-btn:hover{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
+.week-label{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;min-width:200px;text-align:center}
+.btn-today{padding:5px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit}
+.btn-today:hover{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
+.planning-kpis{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+.pl-kpi{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;white-space:nowrap}
+.pl-kpi-val{font-size:18px;font-weight:900;line-height:1}
+/* Body = week grid + sidebar */
+.planning-body{display:flex;flex:1;overflow:hidden}
+/* Week grid */
+.week-grid{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.week-header{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:2px solid var(--border);background:var(--card);flex-shrink:0}
+.wh-day{padding:10px 8px;text-align:center;border-right:1px solid var(--border)}
+.wh-day:last-child{border-right:none}
+.wh-day-name{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.wh-day-num{font-size:20px;font-weight:900;color:var(--text);line-height:1.1;margin-top:2px}
+.wh-day.today .wh-day-name{color:var(--primary)}
+.wh-day.today .wh-day-num{color:#fff;background:var(--primary);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:2px auto 0}
+.wh-day.today .wh-rdv-count{color:var(--primary)}
+.wh-rdv-count{font-size:10px;font-weight:600;color:var(--light);margin-top:3px}
+.week-cols{display:grid;grid-template-columns:repeat(7,1fr);flex:1;overflow-y:auto;align-items:start;background:var(--bg)}
+.week-cols::-webkit-scrollbar{width:4px}
+.week-cols::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.day-col{border-right:1px solid var(--border);padding:8px 6px;min-height:200px;background:var(--bg);transition:.15s}
+.day-col:last-child{border-right:none}
+.day-col.today{background:#FAFBFF}
+.day-col.weekend{background:#F8FAFC;opacity:.7}
+/* RDV mini card in grid */
+.rdv-mini{background:var(--card);border-radius:10px;padding:8px 10px;margin-bottom:6px;border-left:3px solid var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;transition:all .15s;position:relative}
+.rdv-mini:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.rdv-mini.done{border-left-color:var(--success);opacity:.7}
+.rdv-mini.cancelled{border-left-color:var(--light);opacity:.5}
+.rdv-mini.has-meet{border-left-color:#10B981}
+.rdv-mini-time{font-size:10px;font-weight:700;color:var(--primary);margin-bottom:2px}
+.rdv-mini.done .rdv-mini-time{color:var(--success)}
+.rdv-mini-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rdv-mini-type{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rdv-mini-badges{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.rdv-mini-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600}
+.rdv-mini-meet{background:#D1FAE5;color:#065F46}
+.rdv-mini-status{background:#EEF2FF;color:#4F46E5}
+.rdv-mini-status.done{background:#D1FAE5;color:#065F46}
+.rdv-mini-status.cancelled{background:#F1F5F9;color:#64748B}
+.btn-add-rdv-day{width:100%;padding:6px;border:1.5px dashed var(--border);border-radius:8px;background:none;font-size:11px;color:var(--light);cursor:pointer;transition:.15s;font-family:inherit;margin-top:2px}
+.btn-add-rdv-day:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+/* Sidebar: sans RDV */
+.planning-sidebar{width:280px;min-width:280px;border-left:1px solid var(--border);background:var(--card);display:flex;flex-direction:column;overflow:hidden}
+.ps-head{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ps-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.ps-sub{font-size:11px;color:var(--muted)}
+.ps-body{flex:1;overflow-y:auto;padding:8px}
+.ps-body::-webkit-scrollbar{width:3px}
+.ps-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ps-cohort{margin-bottom:12px}
+.ps-cohort-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;display:flex;align-items:center;gap:6px}
+.ps-cohort-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ps-student-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;transition:.15s;cursor:pointer}
+.ps-student-row:hover{background:var(--bg)}
+.ps-student-row.ok{opacity:.45}
+.ps-ava{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.ps-name{flex:1;font-size:12px;font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-action{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;border:none;cursor:pointer;transition:.15s;font-family:inherit;white-space:nowrap}
+.ps-action.missing{background:var(--warning-light);color:#92400E}
+.ps-action.missing:hover{background:#FDE68A}
+.ps-action.ok{background:var(--success-light);color:#065F46;pointer-events:none}
+.ps-empty{padding:20px 8px;text-align:center;font-size:12px;color:var(--light)}
+/* RDV detail popover */
+.rdv-detail-pop{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:500;animation:fadeUp .15s ease}
+.rdv-pop-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.rdv-pop-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin-bottom:3px}
+.rdv-pop-actions{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+
+/* ── COHORTES ── */
+.cohorte-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px}
+.cohorte-card{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:box-shadow .15s}
+.cohorte-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.cohorte-card-top{height:5px}
+.cohorte-card-body{padding:16px 18px}
+.cohorte-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.cohorte-card-name{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
+.cohorte-card-count{font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-left:8px}
+.cohorte-members{display:flex;flex-wrap:wrap;gap:6px;min-height:32px;margin-bottom:14px}
+.cohorte-chip{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px 3px 3px;font-size:12px;font-weight:500;color:var(--text)}
+.cohorte-chip-ava{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.cohorte-empty-slots{font-size:12px;color:var(--light);font-style:italic}
+.cohorte-card-actions{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--bg)}
+.btn-cohorte-manage{flex:1;padding:7px 12px;background:var(--primary-light);color:var(--primary);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+.btn-cohorte-manage:hover{background:#DDD6FE;color:#4338CA}
+.btn-cohorte-del{padding:7px 10px;background:var(--danger-light);color:var(--danger);border:none;border-radius:8px;font-size:12px;cursor:pointer;transition:.15s;font-family:inherit}
+.btn-cohorte-del:hover{background:#FECACA}
+.cohorte-add-card{background:var(--card);border-radius:12px;border:2px dashed var(--border);padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.15s;color:var(--light)}
+.cohorte-add-card:hover{border-color:var(--primary);color:var(--primary);background:#FAFBFF}
+/* Cohort modal */
+.cohort-modal-layout{display:flex;gap:16px;min-height:340px}
+.cohort-col{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cohort-col-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;display:flex;align-items:center;justify-content:space-between}
+.cohort-col-count{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px}
+.cohort-member-list{flex:1;overflow-y:auto;max-height:260px;border:1px solid var(--border);border-radius:10px;background:var(--bg)}
+.cohort-member-list::-webkit-scrollbar{width:3px}
+.cohort-member-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.cohort-member-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--card)}
+.cohort-member-row:last-child{border-bottom:none}
+.cohort-member-row:hover{background:#F8FAFF}
+.cohort-m-ava{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.cohort-m-name{flex:1;font-size:13px;font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cohort-m-sub{font-size:11px;color:var(--muted)}
+.btn-cohort-remove{width:24px;height:24px;border-radius:6px;border:none;background:var(--danger-light);color:var(--danger);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-family:inherit}
+.btn-cohort-remove:hover{background:#FECACA}
+.btn-cohort-add{width:24px;height:24px;border-radius:6px;border:none;background:var(--success-light);color:#065F46;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-family:inherit}
+.btn-cohort-add:hover{background:#A7F3D0}
+.btn-cohort-add:disabled{opacity:.35;cursor:not-allowed}
+.cohort-search{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none;width:100%;font-family:inherit;background:var(--bg);color:var(--text)}
+.cohort-search:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light)}
+.cohort-empty-state{display:flex;align-items:center;justify-content:center;padding:24px;font-size:12px;color:var(--light);font-style:italic}
+.cohort-full-warning{background:var(--warning-light);color:#92400E;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;text-align:center;display:none}
+.cohort-full-warning.show{display:block}
+/* Name suggestions */
+.name-sug{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;background:var(--card);white-space:nowrap}
+.name-sug:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.name-sug.used{opacity:.38;cursor:not-allowed;pointer-events:none;text-decoration:line-through}
+/* Color picker */
+.color-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.color-chip{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.15s}
+.color-chip.selected{border-color:#1E293B;transform:scale(1.1)}
+.color-chip:hover{transform:scale(1.1)}
+/* KPI cohortes */
+.cohorte-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+
+/* ── CONVERSATIONS ── */
+#page-messages{margin:-20px -24px;height:calc(100vh - 60px);overflow:hidden}
+.conv-layout{display:flex;width:100%;height:100%}
+.conv-list{width:300px;min-width:300px;border-right:1px solid var(--border);background:var(--card);display:flex;flex-direction:column;overflow:hidden}
+.conv-list-head{padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.conv-list-title{font-size:13px;font-weight:700;color:var(--text)}
+.conv-total-unread{background:var(--danger);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px}
+.conv-search{padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.conv-search input{width:100%;padding:7px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;color:var(--text);font-family:inherit;background:var(--bg)}
+.conv-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.conv-items{flex:1;overflow-y:auto}
+.conv-items::-webkit-scrollbar{width:4px}
+.conv-items::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.conv-item{display:flex;align-items:center;gap:11px;padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--bg);transition:.15s}
+.conv-item:hover{background:#F8FAFF}
+.conv-item.active{background:var(--primary-light);border-right:3px solid var(--primary)}
+.conv-ava{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.conv-info{flex:1;min-width:0}
+.conv-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-preview{font-size:12px;color:var(--light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.conv-time{font-size:10px;color:var(--light);white-space:nowrap}
+.conv-badge{background:var(--danger);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:8px;min-width:18px;text-align:center}
+.conv-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--light);padding:24px;text-align:center}
+.conv-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.conv-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--light);text-align:center;padding:32px}
+.conv-chat-header{background:var(--card);border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.conv-chat-ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.conv-chat-name{font-size:14px;font-weight:700;color:var(--text)}
+.conv-chat-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.conv-messages{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.conv-messages::-webkit-scrollbar{width:4px}
+.conv-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.adm-day-sep{display:flex;align-items:center;gap:10px;margin:4px 0;font-size:11px;color:var(--light);font-weight:500}
+.adm-day-sep::before,.adm-day-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+.adm-msg-row{display:flex;gap:8px;max-width:72%}
+.adm-msg-row.mine{align-self:flex-end;flex-direction:row-reverse}
+.adm-msg-row.theirs{align-self:flex-start}
+.adm-msg-ava{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-end}
+.adm-msg-body{display:flex;flex-direction:column;gap:3px}
+.adm-msg-row.mine .adm-msg-body{align-items:flex-end}
+.adm-msg-sender{font-size:10px;font-weight:600;color:var(--light);padding:0 4px}
+.adm-msg-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word}
+.adm-msg-row.mine .adm-msg-bubble{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;border-radius:14px 14px 4px 14px}
+.adm-msg-row.theirs .adm-msg-bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.adm-msg-time{font-size:10px;color:var(--light);padding:0 4px}
+.conv-input-area{background:var(--card);border-top:1px solid var(--border);padding:13px 22px;display:flex;gap:10px;align-items:flex-end;flex-shrink:0}
+.conv-input-wrap{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:9px 13px;transition:.2s}
+.conv-input-wrap:focus-within{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-light)}
+.conv-input{width:100%;background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:inherit;resize:none;line-height:1.5;max-height:100px;overflow-y:auto}
+.conv-input::placeholder{color:var(--light)}
+.btn-conv-send{width:38px;height:38px;border-radius:9px;background:var(--primary);border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.btn-conv-send:hover{background:#4338CA;transform:translateY(-1px)}
+/* Nav unread */
+.nav-badge.danger{background:var(--danger)}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;min-width:240px}
+.toast-success{background:#059669}.toast-error{background:var(--danger)}.toast-info{background:var(--primary)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* RDV */
+.rdv-group{margin-bottom:20px}
+.rdv-date-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.rdv-date-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.rdv-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;transition:all .15s}
+.rdv-item:hover{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.rdv-time{font-size:13px;font-weight:700;color:var(--primary);min-width:45px}
+.rdv-content{flex:1}
+.rdv-name{font-size:13px;font-weight:600}
+.rdv-type{font-size:12px;color:var(--muted)}
+.icon-btn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
+.icon-btn:hover{background:var(--bg)}
+
+/* ALERT ITEMS */
+.alert-item{display:flex;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid;margin-bottom:10px;align-items:flex-start}
+.alert-danger{background:var(--danger-light);border-color:#FECACA}
+.alert-warning{background:var(--warning-light);border-color:#FDE68A}
+.alert-info{background:var(--info-light);border-color:#BFDBFE}
+.alert-icon{font-size:18px;flex-shrink:0}
+.alert-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.alert-desc{font-size:12px;color:var(--muted)}
+.alert-action{font-size:12px;font-weight:600;color:var(--primary);cursor:pointer;margin-top:6px;display:inline-block}
+.alert-action:hover{text-decoration:underline}
+
+/* ACTIVITY */
+.activity-item{display:flex;gap:10px;padding-bottom:14px;position:relative}
+.activity-item::before{content:'';position:absolute;left:15px;top:24px;bottom:0;width:1px;background:var(--border)}
+.activity-item:last-child::before{display:none}
+.activity-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:var(--bg);border:2px solid var(--border)}
+.activity-time{font-size:11px;color:var(--light)}
+
+/* JOURNEY */
+.journey-wrap{position:relative;padding-left:24px}
+.journey-wrap::before{content:'';position:absolute;left:8px;top:10px;bottom:10px;width:2px;background:var(--border)}
+.journey-step{position:relative;padding-bottom:20px}
+.journey-step:last-child{padding-bottom:0}
+.jdot{position:absolute;left:-20px;top:4px;width:17px;height:17px;border-radius:50%;border:2px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+.jdot-done{border-color:var(--success)!important;background:var(--success)!important;color:#fff}
+.jdot-cur{border-color:var(--primary)!important;background:var(--primary)!important;color:#fff;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(79,70,229,.3)}50%{box-shadow:0 0 0 5px rgba(79,70,229,0)}}
+.jphase-name{font-size:13px;font-weight:600;margin-bottom:3px}
+.jphase-desc{font-size:12px;color:var(--muted);margin-bottom:8px}
+.jchips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.chip-done{background:var(--success-light);color:#065F46}
+.chip-cur{background:var(--primary-light);color:#3730A3}
+.chip-up{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+
+/* MODULES */
+.mod-row{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border-radius:8px;margin-bottom:6px}
+.mod-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mod-score-input{width:70px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;text-align:center;outline:none}
+.mod-score-input:focus{border-color:var(--primary)}
+
+/* CONTACT ITEM */
+.contact-item{display:flex;gap:12px;padding:12px;background:var(--bg);border-radius:8px;margin-bottom:8px;align-items:flex-start}
+.contact-item.overdue{background:var(--danger-light);border:1px solid #FECACA}
+.contact-item.planned{background:#fff;border:1.5px dashed var(--border)}
+.contact-ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.c-title{font-size:13px;font-weight:600}
+.c-date{font-size:11px;color:var(--muted);margin-bottom:4px}
+.c-note{font-size:12px;background:#fff;padding:6px 10px;border-radius:6px;border-left:3px solid var(--primary);line-height:1.5}
+
+/* STAT BOXES */
+.stat-boxes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-box{background:var(--bg);border-radius:8px;padding:10px;text-align:center}
+.stat-val{font-size:18px;font-weight:700}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* PHASE CHIPS */
+.phase-progress{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:var(--gap)}
+.phase-chip{background:var(--card);border-radius:8px;padding:10px;border:2px solid transparent;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.phase-chip-icon{font-size:16px;margin-bottom:2px}
+.phase-chip-name{font-size:11px;font-weight:600;margin-bottom:2px}
+.phase-chip-days{font-size:10px;color:var(--muted);margin-bottom:4px}
+.phase-chip-count{font-size:14px;font-weight:700}
+.phase-chip-bar{height:3px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden}
+.phase-chip-fill{height:100%;border-radius:2px}
+
+/* CHART */
+.chart-card{background:var(--card);border-radius:var(--r);padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.chart-card canvas{max-height:240px}
+
+/* NOTES */
+.notes-area{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:120px;color:var(--text);outline:none}
+.notes-area:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+
+/* FIELD */
+.field-row{background:var(--bg);border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.field-lbl{font-size:12px;font-weight:600;color:var(--muted);min-width:120px;flex-shrink:0}
+.field-val{font-size:13px;color:var(--text)}
+
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--muted);font-size:14px;gap:10px}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){
+  .grid-5{grid-template-columns:repeat(2,1fr)}
+  .phase-progress{grid-template-columns:repeat(3,1fr)}
+  .detail-panel{width:100%}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><img src="../assets/logo.png" alt="Denem Academy" style="width:38px;height:38px;object-fit:cover;border-radius:10px"></div>
+      <div><div class="logo-title">Denem Academy</div><div class="logo-sub">CSM Dashboard</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item active" data-page="dashboard" onclick="nav('dashboard')"><span class="nav-icon">🏠</span><span class="nav-label">Tableau de bord</span></div>
+      <div class="nav-item" data-page="apprenants" onclick="nav('apprenants')"><span class="nav-icon">👥</span><span class="nav-label">Apprenants</span><span class="nav-badge" id="badge-apprenants"></span></div>
+      <div class="nav-item" data-page="planning" onclick="nav('planning')"><span class="nav-icon">📅</span><span class="nav-label">Planning RDVs</span><span class="nav-badge" id="badge-planning"></span></div>
+      <div class="nav-item" data-page="alertes" onclick="nav('alertes')"><span class="nav-icon">⚠️</span><span class="nav-label">Alertes</span><span class="nav-badge danger" id="badge-alertes"></span></div>
+      <div class="nav-item" data-page="cohortes" onclick="nav('cohortes')"><span class="nav-icon">🎓</span><span class="nav-label">Cohortes</span><span class="nav-badge" id="badge-cohortes"></span></div>
+      <div class="nav-item" data-page="messages" onclick="nav('messages')"><span class="nav-icon">💬</span><span class="nav-label">Messages</span><span class="nav-badge danger" id="badge-messages" style="display:none">0</span></div>
+      <div class="nav-section-label" style="margin-top:12px">Analyse</div>
+      <div class="nav-item" data-page="rapports" onclick="nav('rapports')"><span class="nav-icon">📊</span><span class="nav-label">Rapports</span></div>
+      <div class="nav-section-label" style="margin-top:12px">Config</div>
+      <div class="nav-item" data-page="reglages" onclick="nav('reglages')"><span class="nav-icon">⚙️</span><span class="nav-label">Réglages</span></div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="u-avatar-el" id="u-avatar">C</div>
+        <div><div class="u-name-el" id="u-name">Chargé de suivi</div><div class="u-role-el">CSM · En ligne</div></div>
+      </div>
+      <button onclick="doLogout()" style="width:100%;background:rgba(255,255,255,.06);border:none;border-radius:8px;color:rgba(255,255,255,.6);font-size:12px;padding:8px;cursor:pointer;text-align:left;padding-left:12px;margin-top:4px" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.6)'">🚪 Déconnexion</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="page-title" id="page-title">Tableau de bord</span>
+        <span class="page-subtitle" id="page-subtitle">Vue d'ensemble de la formation</span>
+      </div>
+      <div class="topbar-right">
+        <select id="global-charge" onchange="S.filterCharge=this.value;updateUserDisplay();renderCurrent()" class="topbar-select">
+          <option value="all">Tous les chargés</option>
+        </select>
+        <div class="topbar-date" id="topbar-date"></div>
+        <button class="btn btn-primary btn-sm" id="topbar-action" style="display:none" onclick="topbarAction()">+ Ajouter</button>
+      </div>
+    </div>
+    <div class="pages">
+      <div id="page-dashboard" class="page active"><div class="loading"><div class="spinner"></div> Connexion Firebase…</div></div>
+      <div id="page-apprenants" class="page"></div>
+      <div id="page-planning" class="page"></div>
+      <div id="page-alertes" class="page"></div>
+      <div id="page-rapports" class="page"></div>
+      <div id="page-reglages" class="page"></div>
+      <div id="page-cohortes" class="page"></div>
+      <div id="page-messages" class="page">
+        <div class="conv-layout">
+          <div class="conv-list">
+            <div class="conv-list-head">
+              <div class="conv-list-title">💬 Messages</div>
+              <span class="conv-total-unread" id="csm-conv-total-unread" style="display:none">0</span>
+            </div>
+            <div class="conv-search"><input type="text" id="csm-conv-search" placeholder="Rechercher…" oninput="renderCSMConvList()"></div>
+            <div class="conv-items" id="csm-conv-items">
+              <div class="conv-empty"><div style="font-size:32px">💬</div><div style="font-size:13px">Chargement…</div></div>
+            </div>
+          </div>
+          <div class="conv-chat" id="csm-conv-chat">
+            <div class="conv-placeholder" id="csm-conv-placeholder">
+              <div style="font-size:48px">💬</div>
+              <div style="font-size:15px;font-weight:700;color:var(--muted)">Sélectionnez une conversation</div>
+              <div style="font-size:13px;max-width:260px;line-height:1.6">Répondez aux messages de vos apprenants en temps réel.</div>
+            </div>
+            <div id="csm-conv-inner" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+              <div class="conv-chat-header">
+                <div class="conv-chat-ava" id="csm-chat-ava">?</div>
+                <div>
+                  <div class="conv-chat-name" id="csm-chat-name">—</div>
+                  <div class="conv-chat-sub" id="csm-chat-sub">—</div>
+                </div>
+              </div>
+              <div class="conv-messages" id="csm-conv-messages"></div>
+              <div class="conv-input-area">
+                <div class="conv-input-wrap">
+                  <textarea class="conv-input" id="csm-conv-input" placeholder="Votre réponse…" rows="1" onkeydown="csmConvKeydown(event)" oninput="csmConvResize(this)"></textarea>
+                </div>
+                <button class="btn-conv-send" onclick="sendCSMReply()">➤</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="panel-overlay" id="panel-overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="panel-header">
+    <div class="panel-header-left">
+      <div class="panel-avatar" id="p-avatar"></div>
+      <div><div class="panel-name" id="p-name"></div><div class="panel-meta" id="p-meta"></div></div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-outline" onclick="openStudentModal(S.student)">✏️ Modifier</button>
+      <button class="btn btn-sm btn-ghost" onclick="closePanel()">✕</button>
+    </div>
+  </div>
+  <div class="panel-tabs">
+    <button class="panel-tab active" onclick="switchTab(0)">Profil</button>
+    <button class="panel-tab" onclick="switchTab(1)">Parcours</button>
+    <button class="panel-tab" onclick="switchTab(2)">Modules</button>
+    <button class="panel-tab" onclick="switchTab(3)">Contacts</button>
+    <button class="panel-tab" onclick="switchTab(4)">Notes</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<!-- MODAL COHORTE -->
+<div class="modal-overlay" id="mo-cohort" onclick="if(event.target===this)closeCohortModal()">
+  <div class="modal" style="max-width:680px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="cohort-modal-title">Nouvelle cohorte</h3>
+      <button class="modal-close" onclick="closeCohortModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Nom de la cohorte *</label>
+          <input type="text" id="cohort-nom" placeholder="Choisissez ou tapez un nom…" maxlength="40">
+          <div id="cohort-name-suggestions" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
+        </div>
+        <div class="form-group">
+          <label>Couleur</label>
+          <div class="color-chips" id="cohort-color-chips"></div>
+        </div>
+      </div>
+      <div class="cohort-full-warning" id="cohort-full-warning">⚠️ Cohorte complète — 8 membres maximum</div>
+      <div class="cohort-modal-layout" id="cohort-modal-layout">
+        <div class="cohort-col">
+          <div class="cohort-col-title">
+            <span>Membres assignés</span>
+            <span class="cohort-col-count" id="cohort-member-count" style="background:var(--primary-light);color:var(--primary)">0/8</span>
+          </div>
+          <div class="cohort-member-list" id="cohort-members-list">
+            <div class="cohort-empty-state">Aucun membre pour l'instant</div>
+          </div>
+        </div>
+        <div class="cohort-col">
+          <div class="cohort-col-title"><span>Ajouter des apprenants</span></div>
+          <input type="text" class="cohort-search" id="cohort-avail-search" placeholder="Rechercher…" oninput="renderCohortAvailable()">
+          <div class="cohort-member-list" id="cohort-avail-list">
+            <div class="cohort-empty-state">Chargement…</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeCohortModal()">Annuler</button>
+        <button class="btn btn-primary" onclick="saveCohort()">Enregistrer la cohorte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL APPRENANT -->
+<div class="modal-overlay" id="mo-student" onclick="if(event.target===this)closeStudentModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3 id="sm-title">Ajouter un apprenant</h3><button class="modal-close" onclick="closeStudentModal()">✕</button></div>
+    <div class="modal-body" id="sm-body"></div>
+  </div>
+</div>
+
+<!-- MODAL RDV -->
+<div class="modal-overlay" id="mo-rdv" onclick="if(event.target===this)closeRdvModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3 id="rm-title">Planifier un RDV</h3><button class="modal-close" onclick="closeRdvModal()">✕</button></div>
+    <div class="modal-body" id="rm-body"></div>
+  </div>
+</div>
+
+<!-- MODAL CONTACT -->
+<div class="modal-overlay" id="mo-contact" onclick="if(event.target===this)closeContactModal()">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>Ajouter un contact</h3><button class="modal-close" onclick="closeContactModal()">✕</button></div>
+    <div class="modal-body" id="cm-body"></div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="modal-overlay" id="mo-confirm" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-body" style="text-align:center;padding:32px">
+      <div style="font-size:40px;margin-bottom:12px">🗑️</div>
+      <h3 id="conf-title" style="margin-bottom:8px">Confirmer la suppression</h3>
+      <p id="conf-msg" style="color:var(--muted);margin-bottom:24px;font-size:13px"></p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-outline" onclick="closeConfirm()">Annuler</button>
+        <button class="btn btn-danger" id="conf-btn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════
+const FB={apiKey:"AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",authDomain:"denem-academy-5de41.firebaseapp.com",projectId:"denem-academy-5de41",storageBucket:"denem-academy-5de41.firebasestorage.app",messagingSenderId:"570632584566",appId:"1:570632584566:web:ea9b964787b40805a7ce57"};
+
+const PHASES=[
+  {id:1,nom:"Onboarding",debut:1,fin:7,c:"#8B5CF6",icon:"🚀",desc:"Accueil, configuration et prise en main"},
+  {id:2,nom:"Fondamentaux",debut:8,fin:21,c:"#3B82F6",icon:"📚",desc:"Bases théoriques et concepts clés"},
+  {id:3,nom:"Pratique guidée",debut:22,fin:42,c:"#10B981",icon:"⚡",desc:"Exercices pratiques accompagnés"},
+  {id:4,nom:"Approfondissement",debut:43,fin:63,c:"#F59E0B",icon:"🎯",desc:"Cas avancés et montée en compétences"},
+  {id:5,nom:"Projet final",debut:64,fin:84,c:"#EF4444",icon:"🏗️",desc:"Réalisation du projet personnel"},
+  {id:6,nom:"Certification",debut:85,fin:90,c:"#6366F1",icon:"🎓",desc:"Évaluation finale et certification"},
+];
+const MODULES=[
+  {id:1,nom:"Accueil & Configuration",phase:1,duree:"J1–J7",pts:100},
+  {id:2,nom:"Module 1 — Bases théoriques",phase:2,duree:"J8–J14",pts:150},
+  {id:3,nom:"Module 2 — Concepts clés",phase:2,duree:"J15–J21",pts:150},
+  {id:4,nom:"Module 3 — Pratique 1",phase:3,duree:"J22–J32",pts:200},
+  {id:5,nom:"Module 4 — Pratique 2",phase:3,duree:"J33–J42",pts:200},
+  {id:6,nom:"Module 5 — Avancé 1",phase:4,duree:"J43–J53",pts:250},
+  {id:7,nom:"Module 6 — Avancé 2",phase:4,duree:"J54–J63",pts:250},
+  {id:8,nom:"Projet Final",phase:5,duree:"J64–J84",pts:400},
+  {id:9,nom:"Certification & Bilan",phase:6,duree:"J85–J90",pts:300},
+];
+const CT=[
+  {id:1,nom:"Appel de bienvenue",jour:3,icon:"👋",c:"#8B5CF6"},
+  {id:2,nom:"Check-in J14",jour:14,icon:"📞",c:"#3B82F6"},
+  {id:3,nom:"Point mi-parcours",jour:45,icon:"🎯",c:"#10B981"},
+  {id:4,nom:"Check-in J60",jour:60,icon:"📞",c:"#F59E0B"},
+  {id:5,nom:"Point bilan final",jour:85,icon:"🏁",c:"#EF4444"},
+];
+const STATUTS=["En cours","À risque","En retard","Terminé","Abandonné"];
+const AVC=["#4F46E5","#7C3AED","#DB2777","#EA580C","#16A34A","#0891B2","#CA8A04","#9333EA","#DC2626","#059669"];
+const PAGE_INFO={
+  dashboard:{title:"Tableau de bord",sub:"Vue d'ensemble de la formation",action:null},
+  apprenants:{title:"Apprenants",sub:"Gestion et suivi des apprenants",action:"+ Apprenant"},
+  planning:{title:"Planning RDVs",sub:"Rendez-vous et points de contact",action:"+ RDV"},
+  alertes:{title:"Alertes",sub:"Apprenants nécessitant une attention immédiate",action:null},
+  rapports:{title:"Rapports & Analyses",sub:"Statistiques de la formation",action:null},
+  reglages:{title:"Réglages",sub:"Configuration du dashboard",action:null},
+  cohortes:{title:"Cohortes",sub:"Groupes d'apprenants — 8 membres max",action:"+ Cohorte"},
+  messages:{title:"Messages",sub:"Conversations avec les apprenants",action:null},
+};
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+const S={
+  apprenants:[],rdvs:[],contacts:[],modules:[],progressions:[],cohorts:[],csmUsers:[],
+  page:"dashboard",student:null,panelTab:0,
+  filterCharge:"all",filterStatut:"all",filterCohorte:"all",search:"",
+  editStudentId:null,editRdvId:null,editCohortId:null,_planWeekOffset:0,
+  charts:{},charges:[],cohortes:[],
+  _cohortColor:"#4F46E5",_cohortMembers:[],
+};
+
+// ══════════════════════════════════════
+//  FIREBASE INIT
+// ══════════════════════════════════════
+firebase.initializeApp(FB);
+const auth=firebase.auth();
+const db=firebase.firestore();
+const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
+
+// ══════════════════════════════════════
+//  AUTH GUARD (csm or admin only)
+// ══════════════════════════════════════
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    const base=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
+    location.href=base+'/login/';return;
+  }
+  const doc=await db.collection("users").doc(user.uid).get();
+  const role=doc.exists?doc.data().role:"student";
+  if(role==='student'){
+    const base=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
+    location.href=base+'/student/';return;
+  }
+  // Set sidebar user info
+  if(doc.exists){
+    const d=doc.data();
+    _csmUser={id:user.uid,uid:user.uid,...d,email:user.email};
+    document.getElementById('u-name').textContent=`${d.prenom||''} ${d.nom||''}`.trim()||user.email;
+    document.getElementById('u-avatar').textContent=(d.prenom||user.email).charAt(0).toUpperCase();
+  }
+  startListeners();
+});
+
+function doLogout(){auth.signOut();}
+
+function startListeners(){
+  db.collection("apprenants").orderBy("nom").onSnapshot(snap=>{
+    S.apprenants=snap.docs.map(d=>({id:d.id,...d.data()}));
+    S.charges=[...new Set(S.apprenants.map(a=>a.charge))].filter(Boolean).sort();
+    S.cohortes=[...new Set(S.apprenants.map(a=>a.cohorte))].filter(Boolean).sort();
+    refreshChargeSelect();updateBadges();renderCurrent();
+    if(S.student){const f=S.apprenants.find(a=>a.id===S.student.id);if(f){S.student=f;renderPanelTab();}}
+  });
+  db.collection("rdvs").orderBy("date").onSnapshot(snap=>{
+    S.rdvs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateBadges();if(S.page==="planning"||S.page==="dashboard")renderCurrent();
+  });
+  db.collection("contacts").orderBy("createdAt","desc").onSnapshot(snap=>{
+    S.contacts=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(S.student&&S.panelTab===3)renderPanelTab();
+    if(S.page==="dashboard")renderCurrent();
+  });
+  db.collection("modules").where("published","==",true).orderBy("ordre").onSnapshot(snap=>{
+    S.modules=snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateBadges();renderCurrent();
+    if(S.student)renderPanelTab();
+  });
+  db.collection("progressions").onSnapshot(snap=>{
+    S.progressions=snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateBadges();renderCurrent();
+    if(S.student)renderPanelTab();
+  });
+  db.collection("cohorts").onSnapshot(snap=>{
+    S.cohorts=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(S.page==="cohortes")renderCohortes();
+    updateBadges();
+  },_=>{
+    S.cohorts=[];
+    if(S.page==="cohortes")renderCohortes();
+  });
+  // Load all coaches/admins for the charge selector
+  db.collection("users").onSnapshot(snap=>{
+    S.csmUsers=snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .filter(u=>["csm","admin"].includes(u.role))
+      .sort((a,b)=>(`${a.prenom||""} ${a.nom||""}`).localeCompare(`${b.prenom||""} ${b.nom||""}`));
+  },_=>{});
+}
+
+// ══════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════
+const ini=(p,n)=>((p||"?")[0]+(n||"?")[0]).toUpperCase();
+const avp=(j)=>Math.min(100,Math.round((j/90)*100));
+const phaseOf=(j)=>PHASES.find(p=>j>=p.debut&&j<=p.fin)||PHASES[5];
+const pColor=(p)=>p>=70?"#10B981":p>=40?"#F59E0B":"#EF4444";
+function sBadge(s){const m={"En cours":"b-success","À risque":"b-warning","En retard":"b-danger","Terminé":"b-info","Abandonné":"b-gray"};return`<span class="badge ${m[s]||"b-gray"}">${s}</span>`;}
+function fDate(d){if(!d)return"—";try{return new Date(d).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}catch{return d}}
+function fDateLong(d){if(!d)return"—";try{return new Date(d).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}catch{return d}}
+const today=()=>new Date().toISOString().split("T")[0];
+const isUpcoming=(d,n=7)=>{if(!d)return false;const dt=new Date(d),t=new Date();t.setHours(0,0,0,0);const l=new Date(t);l.setDate(l.getDate()+n);return dt>=t&&dt<=l;};
+const isPast=(d)=>{if(!d)return false;return new Date(d)<new Date(today());};
+const stuProgs=(appId)=>S.progressions.filter(p=>p.apprenant_id===appId&&p.statut==="completed");
+const modulesOk=(a)=>stuProgs(a.id).length;
+const totalModules=()=>S.modules.length||MODULES.length;
+const moduleProgress=(a)=>{const t=totalModules();return t?Math.round((modulesOk(a)/t)*100):avp(a.jour);};
+const scoreTotal=(a)=>stuProgs(a.id).reduce((t,p)=>t+(p.score_quiz||0),0);
+const stuContacts=(id)=>S.contacts.filter(c=>c.apprenant_id===id);
+function byCharge(arr){if(S.filterCharge==="all")return arr;return arr.filter(a=>a.csm_id===S.filterCharge||a.charge===S.filterCharge||a.charge_suivi===S.filterCharge);}
+
+function computeAlerts(){
+  const al=[];
+  byCharge(S.apprenants).forEach(a=>{
+    if(a.statut==="À risque")al.push({type:"danger",icon:"⚠️",title:`${a.prenom} ${a.nom} — À risque`,desc:`Statut critique. Contact chargé recommandé en urgence.`,aid:a.id,p:1});
+    if(a.statut==="En retard")al.push({type:"warning",icon:"🔴",title:`${a.prenom} ${a.nom} — En retard`,desc:`Plan de rattrapage nécessaire. Actuellement J${a.jour}.`,aid:a.id,p:2});
+    CT.forEach(ct=>{
+      if(a.jour>=ct.jour+5){
+        const done=S.contacts.find(c=>c.apprenant_id===a.id&&c.type_id===ct.id);
+        if(!done)al.push({type:"warning",icon:"📞",title:`Contact manqué — ${ct.nom}`,desc:`${a.prenom} ${a.nom} (J${a.jour}) — contact prévu J${ct.jour} non effectué.`,aid:a.id,p:3});
+      }
+    });
+  });
+  S.rdvs.forEach(r=>{
+    if(r.statut==="Planifié"&&isPast(r.date))al.push({type:"danger",icon:"📅",title:`RDV non soldé — ${r.apprenant_nom}`,desc:`RDV "${r.type}" prévu le ${fDate(r.date)} — à marquer comme réalisé ou annulé.`,rid:r.id,p:2});
+  });
+  return al.sort((a,b)=>a.p-b.p);
+}
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+function nav(page){
+  S.page=page;S.student=null;S.search="";S.filterStatut="all";S.filterCohorte="all";
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("page-"+page).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+  document.querySelector(`[data-page="${page}"]`)?.classList.add("active");
+  closePanel();
+  const info=PAGE_INFO[page]||{};
+  document.getElementById("page-title").textContent=info.title||page;
+  document.getElementById("page-subtitle").textContent=info.sub||"";
+  const ab=document.getElementById("topbar-action");
+  if(info.action){ab.textContent=info.action;ab.style.display="flex";}else{ab.style.display="none";}
+  renderCurrent();
+}
+function topbarAction(){if(S.page==="apprenants")openStudentModal();else if(S.page==="planning")openRdvModal();else if(S.page==="cohortes")openCohortModal();}
+function renderCurrent(){
+  switch(S.page){
+    case"dashboard":renderDashboard();break;
+    case"apprenants":renderApprenants();break;
+    case"planning":renderPlanning();break;
+    case"alertes":renderAlertes();break;
+    case"rapports":renderRapports();break;
+    case"reglages":renderReglages();break;
+    case"cohortes":renderCohortes();break;
+    case"messages":initCSMConvListener();break;
+  }
+}
+
+function updateBadges(){
+  const alerts=computeAlerts().length;
+  const upRdvs=S.rdvs.filter(r=>r.statut==="Planifié"&&isUpcoming(r.date,14)).length;
+  document.getElementById("badge-apprenants").textContent=S.apprenants.length||"";
+  document.getElementById("badge-alertes").textContent=alerts||"";
+  document.getElementById("badge-planning").textContent=upRdvs||"";
+  document.getElementById("badge-cohortes").textContent=S.cohorts.length||"";
+}
+function refreshChargeSelect(){
+  const gc=document.getElementById("global-charge"),cur=gc.value;
+  gc.innerHTML=`<option value="all">Tous les coaches</option>`;
+  // Use real coach users if loaded, fallback to names from apprenants
+  const coaches=S.csmUsers.length
+    ?S.csmUsers.map(u=>({id:u.id,label:`${u.prenom||""} ${u.nom||""}`.trim()||u.email}))
+    :S.charges.map(c=>({id:c,label:c}));
+  coaches.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.label;gc.appendChild(o);});
+  if(coaches.some(c=>c.id===cur))gc.value=cur;
+}
+function updateUserDisplay(){
+  const v=S.filterCharge;
+  if(v==="all"){
+    document.getElementById("u-name").textContent="Tous les coaches";
+    document.getElementById("u-avatar").textContent="C";
+  } else {
+    const coach=S.csmUsers.find(u=>u.id===v);
+    const name=coach?`${coach.prenom||""} ${coach.nom||""}`.trim()||coach.email:v;
+    document.getElementById("u-name").textContent=name;
+    document.getElementById("u-avatar").textContent=name.charAt(0).toUpperCase()||"C";
+  }
+}
+
+// ══════════════════════════════════════
+//  PAGE: DASHBOARD
+// ══════════════════════════════════════
+function renderDashboard(){
+  const data=byCharge(S.apprenants);
+  const total=data.length,enCours=data.filter(a=>a.statut==="En cours").length;
+  const aRisque=data.filter(a=>a.statut==="À risque"||a.statut==="En retard").length;
+  const termines=data.filter(a=>a.statut==="Terminé").length;
+  const avgAv=total?Math.round(data.reduce((s,a)=>s+avp(a.jour),0)/total):0;
+  const alerts=computeAlerts().slice(0,4);
+  const upRdvs=S.rdvs.filter(r=>r.statut==="Planifié"&&isUpcoming(r.date,7)).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
+  const recentC=S.contacts.slice(0,5);
+
+  document.getElementById("page-dashboard").innerHTML=`
+    <div class="grid-5 mb">
+      <div class="kpi-card" style="border-left-color:#4F46E5"><div class="kpi-icon" style="background:#EEF2FF">👥</div><div><div class="kpi-label">Apprenants</div><div class="kpi-value" style="color:#4F46E5">${total}</div><div class="kpi-sub">${enCours} actifs</div></div></div>
+      <div class="kpi-card" style="border-left-color:#10B981"><div class="kpi-icon" style="background:#D1FAE5">📈</div><div><div class="kpi-label">Avancement moyen</div><div class="kpi-value" style="color:#10B981">${avgAv}%</div><div class="kpi-sub">Parcours 90 jours</div></div></div>
+      <div class="kpi-card" style="border-left-color:#F59E0B"><div class="kpi-icon" style="background:#FEF3C7">⚠️</div><div><div class="kpi-label">Attention requise</div><div class="kpi-value" style="color:#F59E0B">${aRisque}</div><div class="kpi-sub">À risque ou en retard</div></div></div>
+      <div class="kpi-card" style="border-left-color:#3B82F6"><div class="kpi-icon" style="background:#DBEAFE">🎓</div><div><div class="kpi-label">Certifiés</div><div class="kpi-value" style="color:#3B82F6">${termines}</div><div class="kpi-sub">Formation terminée</div></div></div>
+      <div class="kpi-card" style="border-left-color:#8B5CF6"><div class="kpi-icon" style="background:#EDE9FE">📅</div><div><div class="kpi-label">RDVs cette semaine</div><div class="kpi-value" style="color:#8B5CF6">${upRdvs.length}</div><div class="kpi-sub">7 prochains jours</div></div></div>
+    </div>
+
+    <div class="phase-progress mb">
+      ${PHASES.map(p=>{const count=data.filter(a=>a.jour>=p.debut&&a.jour<=p.fin).length;const pct=total?Math.round((count/total)*100):0;
+        return`<div class="phase-chip" style="border-color:${count>0?p.c:'transparent'}">
+          <div class="phase-chip-icon">${p.icon}</div>
+          <div class="phase-chip-name" style="color:${p.c}">${p.nom}</div>
+          <div class="phase-chip-days">J${p.debut}–J${p.fin}</div>
+          <div class="phase-chip-count" style="color:${p.c}">${count}</div>
+          <div class="phase-chip-bar"><div class="phase-chip-fill" style="width:${pct}%;background:${p.c}"></div></div>
+        </div>`;}).join("")}
+    </div>
+
+    <div class="grid-2 mb">
+      <div class="card">
+        <div class="section-title">Alertes urgentes <span style="font-weight:400;font-size:12px;color:var(--muted)">${computeAlerts().length} signalement(s)</span></div>
+        ${alerts.length?alerts.map(a=>`<div class="alert-item alert-${a.type}"><div class="alert-icon">${a.icon}</div><div style="flex:1"><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div>${a.aid?`<span class="alert-action" onclick="openStudentPanel('${a.aid}')">Voir l'apprenant →</span>`:""}</div></div>`).join(""):
+        `<div class="empty" style="padding:20px"><div class="empty-icon">✅</div><p>Aucune alerte active</p></div>`}
+        ${computeAlerts().length>4?`<div style="text-align:center;margin-top:8px"><button class="btn btn-outline btn-sm" onclick="nav('alertes')">Voir toutes (${computeAlerts().length})</button></div>`:""}
+      </div>
+      <div class="card">
+        <div class="section-title">Prochains RDVs <button class="btn btn-sm btn-outline" onclick="nav('planning')">Voir tout</button></div>
+        ${upRdvs.length?upRdvs.map(r=>`<div class="rdv-item" style="cursor:default">
+          <div style="font-size:18px">🕐</div>
+          <div class="rdv-time">${r.heure||"—"}</div>
+          <div class="rdv-content"><div class="rdv-name">${r.apprenant_nom}</div><div class="rdv-type">${r.type} · ${fDateLong(r.date)}</div></div>
+          ${sBadge(r.statut)}</div>`).join(""):
+        `<div class="empty" style="padding:20px"><div class="empty-icon">📅</div><p>Aucun RDV cette semaine</p><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openRdvModal()">+ Planifier</button></div>`}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Activité récente</div>
+      ${recentC.length?recentC.map(c=>`<div class="activity-item">
+        <div class="activity-dot">📞</div>
+        <div><div style="font-size:13px"><strong>${c.apprenant_nom}</strong> — ${c.type} <span style="color:var(--muted)">(${c.charge_suivi})</span></div>
+        ${c.note?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${c.note}</div>`:""}
+        <div class="activity-time">${fDate(c.date)}</div></div>
+      </div>`).join(""):
+      `<div class="empty" style="padding:20px"><div class="empty-icon">💬</div><p>Aucun contact enregistré</p></div>`}
+    </div>`;
+}
+
+// ══════════════════════════════════════
+//  PAGE: APPRENANTS
+// ══════════════════════════════════════
+function renderApprenants(){
+  let data=byCharge(S.apprenants);
+  if(S.filterStatut!=="all")data=data.filter(a=>a.statut===S.filterStatut);
+  if(S.filterCohorte!=="all")data=data.filter(a=>a.cohorte===S.filterCohorte);
+  if(S.search)data=data.filter(a=>`${a.prenom} ${a.nom} ${a.email||""}`.toLowerCase().includes(S.search.toLowerCase()));
+
+  document.getElementById("page-apprenants").innerHTML=`
+    <div class="search-row">
+      <div class="search-box">
+        <svg width="14" height="14" fill="none" stroke="#94A3B8" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Rechercher…" value="${S.search}" oninput="S.search=this.value;renderApprenants()">
+      </div>
+      <select class="filter-select" onchange="S.filterStatut=this.value;renderApprenants()">
+        <option value="all">Tous les statuts</option>
+        ${STATUTS.map(s=>`<option value="${s}" ${S.filterStatut===s?"selected":""}>${s}</option>`).join("")}
+      </select>
+      <select class="filter-select" onchange="S.filterCohorte=this.value;renderApprenants()">
+        <option value="all">Toutes les cohortes</option>
+        ${S.cohortes.map(c=>`<option value="${c}" ${S.filterCohorte===c?"selected":""}>${c}</option>`).join("")}
+      </select>
+      <span style="font-size:12px;color:var(--muted)">${data.length} apprenant(s)</span>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Apprenant</th><th>Cohorte</th><th>Jour</th><th>Phase</th><th>Avancement</th><th>Contacts</th><th>Dernier contact</th><th>Chargé</th><th>Statut</th><th></th></tr></thead>
+          <tbody>
+          ${data.length?data.map(a=>{
+            const ph=phaseOf(a.jour),p=moduleProgress(a),sc=stuContacts(a.id),last=sc[0];
+            const dots=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const cls=done?"cdot-ok":a.jour>=ct.jour+5?"cdot-late":"cdot-no";return`<div class="cdot ${cls}" title="${ct.nom}"></div>`;}).join("");
+            return`<tr onclick="openStudentPanel('${a.id}')">
+              <td><div class="stu-cell"><div class="avatar" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div><div><div class="stu-name">${a.prenom} ${a.nom}</div><div class="stu-email">${a.email||""}</div></div></div></td>
+              <td style="font-size:12px;color:var(--muted)">${a.cohorte||"—"}</td>
+              <td><span class="day-badge">J${a.jour}</span></td>
+              <td style="font-size:13px">${ph.icon} ${ph.nom}</td>
+              <td><div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${pColor(p)}"></div></div><span class="prog-pct">${p}%</span></div></td>
+              <td><div class="cdots">${dots}</div></td>
+              <td style="font-size:12px;color:var(--muted)">${last?last.date:"—"}</td>
+              <td style="font-size:13px">${a.charge||"—"}</td>
+              <td>${sBadge(a.statut)}</td>
+              <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">
+                <button class="icon-btn" onclick="openStudentModal(S.apprenants.find(x=>x.id==='${a.id}'))" title="Modifier">✏️</button>
+                <button class="icon-btn" onclick="confirmDelete('apprenants','${a.id}','${a.prenom} ${a.nom}')" title="Supprimer">🗑️</button>
+              </div></td>
+            </tr>`;}).join(""):
+          `<tr><td colspan="10"><div class="empty"><div class="empty-icon">👥</div><h3>Aucun apprenant</h3><p>Ajoutez votre premier apprenant.</p></div></td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════
+//  PAGE: PLANNING
+// ══════════════════════════════════════
+// ── Planning helpers ──
+function getWeekDays(offset){
+  const now=new Date();
+  const dow=now.getDay()||7; // 1=Mon…7=Sun
+  const mon=new Date(now);
+  mon.setDate(now.getDate()-dow+1+offset*7);
+  mon.setHours(0,0,0,0);
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(mon);d.setDate(mon.getDate()+i);
+    return{date:d,iso:d.toISOString().split('T')[0],isWeekend:i>=5};
+  });
+}
+function isoToDate(iso){const[y,m,d]=iso.split('-');return new Date(y,m-1,d);}
+function planToday(){return new Date().toISOString().split('T')[0];}
+
+function renderPlanning(){
+  const allRdvs=byCharge(S.rdvs);
+  const apprenants=byCharge(S.apprenants);
+  const days=getWeekDays(S._planWeekOffset);
+  const weekStart=days[0].iso;
+  const weekEnd=days[6].iso;
+  const todayIso=planToday();
+
+  // KPIs for this week
+  const weekRdvs=allRdvs.filter(r=>r.date>=weekStart&&r.date<=weekEnd);
+  const weekPlanned=weekRdvs.filter(r=>r.statut==="Planifié").length;
+  const weekDone=weekRdvs.filter(r=>r.statut==="Réalisé").length;
+
+  // Coverage: apprenants with at least 1 non-cancelled RDV this week
+  const coveredIds=new Set(weekRdvs.filter(r=>r.statut!=="Annulé").map(r=>r.apprenant_id));
+  const missingCount=apprenants.filter(a=>!coveredIds.has(a.id)).length;
+  const coverPct=apprenants.length?Math.round((coveredIds.size/apprenants.length)*100):100;
+
+  // Week label
+  const fmt=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  const weekLabel=`${fmt(days[0].date)} — ${fmt(days[6].date)}`;
+
+  // Sidebar: group students without RDV this week by cohort
+  const missing=apprenants.filter(a=>!coveredIds.has(a.id));
+  const cohortMap={};
+  // Students assigned to a named cohort (from S.cohorts)
+  S.cohorts.forEach(c=>{
+    const members=missing.filter(a=>(c.membres||[]).includes(a.id));
+    if(members.length)cohortMap[c.id]={nom:c.nom,couleur:c.couleur||'#4F46E5',members};
+  });
+  // Students not in any cohort
+  const inAnyCohort=new Set(S.cohorts.flatMap(c=>c.membres||[]));
+  const orphans=missing.filter(a=>!inAnyCohort.has(a.id));
+  if(orphans.length)cohortMap['__none']={nom:'Sans cohorte',couleur:'#94A3B8',members:orphans};
+
+  const sidebarGroups=Object.values(cohortMap);
+
+  document.getElementById("page-planning").innerHTML=`
+  <div class="planning-wrap">
+    <!-- Topbar -->
+    <div class="planning-topbar">
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="planNavWeek(-1)" title="Semaine précédente">‹</button>
+        <div class="week-label">📅 ${weekLabel}</div>
+        <button class="week-nav-btn" onclick="planNavWeek(1)" title="Semaine suivante">›</button>
+        ${S._planWeekOffset!==0?`<button class="btn-today" onclick="planNavWeek(0,true)">Aujourd'hui</button>`:''}
+      </div>
+      <div class="planning-kpis">
+        <div class="pl-kpi" style="background:var(--primary-light)">
+          <div class="pl-kpi-val" style="color:var(--primary)">${weekPlanned}</div>
+          <div style="font-size:11px;color:var(--primary);font-weight:600">Planifiés</div>
+        </div>
+        <div class="pl-kpi" style="background:var(--success-light)">
+          <div class="pl-kpi-val" style="color:var(--success)">${weekDone}</div>
+          <div style="font-size:11px;color:var(--success);font-weight:600">Réalisés</div>
+        </div>
+        <div class="pl-kpi" style="background:${missingCount>0?'var(--warning-light)':'var(--success-light)'}">
+          <div class="pl-kpi-val" style="color:${missingCount>0?'#92400E':'var(--success)'}">
+            ${coverPct}%
+          </div>
+          <div style="font-size:11px;color:${missingCount>0?'#92400E':'var(--success)'};font-weight:600">Couverture</div>
+        </div>
+        ${missingCount>0?`<div class="pl-kpi" style="background:var(--danger-light)">
+          <div class="pl-kpi-val" style="color:var(--danger)">${missingCount}</div>
+          <div style="font-size:11px;color:var(--danger);font-weight:600">Sans RDV</div>
+        </div>`:''}
+        <button class="btn btn-primary btn-sm" onclick="openRdvModal()">+ RDV</button>
+      </div>
+    </div>
+
+    <!-- Body: grid + sidebar -->
+    <div class="planning-body">
+      <!-- Week grid -->
+      <div class="week-grid">
+        <div class="week-header">
+          ${days.map(d=>{
+            const rdvCount=allRdvs.filter(r=>r.date===d.iso&&r.statut!=="Annulé").length;
+            const isTd=d.iso===todayIso;
+            return`<div class="wh-day${isTd?' today':''}${d.isWeekend?' weekend':''}">
+              <div class="wh-day-name">${d.date.toLocaleDateString('fr-FR',{weekday:'short'})}</div>
+              <div class="wh-day-num">${d.date.getDate()}</div>
+              <div class="wh-rdv-count">${rdvCount>0?rdvCount+' rdv':''}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="week-cols">
+          ${days.map(d=>{
+            const dayRdvs=allRdvs.filter(r=>r.date===d.iso).sort((a,b)=>(a.heure||'').localeCompare(b.heure||''));
+            const isTd=d.iso===todayIso;
+            return`<div class="day-col${isTd?' today':''}${d.isWeekend?' weekend':''}">
+              ${dayRdvs.map(r=>{
+                const isDone=r.statut==="Réalisé";
+                const isCancelled=r.statut==="Annulé";
+                const hasMeet=!!r.meet_url;
+                const statusCls=isDone?'done':isCancelled?'cancelled':'';
+                const meetCls=hasMeet&&!isDone&&!isCancelled?'has-meet':'';
+                return`<div class="rdv-mini ${statusCls} ${meetCls}" onclick="showRdvPop(event,'${r.id}')">
+                  ${r.heure?`<div class="rdv-mini-time">${r.heure}</div>`:''}
+                  <div class="rdv-mini-name">${r.apprenant_nom||'—'}</div>
+                  <div class="rdv-mini-type">${r.type||''}</div>
+                  <div class="rdv-mini-badges">
+                    ${hasMeet&&!isCancelled?`<span class="rdv-mini-badge rdv-mini-meet">📹 Meet</span>`:''}
+                    <span class="rdv-mini-badge rdv-mini-status ${statusCls}">${r.statut}</span>
+                  </div>
+                </div>`;
+              }).join('')}
+              ${!d.isWeekend?`<button class="btn-add-rdv-day" onclick="openRdvForDate('${d.iso}')">＋</button>`:''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Sidebar: coverage -->
+      <div class="planning-sidebar">
+        <div class="ps-head">
+          <div class="ps-title">
+            ${missingCount>0?'⚠️':'✅'}
+            ${missingCount>0?`${missingCount} sans RDV cette semaine`:'Tous couverts !'}
+          </div>
+          <div class="ps-sub">1 RDV/semaine requis par apprenant</div>
+        </div>
+        <div class="ps-body">
+          ${missingCount===0?`<div class="ps-empty">🎉 Tous les apprenants ont un RDV planifié cette semaine.</div>`:''}
+          ${sidebarGroups.map(g=>`
+            <div class="ps-cohort">
+              <div class="ps-cohort-label">
+                <div class="ps-cohort-dot" style="background:${g.couleur}"></div>
+                ${g.nom}
+                <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--danger)">${g.members.length}</span>
+              </div>
+              ${g.members.map(a=>`
+                <div class="ps-student-row" onclick="openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">
+                  <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
+                  <div class="ps-name">${a.prenom} ${a.nom}</div>
+                  <button class="ps-action missing" onclick="event.stopPropagation();openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">+ RDV</button>
+                </div>`).join('')}
+            </div>`).join('')}
+          ${apprenants.filter(a=>coveredIds.has(a.id)).length>0?`
+            <div class="ps-cohort" style="margin-top:8px">
+              <div class="ps-cohort-label">
+                <div class="ps-cohort-dot" style="background:var(--success)"></div>
+                Couverts cette semaine
+                <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--success)">${coveredIds.size}</span>
+              </div>
+              ${apprenants.filter(a=>coveredIds.has(a.id)).map(a=>`
+                <div class="ps-student-row ok">
+                  <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
+                  <div class="ps-name">${a.prenom} ${a.nom}</div>
+                  <span class="ps-action ok">✓</span>
+                </div>`).join('')}
+            </div>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function planNavWeek(delta,reset=false){
+  S._planWeekOffset=reset?0:S._planWeekOffset+delta;
+  renderPlanning();
+}
+
+function openRdvForDate(isoDate){
+  openRdvModal();
+  // Pre-fill date after modal renders
+  setTimeout(()=>{const el=document.getElementById("r-date");if(el)el.value=isoDate;},50);
+}
+
+function openRdvForStudent(appId,nom){
+  openRdvModal();
+  setTimeout(()=>{
+    const sel=document.getElementById("r-app");
+    if(sel)sel.value=appId;
+    // Also pre-fill date to today if current week
+    if(S._planWeekOffset===0){
+      const el=document.getElementById("r-date");if(el)el.value=planToday();
+    }
+  },50);
+}
+
+function showRdvPop(e,rdvId){
+  e.stopPropagation();
+  document.querySelectorAll('.rdv-detail-pop').forEach(p=>p.remove());
+  const r=S.rdvs.find(x=>x.id===rdvId);if(!r)return;
+  const pop=document.createElement('div');
+  pop.className='rdv-detail-pop';
+  pop.innerHTML=`
+    <div class="rdv-pop-name">${r.apprenant_nom||'—'}</div>
+    <div class="rdv-pop-row">📋 ${r.type||'—'}</div>
+    ${r.heure?`<div class="rdv-pop-row">🕐 ${r.heure}</div>`:''}
+    <div class="rdv-pop-row">👤 ${r.charge_suivi||'—'}</div>
+    ${r.meet_url?`<div class="rdv-pop-row">📹 <a href="${r.meet_url}" target="_blank" style="color:var(--primary);font-weight:600">Ouvrir Google Meet</a></div>`:''}
+    ${r.notes?`<div class="rdv-pop-row" style="font-style:italic">💬 ${r.notes}</div>`:''}
+    <div class="rdv-pop-actions">
+      ${r.statut==="Planifié"?`
+        <button class="btn btn-success btn-sm" onclick="markRdv('${r.id}','Réalisé');document.querySelectorAll('.rdv-detail-pop').forEach(p=>p.remove())">✅ Réalisé</button>
+        <button class="btn btn-outline btn-sm" onclick="markRdv('${r.id}','Annulé');document.querySelectorAll('.rdv-detail-pop').forEach(p=>p.remove())">❌ Annuler</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="openRdvModal(S.rdvs.find(x=>x.id==='${r.id}'));document.querySelectorAll('.rdv-detail-pop').forEach(p=>p.remove())">✏️</button>
+    </div>`;
+  // Position near click
+  const x=Math.min(e.clientX,window.innerWidth-280);
+  const y=Math.min(e.clientY+10,window.innerHeight-300);
+  pop.style.left=x+'px';pop.style.top=y+'px';
+  document.body.appendChild(pop);
+  setTimeout(()=>document.addEventListener('click',()=>pop.remove(),{once:true}),10);
+}
+
+// ══════════════════════════════════════
+//  PAGE: ALERTES
+// ══════════════════════════════════════
+function renderAlertes(){
+  const alerts=computeAlerts();
+  document.getElementById("page-alertes").innerHTML=alerts.length?`
+    <div class="grid-3 mb">
+      <div class="kpi-card" style="border-left-color:var(--danger)"><div class="kpi-icon" style="background:var(--danger-light)">🔴</div><div><div class="kpi-label">Urgentes</div><div class="kpi-value" style="color:var(--danger)">${alerts.filter(a=>a.type==="danger").length}</div></div></div>
+      <div class="kpi-card" style="border-left-color:var(--warning)"><div class="kpi-icon" style="background:var(--warning-light)">🟡</div><div><div class="kpi-label">Avertissements</div><div class="kpi-value" style="color:var(--warning)">${alerts.filter(a=>a.type==="warning").length}</div></div></div>
+      <div class="kpi-card" style="border-left-color:var(--info)"><div class="kpi-icon" style="background:var(--info-light)">ℹ️</div><div><div class="kpi-label">Info</div><div class="kpi-value" style="color:var(--info)">${alerts.filter(a=>a.type==="info").length}</div></div></div>
+    </div>
+    <div class="card">${alerts.map(a=>`<div class="alert-item alert-${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div style="flex:1"><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div>
+        ${a.aid?`<span class="alert-action" onclick="openStudentPanel('${a.aid}')">Voir l'apprenant →</span>`:""}
+        ${a.rid?`<span class="alert-action" onclick="openRdvModal(S.rdvs.find(r=>r.id==='${a.rid}'))">Mettre à jour le RDV →</span>`:""}
+      </div></div>`).join("")}</div>`:
+  `<div class="empty" style="padding:80px"><div class="empty-icon">✅</div><h3>Aucune alerte active</h3><p>Tous les apprenants avancent correctement.</p></div>`;
+}
+
+// ══════════════════════════════════════
+//  PAGE: RAPPORTS
+// ══════════════════════════════════════
+function renderRapports(){
+  const data=byCharge(S.apprenants);
+  document.getElementById("page-rapports").innerHTML=`
+    <div class="grid-2 mb">
+      <div class="chart-card"><div class="section-title">Complétion par module</div><canvas id="ch-mod" height="220"></canvas></div>
+      <div class="chart-card"><div class="section-title">Répartition des statuts</div><canvas id="ch-stat" height="220"></canvas></div>
+    </div>
+    <div class="grid-2">
+      <div class="chart-card"><div class="section-title">Apprenants par cohorte</div><canvas id="ch-coh" height="220"></canvas></div>
+      <div class="chart-card"><div class="section-title">Avancement moyen par chargé</div><canvas id="ch-ch" height="220"></canvas></div>
+    </div>`;
+  setTimeout(()=>{
+    const modSrc=S.modules.length?S.modules:MODULES.map(m=>({id:m.id,titre:m.nom,phase_id:String(m.phase)}));
+    const PHASE_COLORS_CHART={onboarding:"#8B5CF6CC",formation:"#3B82F6CC",pratique:"#10B981CC",finalisation:"#F59E0BCC"};
+    const rates=modSrc.map(m=>{
+      const done=S.modules.length
+        ?data.filter(a=>S.progressions.some(p=>p.apprenant_id===a.id&&p.module_id===m.id&&p.statut==="completed")).length
+        :data.filter(a=>(a.modules_scores||[])[m.id-1]!=null).length;
+      return data.length?Math.round((done/data.length)*100):0;
+    });
+    const phColors=modSrc.map(m=>PHASE_COLORS_CHART[m.phase_id]||"#4F46E5CC");
+    const modLabels=modSrc.map(m=>(m.titre||m.nom||"").substring(0,12));
+    if(S.charts.mod)S.charts.mod.destroy();
+    S.charts.mod=new Chart(document.getElementById("ch-mod").getContext("2d"),{type:"bar",data:{labels:modLabels,datasets:[{label:"% complété",data:rates,backgroundColor:phColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}},x:{grid:{display:false},ticks:{maxRotation:30,font:{size:10}}}}}})
+
+    const sc={};STATUTS.forEach(s=>sc[s]=data.filter(a=>a.statut===s).length);
+    if(S.charts.stat)S.charts.stat.destroy();
+    S.charts.stat=new Chart(document.getElementById("ch-stat").getContext("2d"),{type:"doughnut",data:{labels:Object.keys(sc),datasets:[{data:Object.values(sc),backgroundColor:["#10B981CC","#3B82F6CC","#F59E0BCC","#EF4444CC","#94A3B8CC"],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:"60%",plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:10,font:{size:12}}}}}});
+
+    const cc={};S.cohortes.forEach(c=>cc[c]=data.filter(a=>a.cohorte===c).length);
+    if(S.charts.coh)S.charts.coh.destroy();
+    S.charts.coh=new Chart(document.getElementById("ch-coh").getContext("2d"),{type:"bar",data:{labels:Object.keys(cc),datasets:[{label:"Apprenants",data:Object.values(cc),backgroundColor:"#4F46E5CC",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}}}}});
+
+    const chData=S.charges.map(c=>{const d=data.filter(a=>a.charge===c);return{c,avg:d.length?Math.round(d.reduce((s,a)=>s+avp(a.jour),0)/d.length):0};});
+    if(S.charts.ch)S.charts.ch.destroy();
+    S.charts.ch=new Chart(document.getElementById("ch-ch").getContext("2d"),{type:"bar",data:{labels:chData.map(c=>c.c),datasets:[{label:"Avancement %",data:chData.map(c=>c.avg),backgroundColor:"#10B981CC",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}},x:{grid:{display:false}}}}});
+  },50);
+}
+
+// ══════════════════════════════════════
+//  PAGE: RÉGLAGES
+// ══════════════════════════════════════
+function renderReglages(){
+  document.getElementById("page-reglages").innerHTML=`
+    <div class="grid-2 mb">
+      <div class="card">
+        <div class="section-title">Chargés de suivi</div>
+        ${S.charges.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div class="avatar" style="background:var(--primary)">${c[0]}</div><span style="flex:1;font-weight:500">${c}</span><span style="font-size:12px;color:var(--muted)">${S.apprenants.filter(a=>a.charge===c).length} apprenant(s)</span></div>`).join("")||`<p style="color:var(--muted);padding:12px 0;font-size:13px">Aucun chargé. Ajoutez des apprenants.</p>`}
+      </div>
+      <div class="card">
+        <div class="section-title">Cohortes actives</div>
+        ${S.cohortes.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:18px">🎓</span><span style="flex:1;font-weight:500">${c}</span><span style="font-size:12px;color:var(--muted)">${S.apprenants.filter(a=>a.cohorte===c).length} apprenant(s)</span></div>`).join("")||`<p style="color:var(--muted);padding:12px 0;font-size:13px">Aucune cohorte.</p>`}
+      </div>
+    </div>
+    <div class="card mb">
+      <div class="section-title">Modules du parcours</div>
+      <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Module</th><th>Phase</th><th>Période</th><th>Points max</th></tr></thead><tbody>
+        ${MODULES.map(m=>{const p=PHASES.find(ph=>ph.id===m.phase);return`<tr style="cursor:default"><td style="font-weight:700;color:var(--primary)">${m.id}</td><td>${m.nom}</td><td>${p?p.icon+" "+p.nom:""}</td><td>${m.duree}</td><td style="font-weight:700">${m.pts} pts</td></tr>`;}).join("")}
+      </tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Données de démonstration</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Charger 18 apprenants de démonstration avec contacts et RDVs.</p>
+      <button class="btn btn-outline" onclick="seedData(true)">Charger les données de démo</button>
+    </div>`;
+}
+
+// ══════════════════════════════════════
+//  DETAIL PANEL
+// ══════════════════════════════════════
+function openStudentPanel(id){
+  const a=S.apprenants.find(x=>x.id===id);if(!a)return;
+  S.student=a;S.panelTab=0;
+  document.getElementById("p-avatar").style.background=a.couleur||AVC[0];
+  document.getElementById("p-avatar").textContent=ini(a.prenom,a.nom);
+  document.getElementById("p-name").textContent=`${a.prenom} ${a.nom}`;
+  document.getElementById("p-meta").innerHTML=`${sBadge(a.statut)}<span>${a.cohorte||""}</span><span>·</span><span>${a.charge||""}</span>`;
+  document.querySelectorAll(".panel-tab").forEach((t,i)=>t.classList.toggle("active",i===0));
+  renderPanelTab();
+  document.getElementById("panel-overlay").classList.add("active");
+  document.getElementById("detail-panel").classList.add("open");
+}
+function closePanel(){
+  document.getElementById("panel-overlay").classList.remove("active");
+  document.getElementById("detail-panel").classList.remove("open");
+  S.student=null;
+}
+function switchTab(i){
+  S.panelTab=i;
+  document.querySelectorAll(".panel-tab").forEach((t,j)=>t.classList.toggle("active",i===j));
+  renderPanelTab();
+}
+function renderPanelTab(){
+  if(!S.student)return;
+  const a=S.student,sc=stuContacts(a.id);
+  [renderPanelProfil,renderPanelParcours,renderPanelModules,renderPanelContacts,renderPanelNotes][S.panelTab](a,sc);
+}
+function renderPanelProfil(a){
+  document.getElementById("panel-body").innerHTML=`
+    <div class="stat-boxes">
+      <div class="stat-box"><div class="stat-val" style="color:var(--primary)">J${a.jour}/90</div><div class="stat-lbl">Jour parcours</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--success)">${moduleProgress(a)}%</div><div class="stat-lbl">Modules complétés</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--warning)">${modulesOk(a)}/${totalModules()}</div><div class="stat-lbl">Modules OK</div></div>
+    </div>
+    ${[["📧 Email",a.email],["📱 Téléphone",a.telephone],["🎓 Cohorte",a.cohorte],["📅 Début",a.date_debut],["👤 Chargé",a.charge],["🏆 Score",scoreTotal(a)+" pts"],["🎯 Objectif",a.objectif]].map(([l,v])=>v?`<div class="field-row"><span class="field-lbl">${l}</span><span class="field-val">${v}</span></div>`:"").join("")}`;
+}
+function renderPanelParcours(a){
+  document.getElementById("panel-body").innerHTML=`<div class="journey-wrap">${PHASES.map(p=>{
+    const done=a.jour>p.fin,cur=a.jour>=p.debut&&a.jour<=p.fin;
+    const dc=done?"jdot-done":cur?"jdot-cur":"";
+    const mods=MODULES.filter(m=>m.phase===p.id).map(m=>{const s=(a.modules_scores||[])[m.id-1];const ok=s!=null;return`<span class="chip ${ok?"chip-done":cur?"chip-cur":"chip-up"}">${m.nom}${ok?" — "+s+" pts":""}</span>`;}).join("");
+    return`<div class="journey-step">
+      <div class="jdot ${dc}">${done?"✓":cur?"●":""}</div>
+      <div class="jphase-name" style="color:${cur?p.c:done?"var(--success)":"var(--muted)"}">${p.icon} ${p.nom} — J${p.debut}–J${p.fin}${cur?` <span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:1px 6px;border-radius:10px;font-weight:600">En cours</span>`:""}${done?" ✓":""}</div>
+      <div class="jphase-desc">${p.desc}</div>
+      <div class="jchips">${mods}</div>
+    </div>`;}).join("")}</div>`;
+}
+function renderPanelModules(a){
+  const progs=stuProgs(a.id);
+  const doneIds=new Set(progs.map(p=>p.module_id));
+  const PHASE_COLORS={onboarding:"#8B5CF6",formation:"#3B82F6",pratique:"#10B981",finalisation:"#F59E0B"};
+  const PHASE_LABELS={onboarding:"Onboarding",formation:"Formation",pratique:"Pratique",finalisation:"Finalisation"};
+  if(!S.modules.length){
+    document.getElementById("panel-body").innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:32px;margin-bottom:8px">📚</div>
+      <div style="font-weight:600">Aucun module publié</div>
+      <div style="font-size:12px;margin-top:4px">Créez des modules depuis le <a href="../admin/" target="_blank" style="color:var(--primary)">panel admin</a></div>
+    </div>`;return;
+  }
+  const rows=S.modules.map(m=>{
+    const prog=progs.find(p=>p.module_id===m.id);
+    const ok=doneIds.has(m.id);
+    const score=prog?.score_quiz??null;
+    const minScore=m.score_minimum||70;
+    const phasec=PHASE_COLORS[m.phase_id]||"var(--primary)";
+    const phasel=PHASE_LABELS[m.phase_id]||m.phase_id||"";
+    return`<div class="mod-row">
+      <div class="mod-dot" style="background:${ok?"#10B981":"#E2E8F0"}"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px">
+          ${m.titre}
+          ${ok?`<span style="font-size:10px;background:#DCFCE7;color:#16A34A;padding:1px 6px;border-radius:10px;font-weight:700">✓ Complété</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span style="font-size:10px;background:${phasec}22;color:${phasec};padding:1px 7px;border-radius:10px;font-weight:600">${phasel}</span>
+          ${m.duree_estimee?`<span style="font-size:11px;color:var(--muted)">⏱ ${m.duree_estimee}</span>`:''}
+          ${score!=null?`<span style="font-size:11px;color:${score>=minScore?"#16A34A":"#DC2626"};font-weight:600">Quiz : ${score}% ${score>=minScore?"✓":"✗"}</span>`:''}
+          ${ok&&prog?.completed_at?`<span style="font-size:11px;color:var(--muted)">${fDate(prog.completed_at?.toDate?.()?.toISOString?.()?.split('T')[0]||'')}</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  const done=progs.length,total=S.modules.length,pct=total?Math.round(done/total*100):0;
+  document.getElementById("panel-body").innerHTML=`
+    <div style="background:var(--primary-light);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:6px">${done} / ${total} modules complétés</div>
+        <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:${pct}%;background:var(--primary)"></div></div>
+      </div>
+      <div style="font-size:22px;font-weight:800;color:var(--primary)">${pct}%</div>
+    </div>
+    <div>${rows}</div>`;
+}
+function saveModScores(id){
+  const scores=MODULES.map((_,i)=>{const v=document.getElementById(`ms-${i}`)?.value;return(v===undefined||v==="")?null:Math.min(parseInt(v)||0,MODULES[i].pts);});
+  db.collection("apprenants").doc(id).update({modules_scores:scores,updatedAt:TS()}).then(()=>toast("Scores enregistrés ✅","success")).catch(e=>toast("Erreur: "+e.message,"error"));
+}
+function renderPanelContacts(a,sc){
+  const enriched=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const status=done?"done":a.jour>=ct.jour+5?"overdue":"planned";return{...ct,status,date:done?.date||null,note:done?.note||null};});
+  document.getElementById("panel-body").innerHTML=`
+    <div style="margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="openContactModal('${a.id}','${a.prenom} ${a.nom}')">+ Ajouter un contact</button></div>
+    <div>${enriched.map(c=>`<div class="contact-item ${c.status==="overdue"?"overdue":c.status==="planned"?"planned":""}">
+      <div class="contact-ico" style="background:${c.c}22">${c.icon}</div>
+      <div style="flex:1">
+        <div class="c-title" style="${c.status==="overdue"?"color:var(--danger)":""}">${c.status==="overdue"?"⚠️ ":""}${c.nom}</div>
+        <div class="c-date">${c.status==="done"?"✅ Réalisé le "+c.date:c.status==="overdue"?"Non réalisé — prévu J"+c.jour:"🕐 Prévu autour de J"+c.jour}</div>
+        ${c.note?`<div class="c-note">${c.note}</div>`:""}
+      </div></div>`).join("")}</div>
+    ${sc.length?`<div style="margin-top:16px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Historique</div>
+      ${sc.map(c=>`<div style="display:flex;gap:8px;padding:8px;background:var(--bg);border-radius:7px;margin-bottom:5px;font-size:12px"><span style="color:var(--primary);font-weight:600">${c.date}</span><span style="color:var(--muted)">·</span><span style="font-weight:500">${c.type}</span>${c.note?`<span style="color:var(--muted)">— ${c.note}</span>`:""}</div>`).join("")}
+    </div>`:""}`;
+}
+function renderPanelNotes(a){
+  document.getElementById("panel-body").innerHTML=`
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Notes internes — visibles par tous les chargés de suivi.</p>
+    <textarea class="notes-area" id="notes-area" placeholder="Écrire vos notes…">${a.notes||""}</textarea>
+    <div style="margin-top:12px"><button class="btn btn-primary" onclick="saveNotes('${a.id}')">💾 Enregistrer</button></div>`;
+}
+function saveNotes(id){
+  const notes=document.getElementById("notes-area")?.value||"";
+  db.collection("apprenants").doc(id).update({notes,updatedAt:TS()}).then(()=>toast("Notes sauvegardées ✅","success")).catch(e=>toast("Erreur","error"));
+}
+
+// ══════════════════════════════════════
+//  MODAL APPRENANT
+// ══════════════���═══════════════════════
+function openStudentModal(student){
+  S.editStudentId=student?.id||null;
+  document.getElementById("sm-title").textContent=student?"Modifier l'apprenant":"Ajouter un apprenant";
+  const a=student||{};
+  document.getElementById("sm-body").innerHTML=`
+    <div class="form-grid">
+      <div class="form-group"><label>Prénom *</label><input id="f-prenom" value="${a.prenom||""}" placeholder="Camille"></div>
+      <div class="form-group"><label>Nom *</label><input id="f-nom" value="${a.nom||""}" placeholder="Dupont"></div>
+      <div class="form-group"><label>Email *</label><input id="f-email" type="email" value="${a.email||""}" placeholder="c.dupont@email.fr"></div>
+      <div class="form-group"><label>Téléphone</label><input id="f-tel" value="${a.telephone||""}" placeholder="+33 6 00 00 00 00"></div>
+      <div class="form-group"><label>Cohorte *</label><input id="f-cohorte" list="dl-coh" value="${a.cohorte||""}" placeholder="Cohorte Jan 2025"><datalist id="dl-coh">${S.cohortes.map(c=>`<option value="${c}">`).join("")}</datalist></div>
+      <div class="form-group"><label>Date de début</label><input id="f-debut" type="date" value="${a.date_debut||""}"></div>
+      <div class="form-group"><label>Jour dans le parcours *</label><input id="f-jour" type="number" min="1" max="90" value="${a.jour||1}"></div>
+      <div class="form-group"><label>Statut *</label><select id="f-statut">${STATUTS.map(s=>`<option value="${s}" ${a.statut===s?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div class="form-group form-full"><label>Coach attribué *</label><select id="f-charge">
+        <option value="">— Sélectionner un coach —</option>
+        ${S.csmUsers.map(u=>{
+          const name=`${u.prenom||""} ${u.nom||""}`.trim()||u.email||u.id;
+          const selected=(a.csm_id===u.id)||(a.charge===name&&!a.csm_id);
+          return`<option value="${u.id}" data-name="${name}" ${selected?"selected":""}>${name}</option>`;
+        }).join("")}
+      </select></div>
+      <div class="form-group form-full"><label>Objectif</label><input id="f-obj" value="${a.objectif||""}" placeholder="Reconversion, montée en compétences…"></div>
+      <div class="form-group form-full"><label>Notes</label><textarea id="f-notes">${a.notes||""}</textarea></div>
+    </div>
+    <div class="form-actions">
+      ${student?`<button class="btn btn-danger btn-sm" onclick="confirmDelete('apprenants','${a.id}','${a.prenom} ${a.nom}');closeStudentModal()">🗑️ Supprimer</button>`:""}
+      <button class="btn btn-outline" onclick="closeStudentModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveStudent()">💾 Enregistrer</button>
+    </div>`;
+  document.getElementById("mo-student").classList.add("active");
+}
+function closeStudentModal(){document.getElementById("mo-student").classList.remove("active");}
+function saveStudent(){
+  const prenom=document.getElementById("f-prenom").value.trim();
+  const nom=document.getElementById("f-nom").value.trim();
+  const email=document.getElementById("f-email").value.trim();
+  if(!prenom||!nom||!email){toast("Prénom, nom et email sont requis","error");return;}
+  // Resolve coach UID + display name from select
+  const chargeSelect=document.getElementById("f-charge");
+  const csm_id=chargeSelect.value||null;
+  const chargeOpt=chargeSelect.options[chargeSelect.selectedIndex];
+  const charge=csm_id?(chargeOpt.getAttribute("data-name")||chargeOpt.textContent.trim()):"";
+  const data={
+    prenom,nom,email,
+    telephone:document.getElementById("f-tel").value.trim(),
+    cohorte:document.getElementById("f-cohorte").value.trim(),
+    charge,          // nom affiché (ex: "Sophie Martin")
+    csm_id,          // UID Firebase du coach
+    jour:parseInt(document.getElementById("f-jour").value)||1,
+    date_debut:document.getElementById("f-debut").value,
+    statut:document.getElementById("f-statut").value,
+    objectif:document.getElementById("f-obj").value.trim(),
+    notes:document.getElementById("f-notes").value.trim(),
+    couleur:AVC[Math.floor(Math.random()*AVC.length)],
+    updatedAt:TS()
+  };
+  const col=db.collection("apprenants");
+  const p=S.editStudentId?col.doc(S.editStudentId).update(data):col.add({...data,modules_scores:Array(9).fill(null),createdAt:TS()});
+  p.then(()=>{toast(S.editStudentId?"Apprenant mis à jour ✅":"Apprenant ajouté ✅","success");closeStudentModal();}).catch(e=>toast("Erreur: "+e.message,"error"));
+}
+
+// ══════════════════════════════════════
+//  MODAL RDV
+// ══════════════════════════════════════
+function openRdvModal(rdv){
+  S.editRdvId=rdv?.id||null;
+  document.getElementById("rm-title").textContent=rdv?"Modifier le RDV":"Planifier un RDV";
+  const r=rdv||{};
+  document.getElementById("rm-body").innerHTML=`
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Apprenant *</label><select id="r-app">${S.apprenants.map(a=>`<option value="${a.id}" data-nom="${a.prenom} ${a.nom}" ${r.apprenant_id===a.id?"selected":""}>${a.prenom} ${a.nom}</option>`).join("")}</select></div>
+      <div class="form-group"><label>Type de contact *</label><select id="r-type">${CT.map(c=>`<option value="${c.nom}" ${r.type===c.nom?"selected":""}>${c.nom}</option>`).join("")}<option value="Autre" ${r.type==="Autre"?"selected":""}>Autre</option></select></div>
+      <div class="form-group"><label>Coach *</label><select id="r-charge">
+        <option value="">Sélectionner…</option>
+        ${S.csmUsers.map(u=>{const name=`${u.prenom||""} ${u.nom||""}`.trim()||u.email;return`<option value="${u.id}" data-name="${name}" ${(r.csm_id===u.id||(r.charge_suivi===name&&!r.csm_id))?"selected":""}>${name}</option>`;}).join("")}
+      </select></div>
+      <div class="form-group"><label>Date *</label><input id="r-date" type="date" value="${r.date||today()}"></div>
+      <div class="form-group"><label>Heure *</label><input id="r-heure" type="time" value="${r.heure||"10:00"}"></div>
+      <div class="form-group"><label>Statut</label><select id="r-statut">${["Planifié","Réalisé","Annulé","Reporté"].map(s=>`<option value="${s}" ${(r.statut||"Planifié")===s?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div class="form-group form-full">
+        <label>Lien Google Meet</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="r-meet" type="url" value="${r.meet_url||""}" placeholder="https://meet.google.com/xxx-xxxx-xxx" style="flex:1">
+          <a href="https://meet.google.com/new" target="_blank" class="btn btn-outline btn-sm" style="white-space:nowrap;text-decoration:none">+ Créer Meet</a>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Ce lien sera visible par l'apprenant dans son espace</div>
+      </div>
+      <div class="form-group form-full"><label>Notes internes</label><textarea id="r-notes">${r.notes||""}</textarea></div>
+    </div>
+    <div class="form-actions">
+      ${rdv?`<button class="btn btn-danger btn-sm" onclick="confirmDelete('rdvs','${r.id}','ce RDV');closeRdvModal()">🗑️ Supprimer</button>`:""}
+      <button class="btn btn-outline" onclick="closeRdvModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveRdv()">💾 Enregistrer</button>
+    </div>`;
+  document.getElementById("mo-rdv").classList.add("active");
+}
+function closeRdvModal(){document.getElementById("mo-rdv").classList.remove("active");}
+function saveRdv(){
+  const sel=document.getElementById("r-app");
+  const apprenant_id=sel.value;
+  const apprenant_nom=sel.options[sel.selectedIndex]?.dataset.nom||"";
+  const chargeEl=document.getElementById("r-charge");
+  const csm_id=chargeEl.value;
+  const charge_suivi=(chargeEl.options[chargeEl.selectedIndex]?.dataset.name||chargeEl.options[chargeEl.selectedIndex]?.textContent||"").trim();
+  const date=document.getElementById("r-date").value;
+  if(!apprenant_id||!csm_id||!date){toast("Apprenant, coach et date sont requis","error");return;}
+  const meet_url=document.getElementById("r-meet").value.trim();
+  const data={
+    apprenant_id,apprenant_nom,
+    csm_id,charge_suivi,
+    type:document.getElementById("r-type").value,
+    date,heure:document.getElementById("r-heure").value,
+    statut:document.getElementById("r-statut").value,
+    meet_url:meet_url||null,
+    notes:document.getElementById("r-notes").value.trim(),
+    updatedAt:TS()
+  };
+  const col=db.collection("rdvs");
+  const p=S.editRdvId?col.doc(S.editRdvId).update(data):col.add({...data,createdAt:TS()});
+  p.then(()=>{toast(S.editRdvId?"RDV mis à jour ✅":"RDV planifié ✅","success");closeRdvModal();}).catch(e=>toast("Erreur: "+e.message,"error"));
+}
+function markRdv(id,statut){
+  db.collection("rdvs").doc(id).update({statut,updatedAt:TS()}).then(()=>toast(`RDV marqué: ${statut} ✅`,"success")).catch(e=>toast("Erreur","error"));
+}
+
+// ══════════════════════════════════════
+//  MODAL CONTACT
+// ══════════════════════════════════════
+function openContactModal(apprenant_id,apprenant_nom){
+  document.getElementById("cm-body").innerHTML=`
+    <div style="font-size:13px;font-weight:600;margin-bottom:14px">👤 ${apprenant_nom}</div>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Type *</label><select id="c-type">${CT.map(c=>`<option value="${c.nom}" data-id="${c.id}">${c.nom}</option>`).join("")}<option value="Autre">Autre</option></select></div>
+      <div class="form-group"><label>Date *</label><input id="c-date" type="date" value="${today()}"></div>
+      <div class="form-group"><label>Chargé *</label><select id="c-charge"><option value="">Sélectionner…</option>${S.charges.map(c=>`<option value="${c}">${c}</option>`).join("")}</select></div>
+      <div class="form-group form-full"><label>Note / compte rendu</label><textarea id="c-note" placeholder="Résumé du contact…"></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeContactModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveContact('${apprenant_id}','${apprenant_nom}')">💾 Enregistrer</button>
+    </div>`;
+  document.getElementById("mo-contact").classList.add("active");
+}
+function closeContactModal(){document.getElementById("mo-contact").classList.remove("active");}
+function saveContact(apprenant_id,apprenant_nom){
+  const typeEl=document.getElementById("c-type");const type=typeEl.value;const type_id=parseInt(typeEl.options[typeEl.selectedIndex]?.dataset.id)||0;
+  const date=document.getElementById("c-date").value;const charge_suivi=document.getElementById("c-charge").value;
+  if(!date||!charge_suivi){toast("Date et chargé requis","error");return;}
+  db.collection("contacts").add({apprenant_id,apprenant_nom,type,type_id,date,charge_suivi,note:document.getElementById("c-note").value.trim(),createdAt:TS()})
+    .then(()=>{toast("Contact enregistré ✅","success");closeContactModal();}).catch(e=>toast("Erreur: "+e.message,"error"));
+}
+
+// ══════════════════════════════════════
+//  CONFIRM DELETE
+// ══════════════════════════════════════
+function confirmDelete(collection,id,label){
+  document.getElementById("conf-title").textContent="Confirmer la suppression";
+  document.getElementById("conf-msg").textContent=`Supprimer "${label}" ? Cette action est irréversible.`;
+  document.getElementById("conf-btn").onclick=()=>{
+    db.collection(collection).doc(id).delete()
+      .then(()=>{toast("Supprimé ✅","success");closeConfirm();if(S.student?.id===id)closePanel();})
+      .catch(e=>toast("Erreur: "+e.message,"error"));
+  };
+  document.getElementById("mo-confirm").classList.add("active");
+}
+function closeConfirm(){document.getElementById("mo-confirm").classList.remove("active");}
+
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+function toast(msg,type="info"){
+  const el=document.createElement("div");
+  el.className=`toast toast-${type}`;
+  el.innerHTML=`${type==="success"?"✅":type==="error"?"❌":"ℹ️"} ${msg}`;
+  document.getElementById("toasts").appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+// ══════════════════════════════════════
+//  SEED DATA
+// ══════════════════════════════════════
+const SEED=[
+  {prenom:"Camille",nom:"Bertrand",email:"c.bertrand@email.fr",telephone:"06 11 22 33 44",cohorte:"Cohorte Jan 2025",date_debut:"2025-01-06",jour:87,statut:"Terminé",charge:"Sophie Martin",objectif:"Reconversion développeuse web",notes:"Excellente apprenante, très autonome.",modules_scores:[98,142,138,195,188,237,241,385,56],couleur:"#4F46E5"},
+  {prenom:"Antoine",nom:"Moreau",email:"a.moreau@email.fr",telephone:"06 22 33 44 55",cohorte:"Cohorte Jan 2025",date_debut:"2025-01-06",jour:82,statut:"En cours",charge:"Lucas Dubois",objectif:"Montée en compétences",notes:"Perfectionniste, profil technique solide.",modules_scores:[95,138,145,180,175,220,230,247,null],couleur:"#7C3AED"},
+  {prenom:"Léa",nom:"Fontaine",email:"l.fontaine@email.fr",telephone:"06 33 44 55 66",cohorte:"Cohorte Jan 2025",date_debut:"2025-01-06",jour:79,statut:"À risque",charge:"Amina Benali",objectif:"Changement de poste",notes:"Difficultés en mi-parcours. Accompagnement renforcé.",modules_scores:[85,110,95,140,130,180,160,150,null],couleur:"#DB2777"},
+  {prenom:"Maxime",nom:"Laurent",email:"m.laurent@email.fr",telephone:"06 44 55 66 77",cohorte:"Cohorte Fév 2025",date_debut:"2025-02-03",jour:58,statut:"En cours",charge:"Sophie Martin",objectif:"Reconversion pro",notes:"Très motivé, bon rythme.",modules_scores:[97,145,148,195,192,243,100,null,null],couleur:"#EA580C"},
+  {prenom:"Inès",nom:"Dupont",email:"i.dupont@email.fr",telephone:"06 55 66 77 88",cohorte:"Cohorte Fév 2025",date_debut:"2025-02-03",jour:61,statut:"En cours",charge:"Lucas Dubois",objectif:"Développement personnel",notes:"Profil créatif, bonne progression.",modules_scores:[92,128,130,188,175,235,147,null,null],couleur:"#16A34A"},
+  {prenom:"Thomas",nom:"Simon",email:"t.simon@email.fr",telephone:"06 66 77 88 99",cohorte:"Cohorte Fév 2025",date_debut:"2025-02-03",jour:55,statut:"En retard",charge:"Amina Benali",objectif:"Nouvelle carrière",notes:"Retard de 2 semaines. Plan de rattrapage.",modules_scores:[70,105,98,150,145,170,82,null,null],couleur:"#0891B2"},
+  {prenom:"Clara",nom:"Roux",email:"c.roux@email.fr",telephone:"06 77 88 99 00",cohorte:"Cohorte Fév 2025",date_debut:"2025-02-03",jour:47,statut:"En cours",charge:"Sophie Martin",objectif:"Évolution de carrière",notes:"Profil autonome et brillant.",modules_scores:[99,148,149,197,196,216,null,null,null],couleur:"#CA8A04"},
+  {prenom:"Hugo",nom:"Bernard",email:"h.bernard@email.fr",telephone:"06 88 99 00 11",cohorte:"Cohorte Mar 2025",date_debut:"2025-03-03",jour:35,statut:"En cours",charge:"Lucas Dubois",objectif:"Spécialisation technique",notes:"Profil analytique, très rigoureux.",modules_scores:[88,140,138,180,194,null,null,null,null],couleur:"#9333EA"},
+  {prenom:"Julie",nom:"Petit",email:"j.petit@email.fr",telephone:"06 99 00 11 22",cohorte:"Cohorte Mar 2025",date_debut:"2025-03-03",jour:34,statut:"En cours",charge:"Amina Benali",objectif:"Reconversion",notes:"Motivée, objectif clair.",modules_scores:[90,118,125,185,172,null,null,null,null],couleur:"#DC2626"},
+  {prenom:"Nicolas",nom:"Garcia",email:"n.garcia@email.fr",telephone:"07 00 11 22 33",cohorte:"Cohorte Mar 2025",date_debut:"2025-03-03",jour:32,statut:"En cours",charge:"Sophie Martin",objectif:"Perfectionnement",notes:"Bases solides, avance rapidement.",modules_scores:[100,148,149,123,null,null,null,null,null],couleur:"#059669"},
+  {prenom:"Manon",nom:"Leroy",email:"m.leroy@email.fr",telephone:"07 11 22 33 44",cohorte:"Cohorte Mar 2025",date_debut:"2025-03-03",jour:28,statut:"À risque",charge:"Lucas Dubois",objectif:"Première expérience pro",notes:"Besoin d'accompagnement et de rassurance.",modules_scores:[72,108,null,null,null,null,null,null,null],couleur:"#4F46E5"},
+  {prenom:"Romain",nom:"Martin",email:"r.martin@email.fr",telephone:"07 22 33 44 55",cohorte:"Cohorte Mar 2025",date_debut:"2025-03-03",jour:25,statut:"En cours",charge:"Amina Benali",objectif:"Montée en compétences",notes:"Junior très enthousiaste.",modules_scores:[85,140,195,null,null,null,null,null,null],couleur:"#7C3AED"},
+  {prenom:"Emma",nom:"Thomas",email:"e.thomas@email.fr",telephone:"07 33 44 55 66",cohorte:"Cohorte Mar 2025",date_debut:"2025-03-03",jour:18,statut:"En cours",charge:"Sophie Martin",objectif:"Transition de carrière",notes:"Très structurée, avance bien.",modules_scores:[98,144,38,null,null,null,null,null,null],couleur:"#DB2777"},
+  {prenom:"Sébastien",nom:"Michel",email:"s.michel@email.fr",telephone:"07 44 55 66 77",cohorte:"Cohorte Mar 2025",date_debut:"2025-03-10",jour:11,statut:"En cours",charge:"Lucas Dubois",objectif:"Développement pro",notes:"Bon démarrage.",modules_scores:[97,98,null,null,null,null,null,null,null],couleur:"#EA580C"},
+  {prenom:"Chloé",nom:"Robert",email:"c.robert@email.fr",telephone:"07 55 66 77 88",cohorte:"Cohorte Mar 2025",date_debut:"2025-03-17",jour:6,statut:"En cours",charge:"Amina Benali",objectif:"Reconversion",notes:"Onboarding en cours.",modules_scores:[88,null,null,null,null,null,null,null,null],couleur:"#16A34A"},
+  {prenom:"Alice",nom:"Blanc",email:"a.blanc@email.fr",telephone:"07 66 77 88 99",cohorte:"Cohorte Fév 2025",date_debut:"2025-02-03",jour:52,statut:"En retard",charge:"Lucas Dubois",objectif:"Changement de domaine",notes:"Retard accumulé.",modules_scores:[75,112,108,165,158,162,110,null,null],couleur:"#0891B2"},
+  {prenom:"Julien",nom:"Dupuis",email:"j.dupuis@email.fr",telephone:"07 77 88 99 00",cohorte:"Cohorte Jan 2025",date_debut:"2025-01-06",jour:75,statut:"En cours",charge:"Amina Benali",objectif:"Spécialisation avancée",notes:"Excellent profil technique.",modules_scores:[100,148,147,198,196,246,242,103,null],couleur:"#CA8A04"},
+  {prenom:"Paul",nom:"Girard",email:"p.girard@email.fr",telephone:"07 88 99 00 11",cohorte:"Cohorte Fév 2025",date_debut:"2025-02-03",jour:38,statut:"Abandonné",charge:"Sophie Martin",objectif:"Reconversion",notes:"A abandonné — surcharge professionnelle.",modules_scores:[78,115,105,112,null,null,null,null,null],couleur:"#9333EA"},
+];
+
+async function seedData(force){
+  const snap=await db.collection("apprenants").limit(1).get();
+  if(!snap.empty&&!force){return;}
+  toast("Chargement des données de démo…","info");
+  const batch=db.batch();const idMap={};
+  SEED.forEach(s=>{const ref=db.collection("apprenants").doc();idMap[`${s.prenom} ${s.nom}`]=ref.id;batch.set(ref,{...s,createdAt:TS(),updatedAt:TS()});});
+  await batch.commit();
+
+  const contactsSeed=[
+    {nom:"Camille Bertrand",charge:"Sophie Martin",contacts:[{type:"Appel de bienvenue",type_id:1,date:"2025-01-06",note:"Très bonne prise en main."},{type:"Check-in J14",type_id:2,date:"2025-01-20",note:"Avance bien, aucun blocage."},{type:"Point mi-parcours",type_id:3,date:"2025-02-19",note:"Mi-parcours excellent — 85%."},{type:"Check-in J60",type_id:4,date:"2025-03-07",note:"Projet bien avancé."},{type:"Point bilan final",type_id:5,date:"2025-04-01",note:"Certification réussie avec mention !"}]},
+    {nom:"Antoine Moreau",charge:"Lucas Dubois",contacts:[{type:"Appel de bienvenue",type_id:1,date:"2025-01-06",note:"Enthousiaste, profil solide."},{type:"Check-in J14",type_id:2,date:"2025-01-20",note:"En avance sur le planning."},{type:"Point mi-parcours",type_id:3,date:"2025-02-19",note:"Légère baisse de rythme."},{type:"Check-in J60",type_id:4,date:"2025-03-07",note:"Projet bien avancé."}]},
+    {nom:"Léa Fontaine",charge:"Amina Benali",contacts:[{type:"Appel de bienvenue",type_id:1,date:"2025-01-06",note:"Bonne motivation initiale."},{type:"Check-in J14",type_id:2,date:"2025-01-20",note:"Difficultés sur module 2."}]},
+    {nom:"Maxime Laurent",charge:"Sophie Martin",contacts:[{type:"Appel de bienvenue",type_id:1,date:"2025-02-03",note:"Très motivé, en reconversion."},{type:"Check-in J14",type_id:2,date:"2025-02-17",note:"Bon rythme."},{type:"Point mi-parcours",type_id:3,date:"2025-03-20",note:"Mi-parcours excellent."}]},
+    {nom:"Thomas Simon",charge:"Amina Benali",contacts:[{type:"Appel de bienvenue",type_id:1,date:"2025-02-03",note:"Démarrage difficile."},{type:"Check-in J14",type_id:2,date:"2025-02-17",note:"Plan de rattrapage mis en place."},{type:"Point mi-parcours",type_id:3,date:"2025-03-25",note:"Améliore mais reste en retard."}]},
+    {nom:"Julien Dupuis",charge:"Amina Benali",contacts:[{type:"Appel de bienvenue",type_id:1,date:"2025-01-06",note:"Profil technique confirmé."},{type:"Check-in J14",type_id:2,date:"2025-01-20",note:"Excellent rythme."},{type:"Point mi-parcours",type_id:3,date:"2025-02-19",note:"90% de complétion."},{type:"Check-in J60",type_id:4,date:"2025-03-07",note:"Projet ambitieux."}]},
+  ];
+  for(const sc of contactsSeed){
+    const aid=idMap[sc.nom];if(!aid)continue;
+    for(const c of sc.contacts){await db.collection("contacts").add({...c,apprenant_id:aid,apprenant_nom:sc.nom,charge_suivi:sc.charge,createdAt:TS()});}
+  }
+
+  const rdvsSeed=[
+    {apprenant_nom:"Léa Fontaine",type:"Point mi-parcours",heure:"10:00",statut:"Planifié",charge_suivi:"Amina Benali",notes:"Suivi renforcé",daysOffset:2},
+    {apprenant_nom:"Manon Leroy",type:"Check-in J14",heure:"14:00",statut:"Planifié",charge_suivi:"Lucas Dubois",notes:"Premier check-in",daysOffset:3},
+    {apprenant_nom:"Thomas Simon",type:"Point mi-parcours",heure:"11:00",statut:"Planifié",charge_suivi:"Amina Benali",notes:"Plan de rattrapage",daysOffset:5},
+    {apprenant_nom:"Antoine Moreau",type:"Point bilan final",heure:"15:00",statut:"Planifié",charge_suivi:"Lucas Dubois",notes:"Prépa certification",daysOffset:7},
+    {apprenant_nom:"Camille Bertrand",type:"Appel de bienvenue",heure:"10:00",statut:"Réalisé",charge_suivi:"Sophie Martin",notes:"",daysOffset:-5},
+  ];
+  for(const r of rdvsSeed){
+    const aid=idMap[r.apprenant_nom]||"";
+    const d=new Date();d.setDate(d.getDate()+r.daysOffset);
+    const date=d.toISOString().split("T")[0];
+    await db.collection("rdvs").add({...r,apprenant_id:aid,date,createdAt:TS(),updatedAt:TS()});
+  }
+  toast("Données de démo chargées ✅","success");
+}
+
+// ══════════════════════════════════════
+//  COHORTES
+// ══════════════════════════════════════
+const COHORT_COLORS=["#4F46E5","#7C3AED","#DB2777","#EA580C","#16A34A","#0891B2","#CA8A04","#9333EA","#DC2626","#059669","#F59E0B","#3B82F6"];
+const COHORT_MAX=8;
+const COHORT_NAMES=[
+  {emoji:"🚀",name:"Odyssée"},
+  {emoji:"⚡",name:"Éclipse"},
+  {emoji:"🔥",name:"Ignition"},
+  {emoji:"🌊",name:"Vortex"},
+  {emoji:"🦁",name:"Apex"},
+  {emoji:"🌟",name:"Zénith"},
+  {emoji:"🏔️",name:"Summit"},
+  {emoji:"🎯",name:"Impact"},
+  {emoji:"💎",name:"Prism"},
+  {emoji:"🌙",name:"Nova"},
+  {emoji:"🦅",name:"Altitude"},
+  {emoji:"🧩",name:"Nexus"},
+  {emoji:"🛡️",name:"Bastion"},
+  {emoji:"🌀",name:"Quantum"},
+  {emoji:"🎖️",name:"Élite"},
+  {emoji:"🌈",name:"Aurora"},
+  {emoji:"⚔️",name:"Titan"},
+  {emoji:"🔮",name:"Horizon"},
+  {emoji:"🏹",name:"Vector"},
+  {emoji:"💡",name:"Spark"},
+  {emoji:"🌺",name:"Momentum"},
+  {emoji:"🦋",name:"Métamorphose"},
+  {emoji:"🔭",name:"Cosmos"},
+  {emoji:"🎯",name:"Catalyst"},
+];
+
+function renderCohortes(){
+  const el=document.getElementById("page-cohortes");
+  const cohorts=S.cohorts;
+  const totalMembers=cohorts.reduce((s,c)=>(s+(c.membres||[]).length),0);
+  const totalSlots=cohorts.length*COHORT_MAX;
+  const freeSlots=Math.max(0,totalSlots-totalMembers);
+  const unassigned=S.apprenants.filter(a=>!cohorts.some(c=>(c.membres||[]).includes(a.id))).length;
+
+  el.innerHTML=`
+    <div class="cohorte-kpis">
+      ${kpiCard("🎓","Cohortes",cohorts.length,"groupes actifs","#4F46E5")}
+      ${kpiCard("👥","Membres assignés",totalMembers,"sur "+S.apprenants.length+" apprenants","#10B981")}
+      ${kpiCard("🔓","Places libres",freeSlots,"dans les cohortes existantes","#F59E0B")}
+      ${kpiCard("⏳","Non assignés",unassigned,"apprenants sans cohorte","#EF4444")}
+    </div>
+    <div class="cohorte-grid" id="cohorte-grid">${renderCohortCards()}</div>`;
+}
+
+function kpiCard(icon,label,val,sub,color){
+  return`<div class="kpi-card" style="border-left-color:${color}">
+    <div class="kpi-icon" style="background:${color}18">${icon}</div>
+    <div><div class="kpi-label">${label}</div><div class="kpi-value" style="color:${color}">${val}</div><div class="kpi-sub">${sub}</div></div>
+  </div>`;
+}
+
+function renderCohortCards(){
+  const cohorts=S.cohorts;
+  let html=cohorts.map(c=>{
+    const membres=c.membres||[];
+    const count=membres.length;
+    const isFull=count>=COHORT_MAX;
+    const countColor=isFull?"background:#FEE2E2;color:#991B1B":"background:var(--primary-light);color:var(--primary)";
+    // Get apprenant data for each member
+    const memberHtml=membres.map(mid=>{
+      const a=S.apprenants.find(x=>x.id===mid);
+      if(!a)return'';
+      const bg=a.couleur||AVC[0];
+      return`<div class="cohorte-chip"><div class="cohorte-chip-ava" style="background:${bg}">${ini(a.prenom,a.nom)}</div>${a.prenom||'?'}</div>`;
+    }).join('');
+    const emptySlots=COHORT_MAX-count;
+    return`<div class="cohorte-card">
+      <div class="cohorte-card-top" style="background:${c.couleur||'#4F46E5'}"></div>
+      <div class="cohorte-card-body">
+        <div class="cohorte-card-header">
+          <div class="cohorte-card-name">${csmEsc(c.nom||'Sans nom')}</div>
+          <span class="cohorte-card-count" style="${countColor}">${count}/${COHORT_MAX}</span>
+        </div>
+        <div class="cohorte-members">
+          ${memberHtml||'<div class="cohorte-empty-slots">Aucun membre</div>'}
+        </div>
+        <div class="cohorte-card-actions">
+          <button class="btn-cohorte-manage" onclick="openCohortModal('${c.id}')">✏️ Gérer les membres</button>
+          <button class="btn-cohorte-del" onclick="deleteCohort('${c.id}','${csmEsc(c.nom||'')}')" title="Supprimer">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // Add card
+  html+=`<div class="cohorte-add-card" onclick="openCohortModal()">
+    <div style="font-size:32px">＋</div>
+    <div style="font-size:13px;font-weight:600">Nouvelle cohorte</div>
+    <div style="font-size:12px">Nommez et assignez jusqu'à 8 apprenants</div>
+  </div>`;
+  return html;
+}
+
+function openCohortModal(id){
+  S.editCohortId=id||null;
+  const cohort=id?S.cohorts.find(c=>c.id===id):null;
+  S._cohortColor=cohort?.couleur||COHORT_COLORS[0];
+  S._cohortMembers=Array.from(cohort?.membres||[]);
+  document.getElementById("cohort-modal-title").textContent=id?"Gérer la cohorte":"Nouvelle cohorte";
+  document.getElementById("cohort-nom").value=cohort?.nom||'';
+  // Name suggestions — grey out already-used names
+  const usedNames=S.cohorts.filter(c=>c.id!==id).map(c=>c.nom||'');
+  document.getElementById("cohort-name-suggestions").innerHTML=COHORT_NAMES.map(n=>{
+    const full=`${n.emoji} ${n.name}`;
+    const isUsed=usedNames.includes(full);
+    return`<span class="name-sug${isUsed?' used':''}" onclick="if(!${isUsed})pickCohortName('${full}')" title="${isUsed?'Déjà utilisé':''}">${full}</span>`;
+  }).join('');
+  // Color chips
+  document.getElementById("cohort-color-chips").innerHTML=COHORT_COLORS.map(c=>`
+    <div class="color-chip${c===S._cohortColor?' selected':''}" style="background:${c}" onclick="selectCohortColor('${c}')" title="${c}"></div>`).join('');
+  renderCohortMembers();
+  renderCohortAvailable();
+  document.getElementById("cohort-avail-search").value='';
+  document.getElementById("mo-cohort").classList.add("active");
+  setTimeout(()=>document.getElementById("cohort-nom").focus(),100);
+}
+
+function closeCohortModal(){
+  document.getElementById("mo-cohort").classList.remove("active");
+}
+
+function pickCohortName(name){
+  document.getElementById("cohort-nom").value=name;
+  // Highlight selected suggestion
+  document.querySelectorAll(".name-sug:not(.used)").forEach(el=>{
+    el.style.borderColor=el.textContent.trim()===name?"var(--primary)":"";
+    el.style.color=el.textContent.trim()===name?"var(--primary)":"";
+    el.style.background=el.textContent.trim()===name?"var(--primary-light)":"";
+  });
+}
+
+function selectCohortColor(c){
+  S._cohortColor=c;
+  document.querySelectorAll(".color-chip").forEach(el=>{
+    el.classList.toggle("selected",el.style.background===c||el.getAttribute("onclick").includes(c));
+  });
+}
+
+function renderCohortMembers(){
+  const el=document.getElementById("cohort-members-list");
+  const countEl=document.getElementById("cohort-member-count");
+  const warnEl=document.getElementById("cohort-full-warning");
+  const count=S._cohortMembers.length;
+  countEl.textContent=`${count}/${COHORT_MAX}`;
+  countEl.style.background=count>=COHORT_MAX?"#FEE2E2":"var(--primary-light)";
+  countEl.style.color=count>=COHORT_MAX?"#991B1B":"var(--primary)";
+  warnEl.classList.toggle("show",count>=COHORT_MAX);
+  if(!count){el.innerHTML='<div class="cohort-empty-state">Aucun membre — ajoutez des apprenants →</div>';return;}
+  el.innerHTML=S._cohortMembers.map(mid=>{
+    const a=S.apprenants.find(x=>x.id===mid);
+    if(!a)return'';
+    const bg=a.couleur||AVC[0];
+    return`<div class="cohort-member-row">
+      <div class="cohort-m-ava" style="background:${bg}">${ini(a.prenom,a.nom)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="cohort-m-name">${csmEsc(a.prenom||'')} ${csmEsc(a.nom||'')}</div>
+        <div class="cohort-m-sub">${csmEsc(a.cohorte||'Aucune cohorte')}</div>
+      </div>
+      <button class="btn-cohort-remove" onclick="removeCohortMember('${mid}')" title="Retirer">−</button>
+    </div>`;
+  }).join('');
+}
+
+function renderCohortAvailable(){
+  const el=document.getElementById("cohort-avail-list");
+  const search=(document.getElementById("cohort-avail-search")?.value||'').toLowerCase();
+  const isFull=S._cohortMembers.length>=COHORT_MAX;
+  // All apprenants not already in current member list
+  let available=S.apprenants.filter(a=>!S._cohortMembers.includes(a.id));
+  if(search)available=available.filter(a=>`${a.prenom||''} ${a.nom||''}`.toLowerCase().includes(search)||`${a.email||''}`.toLowerCase().includes(search));
+  if(!available.length){el.innerHTML='<div class="cohort-empty-state">Aucun apprenant disponible</div>';return;}
+  // Show which cohort they're currently in
+  el.innerHTML=available.map(a=>{
+    const currentCohort=S.cohorts.find(c=>c.id!==S.editCohortId&&(c.membres||[]).includes(a.id));
+    const bg=a.couleur||AVC[0];
+    return`<div class="cohort-member-row">
+      <div class="cohort-m-ava" style="background:${bg}">${ini(a.prenom,a.nom)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="cohort-m-name">${csmEsc(a.prenom||'')} ${csmEsc(a.nom||'')}</div>
+        <div class="cohort-m-sub">${currentCohort?`📌 ${csmEsc(currentCohort.nom||'')}`:'Sans cohorte'}</div>
+      </div>
+      <button class="btn-cohort-add" onclick="addCohortMember('${a.id}')" ${isFull?'disabled title="Cohorte complète"':''}>＋</button>
+    </div>`;
+  }).join('');
+}
+
+function addCohortMember(appId){
+  if(S._cohortMembers.length>=COHORT_MAX)return;
+  if(!S._cohortMembers.includes(appId))S._cohortMembers.push(appId);
+  renderCohortMembers();
+  renderCohortAvailable();
+}
+
+function removeCohortMember(appId){
+  S._cohortMembers=S._cohortMembers.filter(id=>id!==appId);
+  renderCohortMembers();
+  renderCohortAvailable();
+}
+
+async function saveCohort(){
+  const nom=document.getElementById("cohort-nom").value.trim();
+  if(!nom){document.getElementById("cohort-nom").focus();toast("Le nom est obligatoire","error");return;}
+  const data={
+    nom,
+    couleur:S._cohortColor,
+    membres:S._cohortMembers,
+    csm_id:_csmUser?.uid||null,
+    updatedAt:TS(),
+  };
+  try{
+    if(S.editCohortId){
+      await db.collection("cohorts").doc(S.editCohortId).update(data);
+      toast(`Cohorte "${nom}" mise à jour ✅`,"success");
+    } else {
+      data.createdAt=TS();
+      await db.collection("cohorts").add(data);
+      toast(`Cohorte "${nom}" créée ✅`,"success");
+    }
+    closeCohortModal();
+  }catch(e){toast("Erreur : "+e.message,"error");}
+}
+
+async function deleteCohort(id,nom){
+  if(!confirm(`Supprimer la cohorte "${nom}" ? Les messages du groupe seront conservés.`))return;
+  await db.collection("cohorts").doc(id).delete();
+  toast(`Cohorte "${nom}" supprimée`,"success");
+}
+
+// ══════════════════════════════════════
+//  CONVERSATIONS
+// ══════════════════════════════════════
+let _csmUser=null;
+let _csmConvs=[];
+let _csmCurrentConvId=null;
+let _csmConvListUnsub=null;
+let _csmMsgUnsub=null;
+let _csmConvListenerDone=false;
+
+function initCSMConvListener(){
+  if(_csmConvListenerDone)return;
+  _csmConvListenerDone=true;
+  const setup=(ref)=>{
+    _csmConvListUnsub=ref.onSnapshot(snap=>{
+      _csmConvs=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.timestamp?.seconds||0)-(a.timestamp?.seconds||0));
+      renderCSMConvList();
+      updateCSMConvBadge();
+    });
+  };
+  try{setup(db.collection("conversations").orderBy("timestamp","desc"));}
+  catch(_){setup(db.collection("conversations"));}
+}
+
+function renderCSMConvList(){
+  const el=document.getElementById("csm-conv-items");
+  if(!el)return;
+  const search=(document.getElementById("csm-conv-search")?.value||'').toLowerCase().trim();
+  let list=_csmConvs;
+  if(search)list=list.filter(c=>(c.apprenantName||'').toLowerCase().includes(search));
+  if(!list.length){
+    el.innerHTML=`<div class="conv-empty"><div style="font-size:32px">💬</div><div style="font-size:13px">${_csmConvs.length?'Aucun résultat':'Aucune conversation'}</div></div>`;
+    return;
+  }
+  el.innerHTML=list.map(c=>{
+    const name=c.apprenantName||c.apprenant_id||'Apprenant';
+    const initial=name.charAt(0).toUpperCase();
+    const preview=c.dernierMsg?csmTrunc(c.dernierMsg,48):'Aucun message';
+    const unread=c.nonLusCSM||0;
+    const ts=c.timestamp?.seconds?csmFmtTime(new Date(c.timestamp.seconds*1000)):'';
+    const isActive=c.id===_csmCurrentConvId;
+    return`<div class="conv-item${isActive?' active':''}" onclick="openCSMConv('${c.id}')">
+      <div class="conv-ava">${initial}</div>
+      <div class="conv-info">
+        <div class="conv-name">${csmEsc(name)}</div>
+        <div class="conv-preview">${csmEsc(preview)}</div>
+      </div>
+      <div class="conv-meta">
+        <div class="conv-time">${ts}</div>
+        ${unread>0?`<div class="conv-badge">${unread}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateCSMConvBadge(){
+  const total=_csmConvs.reduce((s,c)=>s+(c.nonLusCSM||0),0);
+  const nav=document.getElementById("badge-messages");
+  const top=document.getElementById("csm-conv-total-unread");
+  if(nav){if(total>0){nav.textContent=total;nav.style.display='flex';}else nav.style.display='none';}
+  if(top){if(total>0){top.textContent=total;top.style.display='';}else top.style.display='none';}
+}
+
+function openCSMConv(appId){
+  _csmCurrentConvId=appId;
+  const conv=_csmConvs.find(c=>c.id===appId);
+  renderCSMConvList();
+  document.getElementById("csm-conv-placeholder").style.display="none";
+  const inner=document.getElementById("csm-conv-inner");
+  inner.style.display="flex";inner.style.flexDirection="column";
+  const appData=S.apprenants.find(a=>a.id===appId);
+  const name=appData?`${appData.prenom||''} ${appData.nom||''}`.trim():conv?.apprenantName||appId;
+  const initial=name.charAt(0).toUpperCase()||'?';
+  document.getElementById("csm-chat-ava").textContent=initial;
+  document.getElementById("csm-chat-name").textContent=name;
+  document.getElementById("csm-chat-sub").textContent=appData?.email||conv?.apprenant_id||'Apprenant';
+  // Reset unread
+  db.collection("conversations").doc(appId).update({nonLusCSM:0}).catch(()=>{});
+  // Messages listener
+  if(_csmMsgUnsub){_csmMsgUnsub();_csmMsgUnsub=null;}
+  document.getElementById("csm-conv-messages").innerHTML=`<div style="text-align:center;padding:24px;color:var(--light);font-size:13px">Chargement…</div>`;
+  const setupMsg=(ref)=>{
+    _csmMsgUnsub=ref.onSnapshot(snap=>{
+      const msgs=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+      renderCSMMessages(msgs,appId);
+      msgs.filter(m=>m.role==='student'&&!m.lu).forEach(m=>{
+        db.collection("conversations").doc(appId).collection("messages").doc(m.id).update({lu:true}).catch(()=>{});
+      });
+    });
+  };
+  try{setupMsg(db.collection("conversations").doc(appId).collection("messages").orderBy("timestamp","asc"));}
+  catch(_){setupMsg(db.collection("conversations").doc(appId).collection("messages"));}
+  document.getElementById("csm-conv-input")?.focus();
+}
+
+function renderCSMMessages(msgs,appId){
+  const el=document.getElementById("csm-conv-messages");
+  const appData=S.apprenants.find(a=>a.id===appId);
+  const appName=appData?`${appData.prenom||''}`.trim()||'Apprenant':'Apprenant';
+  const coachName=_csmUser?(_csmUser.prenom||'Coach'):'Coach';
+  if(!msgs.length){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--light);text-align:center">
+      <div style="font-size:40px">💬</div>
+      <div style="font-size:14px;font-weight:600;color:var(--muted)">Aucun message</div>
+      <div style="font-size:12px">Envoyez le premier message à ${csmEsc(appName)}</div>
+    </div>`;
+    return;
+  }
+  let html='';let lastDay='';
+  msgs.forEach(m=>{
+    const isMe=m.role!=='student';
+    const ts=m.timestamp?.seconds?new Date(m.timestamp.seconds*1000):new Date();
+    const day=ts.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const time=ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if(day!==lastDay){lastDay=day;html+=`<div class="adm-day-sep">${day}</div>`;}
+    const name=isMe?coachName:appName;
+    const initial=name.charAt(0).toUpperCase();
+    const avatarBg=isMe?"linear-gradient(135deg,var(--primary),var(--purple))":"linear-gradient(135deg,#10B981,#059669)";
+    html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
+      <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
+      <div class="adm-msg-body">
+        <div class="adm-msg-sender">${csmEsc(name)}</div>
+        <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+        <div class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':''}</div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+  requestAnimationFrame(()=>{const e=document.getElementById("csm-conv-messages");if(e)e.scrollTop=e.scrollHeight;});
+}
+
+async function sendCSMReply(){
+  if(!_csmCurrentConvId||!_csmUser)return;
+  const input=document.getElementById("csm-conv-input");
+  const text=input?.value.trim();
+  if(!text)return;
+  input.value='';csmConvResize(input);
+  const name=(_csmUser.prenom&&_csmUser.nom)?`${_csmUser.prenom} ${_csmUser.nom}`.trim():_csmUser.prenom||'Coach';
+  await db.collection("conversations").doc(_csmCurrentConvId).collection("messages").add({
+    text,senderId:_csmUser.uid,senderName:name,role:_csmUser.role||'csm',
+    timestamp:TS(),lu:false
+  });
+  db.collection("conversations").doc(_csmCurrentConvId).set({
+    dernierMsg:text,timestamp:TS(),nonLusCSM:0
+  },{merge:true}).catch(()=>{});
+}
+
+function csmConvKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCSMReply();}}
+function csmConvResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+function csmFmtTime(d){const now=new Date(),diff=now-d;if(diff<60000)return'À l\'instant';if(diff<3600000)return Math.floor(diff/60000)+'min';if(diff<86400000)return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});if(diff<604800000)return d.toLocaleDateString('fr-FR',{weekday:'short'});return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
+function csmTrunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}
+function csmEsc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+document.getElementById("topbar-date").textContent=new Date().toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"long",year:"numeric"});
+</script>
+</body>
+</html>
