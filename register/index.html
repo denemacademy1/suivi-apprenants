@@ -151,21 +151,27 @@ auth.onAuthStateChanged(async user=>{
 
 // ── ÉTAPE 1 : Vérification email ──
 async function checkEmail(){
-  const email=document.getElementById('check-email').value.trim().toLowerCase();
+  const emailRaw=document.getElementById('check-email').value.trim();
+  const emailLower=emailRaw.toLowerCase();
   const err=document.getElementById('check-error');
   const btn=document.getElementById('btn-check');
 
-  if(!email){showError(err,'type-warn','Veuillez saisir votre email.');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError(err,'type-warn','Email invalide.');return;}
+  if(!emailRaw){showError(err,'type-warn','Veuillez saisir votre email.');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)){showError(err,'type-warn','Email invalide.');return;}
 
   btn.disabled=true;
   btn.innerHTML='<span class="spinner"></span>Vérification…';
 
   try{
-    // Chercher l'email dans la collection apprenants
-    const snap=await db.collection("apprenants").where("email","==",email).limit(1).get();
+    // Récupérer tous les apprenants et comparer en insensible à la casse
+    // (le CSM peut avoir saisi l'email en majuscules/minuscules)
+    const allSnap=await db.collection("apprenants").get();
+    const matchDoc=allSnap.docs.find(d=>{
+      const stored=(d.data().email||'').toLowerCase().trim();
+      return stored===emailLower;
+    });
 
-    if(snap.empty){
+    if(!matchDoc){
       // Email non trouvé → accès refusé
       showError(err,'type-blocked',
         '⛔ Cet email n\'est pas dans notre système.<br>Contactez votre chargé de suivi pour être inscrit avant de créer votre compte.');
@@ -174,8 +180,8 @@ async function checkEmail(){
       return;
     }
 
-    // Email trouvé
-    foundApprenant={id:snap.docs[0].id,...snap.docs[0].data()};
+    // Email trouvé — on normalise l'email en minuscules pour la suite
+    foundApprenant={id:matchDoc.id,...matchDoc.data(),_emailNorm:emailLower};
 
     // Vérifier si un compte existe déjà (uid déjà lié)
     if(foundApprenant.uid){
@@ -215,7 +221,7 @@ function resetToEmail(){
 async function doRegister(){
   if(!foundApprenant){resetToEmail();return;}
 
-  const email=document.getElementById('verified-email').textContent.trim();
+  const email=foundApprenant._emailNorm||document.getElementById('verified-email').textContent.trim();
   const pwd=document.getElementById('reg-pwd').value;
   const pwd2=document.getElementById('reg-pwd2').value;
   const err=document.getElementById('reg-error');
