@@ -18,19 +18,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .badge{display:inline-block;background:#EEF2FF;color:#4F46E5;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-top:8px}
 .form-group{margin-bottom:14px}
 .form-group label{display:block;font-size:12px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
-.form-group input,.form-group select{width:100%;padding:10px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;color:#1E293B;outline:none;transition:border .2s;font-family:inherit;background:#fff}
-.form-group input:focus,.form-group select:focus{border-color:#4F46E5;box-shadow:0 0 0 3px #EEF2FF}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group input{width:100%;padding:10px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;color:#1E293B;outline:none;transition:border .2s;font-family:inherit;background:#fff}
+.form-group input:focus{border-color:#4F46E5;box-shadow:0 0 0 3px #EEF2FF}
+.form-group input:disabled{background:#F8FAFC;color:#94A3B8}
 .btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px}
 .btn-primary{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(79,70,229,.4)}
-.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.error{background:#FEE2E2;color:#991B1B;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;display:none}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+.error{border-radius:10px;padding:12px 16px;font-size:13px;margin-top:12px;display:none;line-height:1.5}
 .error.show{display:block}
-.success{background:#DCFCE7;color:#15803D;border-radius:12px;padding:20px;font-size:14px;text-align:center;display:none}
+.error.type-blocked{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
+.error.type-warn{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}
+.error.type-info{background:#EEF2FF;color:#3730A3;border:1px solid #C7D2FE}
+.success{background:#DCFCE7;color:#15803D;border-radius:12px;padding:28px 20px;font-size:14px;text-align:center;display:none}
 .success.show{display:block}
-.success .s-icon{font-size:36px;margin-bottom:8px}
-.success .s-title{font-weight:700;font-size:16px;margin-bottom:4px}
+.success .s-icon{font-size:40px;margin-bottom:10px}
+.success .s-title{font-weight:800;font-size:17px;margin-bottom:6px}
+.success .s-name{font-size:13px;color:#166534;margin-bottom:14px}
 .footer-note{text-align:center;font-size:12px;color:#94A3B8;margin-top:20px}
 .footer-note a{color:#4F46E5;text-decoration:none;font-weight:600}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
@@ -40,6 +44,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .loading-spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
 .divider{display:flex;align-items:center;gap:10px;margin:6px 0 14px;color:#94A3B8;font-size:12px}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:#E2E8F0}
+/* Validation email step */
+.step{transition:opacity .25s}
+.step.hidden{display:none}
+.email-verified-row{display:flex;align-items:center;gap:10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 14px;margin-bottom:14px}
+.ev-icon{font-size:18px}
+.ev-name{font-size:13px;font-weight:700;color:#15803D}
+.ev-email{font-size:12px;color:#166534;opacity:.8}
+.ev-change{font-size:11px;color:#4F46E5;cursor:pointer;margin-left:auto;font-weight:600;white-space:nowrap}
+.ev-change:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -56,26 +69,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="badge">👤 Inscription apprenant</div>
   </div>
 
-  <div id="form-section">
-    <div class="form-row">
-      <div class="form-group">
-        <label>Prénom *</label>
-        <input type="text" id="reg-prenom" placeholder="Camille" autocomplete="given-name">
-      </div>
-      <div class="form-group">
-        <label>Nom *</label>
-        <input type="text" id="reg-nom" placeholder="Dupont" autocomplete="family-name">
-      </div>
-    </div>
+  <!-- ÉTAPE 1 : Vérification email -->
+  <div id="step-email">
     <div class="form-group">
-      <label>Téléphone</label>
-      <input type="tel" id="reg-tel" placeholder="06 12 34 56 78" autocomplete="tel">
+      <label>Votre email *</label>
+      <input type="email" id="check-email" placeholder="votre@email.fr" autocomplete="email">
     </div>
-    <div class="divider">Identifiants de connexion</div>
-    <div class="form-group">
-      <label>Email *</label>
-      <input type="email" id="reg-email" placeholder="votre@email.fr" autocomplete="email">
+    <button class="btn btn-primary" id="btn-check" onclick="checkEmail()">Vérifier mon email →</button>
+    <div class="error" id="check-error"></div>
+    <div style="background:#F8FAFC;border-radius:10px;padding:12px 16px;margin-top:16px;font-size:12px;color:#64748B;line-height:1.6">
+      ℹ️ L'accès est réservé aux apprenants inscrits par leur chargé de suivi. Si vous n'avez pas encore reçu votre invitation, contactez votre chargé de suivi.
     </div>
+  </div>
+
+  <!-- ÉTAPE 2 : Création du mot de passe -->
+  <div id="step-register" class="step hidden">
+    <!-- Récap apprenant vérifié -->
+    <div class="email-verified-row" id="verified-row">
+      <div class="ev-icon">✅</div>
+      <div>
+        <div class="ev-name" id="verified-name">—</div>
+        <div class="ev-email" id="verified-email">—</div>
+      </div>
+      <span class="ev-change" onclick="resetToEmail()">Changer</span>
+    </div>
+
+    <div class="divider">Choisissez votre mot de passe</div>
+
     <div class="form-group">
       <label>Mot de passe *</label>
       <input type="password" id="reg-pwd" placeholder="Minimum 6 caractères" autocomplete="new-password">
@@ -88,14 +108,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="error" id="reg-error"></div>
   </div>
 
+  <!-- SUCCÈS -->
   <div class="success" id="success-box">
     <div class="s-icon">🎉</div>
     <div class="s-title">Compte créé avec succès !</div>
-    <div style="color:#166534;font-size:13px;margin-bottom:12px">Vous allez être redirigé vers votre espace…</div>
-    <div style="width:40px;height:40px;border:3px solid #16A34A33;border-top-color:#16A34A;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto"></div>
+    <div class="s-name" id="success-name"></div>
+    <div style="width:36px;height:36px;border:3px solid #16A34A33;border-top-color:#16A34A;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto"></div>
   </div>
 
-  <div class="footer-note">
+  <div class="footer-note" id="footer-login">
     Déjà un compte ? <a href="../login/">Se connecter</a>
   </div>
 </div>
@@ -105,10 +126,12 @@ const FB={apiKey:"AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",authDomain:"denem-aca
 firebase.initializeApp(FB);
 const auth=firebase.auth();
 const db=firebase.firestore();
-
 function getBase(){return location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';}
 
-// If already logged in, redirect directly
+// Données de l'apprenant trouvé
+let foundApprenant=null;
+
+// Redirect si déjà connecté
 auth.onAuthStateChanged(async user=>{
   if(user){
     try{
@@ -123,69 +146,134 @@ auth.onAuthStateChanged(async user=>{
   }
   document.getElementById("loading").classList.add("hidden");
   document.getElementById("card").style.display="";
+  document.getElementById("check-email").focus();
 });
 
+// ── ÉTAPE 1 : Vérification email ──
+async function checkEmail(){
+  const email=document.getElementById('check-email').value.trim().toLowerCase();
+  const err=document.getElementById('check-error');
+  const btn=document.getElementById('btn-check');
+
+  if(!email){showError(err,'type-warn','Veuillez saisir votre email.');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError(err,'type-warn','Email invalide.');return;}
+
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Vérification…';
+
+  try{
+    // Chercher l'email dans la collection apprenants
+    const snap=await db.collection("apprenants").where("email","==",email).limit(1).get();
+
+    if(snap.empty){
+      // Email non trouvé → accès refusé
+      showError(err,'type-blocked',
+        '⛔ Cet email n\'est pas dans notre système.<br>Contactez votre chargé de suivi pour être inscrit avant de créer votre compte.');
+      btn.disabled=false;
+      btn.textContent='Vérifier mon email →';
+      return;
+    }
+
+    // Email trouvé
+    foundApprenant={id:snap.docs[0].id,...snap.docs[0].data()};
+
+    // Vérifier si un compte existe déjà (uid déjà lié)
+    if(foundApprenant.uid){
+      showError(err,'type-info',
+        'ℹ️ Un compte existe déjà pour cet email. <a href="../login/" style="color:#4338CA;font-weight:700">Se connecter →</a>');
+      btn.disabled=false;
+      btn.textContent='Vérifier mon email →';
+      return;
+    }
+
+    // Afficher l'étape 2
+    const prenom=foundApprenant.prenom||'';
+    const nom=foundApprenant.nom||'';
+    document.getElementById('verified-name').textContent=`${prenom} ${nom}`.trim()||'Apprenant';
+    document.getElementById('verified-email').textContent=email;
+    document.getElementById('step-email').classList.add('hidden');
+    document.getElementById('step-register').classList.remove('hidden');
+    document.getElementById('reg-pwd').focus();
+
+  }catch(e){
+    console.error(e);
+    showError(err,'type-warn','Erreur réseau. Vérifiez votre connexion.');
+    btn.disabled=false;
+    btn.textContent='Vérifier mon email →';
+  }
+}
+
+function resetToEmail(){
+  foundApprenant=null;
+  document.getElementById('step-register').classList.add('hidden');
+  document.getElementById('step-email').classList.remove('hidden');
+  document.getElementById('reg-error').classList.remove('show');
+  document.getElementById('check-email').focus();
+}
+
+// ── ÉTAPE 2 : Création du compte ──
 async function doRegister(){
-  const prenom=document.getElementById('reg-prenom').value.trim();
-  const nom=document.getElementById('reg-nom').value.trim();
-  const tel=document.getElementById('reg-tel').value.trim();
-  const email=document.getElementById('reg-email').value.trim();
+  if(!foundApprenant){resetToEmail();return;}
+
+  const email=document.getElementById('verified-email').textContent.trim();
   const pwd=document.getElementById('reg-pwd').value;
   const pwd2=document.getElementById('reg-pwd2').value;
   const err=document.getElementById('reg-error');
   const btn=document.getElementById('btn-register');
 
-  // Validation
-  if(!prenom||!nom||!email||!pwd){showError(err,'Veuillez remplir tous les champs obligatoires.');return;}
-  if(pwd.length<6){showError(err,'Le mot de passe doit faire au moins 6 caractères.');return;}
-  if(pwd!==pwd2){showError(err,'Les mots de passe ne correspondent pas.');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError(err,'Email invalide.');return;}
+  if(!pwd){showError(err,'type-warn','Veuillez choisir un mot de passe.');return;}
+  if(pwd.length<6){showError(err,'type-warn','Le mot de passe doit faire au moins 6 caractères.');return;}
+  if(pwd!==pwd2){showError(err,'type-warn','Les mots de passe ne correspondent pas.');return;}
 
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Création en cours…';
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Création en cours…';
 
   try{
-    // 1. Create Firebase Auth account
+    // 1. Créer le compte Firebase Auth
     const cred=await auth.createUserWithEmailAndPassword(email,pwd);
     const uid=cred.user.uid;
     const now=firebase.firestore.FieldValue.serverTimestamp();
 
-    // 2. Create users doc (role: student)
+    // 2. Créer le doc users (rôle toujours "student")
     await db.collection("users").doc(uid).set({
-      prenom,nom,email,role:'student',createdAt:now
+      prenom:foundApprenant.prenom||'',
+      nom:foundApprenant.nom||'',
+      email,
+      role:'student',
+      createdAt:now
     });
 
-    // 3. Auto-create apprenant record in Firestore
-    await db.collection("apprenants").add({
-      prenom,nom,email,
-      telephone:tel||'',
+    // 3. Lier l'UID à la fiche apprenant existante (ne pas créer de doublon)
+    await db.collection("apprenants").doc(foundApprenant.id).update({
       uid,
-      statut:'En cours',
-      cohorte:'',
-      charge:'',
-      jour:1,
-      date_debut:new Date().toISOString().split('T')[0],
-      objectif:'',
-      modules_scores:[],
-      couleur:'#4F46E5',
-      createdAt:now,
-      source:'auto-register'
+      updatedAt:now
     });
 
-    // 4. Show success then redirect
-    document.getElementById('form-section').style.display='none';
+    // 4. Succès → redirect
+    const name=`${foundApprenant.prenom||''} ${foundApprenant.nom||''}`.trim();
+    document.getElementById('step-register').style.display='none';
+    document.getElementById('footer-login').style.display='none';
+    document.getElementById('success-name').textContent=name?`Bienvenue, ${name} 🚀`:'Bienvenue 🚀';
     document.getElementById('success-box').classList.add('show');
-    setTimeout(()=>{location.href=getBase()+'/student/';},2000);
+    setTimeout(()=>{location.href=getBase()+'/student/';},2200);
 
   }catch(e){
-    showError(err,getFrError(e.code));
-    btn.disabled=false;btn.textContent='Créer mon compte';
+    console.error(e);
+    showError(err,'type-blocked',getFrError(e.code));
+    btn.disabled=false;
+    btn.textContent='Créer mon compte';
   }
 }
 
-function showError(el,msg){el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),5000);}
+function showError(el,type,msg){
+  el.innerHTML=msg;
+  el.className=`error ${type} show`;
+  setTimeout(()=>el.classList.remove('show'),7000);
+}
+
 function getFrError(code){
   const m={
-    'auth/email-already-in-use':'Un compte existe déjà avec cet email. <a href="../login/">Connectez-vous</a>.',
+    'auth/email-already-in-use':'Un compte existe déjà avec cet email. <a href="../login/" style="color:#991B1B;font-weight:700">Se connecter →</a>',
     'auth/invalid-email':'Adresse email invalide.',
     'auth/weak-password':'Mot de passe trop faible (minimum 6 caractères).',
     'auth/too-many-requests':'Trop de tentatives. Réessayez dans quelques minutes.',
@@ -194,7 +282,12 @@ function getFrError(code){
   return m[code]||'Une erreur est survenue. Réessayez.';
 }
 
-document.addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  const step2=document.getElementById('step-register');
+  if(!step2.classList.contains('hidden'))doRegister();
+  else checkEmail();
+});
 </script>
 </body>
 </html>
