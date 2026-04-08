@@ -1791,10 +1791,12 @@ function setupPrivateChat(){
     if(S.chatTab==='private'){
       S._privateUnread=0;
       updateChatNavBadge();
-      // Mark as read
+      // Mark coach messages as read on individual docs
       msgs.filter(m=>m.role!=='student'&&!m.lu).forEach(m=>{
         convRef.doc(m.id).update({lu:true}).catch(()=>{});
       });
+      // Reset student unread counter on conversation meta doc
+      db.collection("conversations").doc(S.apprenant.id).update({nonLusStudent:0}).catch(()=>{});
     } else {
       S._privateUnread=msgs.filter(m=>m.role!=='student'&&!m.lu).length;
       updateChatNavBadge();

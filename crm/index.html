@@ -1968,16 +1968,40 @@ function renderCSMConvList(){
   const el=document.getElementById("csm-conv-items");
   if(!el)return;
   const search=(document.getElementById("csm-conv-search")?.value||'').toLowerCase().trim();
-  let list=_csmConvs;
-  if(search)list=list.filter(c=>(c.apprenantName||'').toLowerCase().includes(search));
-  if(!list.length){
-    el.innerHTML=`<div class="conv-empty"><div style="font-size:32px">💬</div><div style="font-size:13px">${_csmConvs.length?'Aucun résultat':'Aucune conversation'}</div></div>`;
+  const myUid=_csmUser?.uid||_csmUser?.id;
+  const myName=((_csmUser?.prenom||'')+' '+(_csmUser?.nom||'')).trim();
+  // All students assigned to this coach
+  const myStudents=S.apprenants.filter(a=>
+    !myUid||(a.csm_id===myUid||(a.charge&&myName&&a.charge===myName&&!a.csm_id))
+  );
+  // Merge with existing conversation metadata
+  let items=myStudents.map(a=>{
+    const conv=_csmConvs.find(c=>c.id===a.id);
+    return{
+      id:a.id,
+      apprenantName:`${a.prenom||''} ${a.nom||''}`.trim()||a.email||a.id,
+      dernierMsg:conv?.dernierMsg||null,
+      timestamp:conv?.timestamp||null,
+      nonLusCSM:conv?.nonLusCSM||0
+    };
+  });
+  // Sort: conversations with messages first (newest), then alphabetically
+  items.sort((a,b)=>{
+    if(a.timestamp&&b.timestamp)return(b.timestamp?.seconds||0)-(a.timestamp?.seconds||0);
+    if(a.timestamp)return -1;
+    if(b.timestamp)return 1;
+    return(a.apprenantName).localeCompare(b.apprenantName,'fr');
+  });
+  if(search)items=items.filter(c=>(c.apprenantName||'').toLowerCase().includes(search));
+  if(!items.length){
+    el.innerHTML=`<div class="conv-empty"><div style="font-size:32px">💬</div><div style="font-size:13px">${myStudents.length?'Aucun résultat':'Aucun apprenant assigné'}</div></div>`;
     return;
   }
-  el.innerHTML=list.map(c=>{
-    const name=c.apprenantName||c.apprenant_id||'Apprenant';
+  el.innerHTML=items.map(c=>{
+    const name=c.apprenantName||'Apprenant';
     const initial=name.charAt(0).toUpperCase();
-    const preview=c.dernierMsg?csmTrunc(c.dernierMsg,48):'Aucun message';
+    const preview=c.dernierMsg?csmTrunc(c.dernierMsg,48):'Démarrer la conversation…';
+    const hasMsg=!!c.dernierMsg;
     const unread=c.nonLusCSM||0;
     const ts=c.timestamp?.seconds?csmFmtTime(new Date(c.timestamp.seconds*1000)):'';
     const isActive=c.id===_csmCurrentConvId;
@@ -1985,7 +2009,7 @@ function renderCSMConvList(){
       <div class="conv-ava">${initial}</div>
       <div class="conv-info">
         <div class="conv-name">${csmEsc(name)}</div>
-        <div class="conv-preview">${csmEsc(preview)}</div>
+        <div class="conv-preview" style="${!hasMsg?'color:var(--light);font-style:italic':''}">${csmEsc(preview)}</div>
       </div>
       <div class="conv-meta">
         <div class="conv-time">${ts}</div>
@@ -1996,7 +2020,14 @@ function renderCSMConvList(){
 }
 
 function updateCSMConvBadge(){
-  const total=_csmConvs.reduce((s,c)=>s+(c.nonLusCSM||0),0);
+  const myUid=_csmUser?.uid||_csmUser?.id;
+  const myStudentIds=new Set(S.apprenants
+    .filter(a=>!myUid||(a.csm_id===myUid))
+    .map(a=>a.id)
+  );
+  const total=_csmConvs
+    .filter(c=>myStudentIds.has(c.id)||c.csm_id===myUid)
+    .reduce((s,c)=>s+(c.nonLusCSM||0),0);
   const nav=document.getElementById("badge-messages");
   const top=document.getElementById("csm-conv-total-unread");
   if(nav){if(total>0){nav.textContent=total;nav.style.display='flex';}else nav.style.display='none';}
@@ -2083,8 +2114,17 @@ async function sendCSMReply(){
     text,senderId:_csmUser.uid,senderName:name,role:_csmUser.role||'csm',
     timestamp:TS(),lu:false
   });
+  // Update meta: increment student's unread badge, ensure coach/apprenant info is stored
+  const appData=S.apprenants.find(a=>a.id===_csmCurrentConvId);
+  const appName=appData?`${appData.prenom||''} ${appData.nom||''}`.trim()||appData.email:'Apprenant';
   db.collection("conversations").doc(_csmCurrentConvId).set({
-    dernierMsg:text,timestamp:TS(),nonLusCSM:0
+    apprenant_id:_csmCurrentConvId,
+    apprenantName:appName,
+    csm_id:_csmUser.uid||null,
+    dernierMsg:text,
+    timestamp:TS(),
+    nonLusCSM:0,
+    nonLusStudent:firebase.firestore.FieldValue.increment(1)
   },{merge:true}).catch(()=>{});
 }
 
