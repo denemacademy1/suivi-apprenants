@@ -724,11 +724,30 @@ auth.onAuthStateChanged(async user=>{
   document.getElementById("suc-name").textContent=`${ud.prenom||''} ${ud.nom||''}`.trim()||user.email;
   document.getElementById("suc-avatar").textContent=prenom.charAt(0).toUpperCase();
   document.getElementById("daily-quote").textContent=`"${QUOTES[new Date().getDay()%QUOTES.length]}"`;
-  // Apprenant
+  // Apprenant — 3 méthodes pour garantir la correspondance
   try{
-    const snap=await db.collection("apprenants").where("email","==",user.email).limit(1).get();
-    if(!snap.empty)S.apprenant={id:snap.docs[0].id,...snap.docs[0].data()};
-  }catch(e){console.warn(e);}
+    let appDoc=null;
+    // 1. Par uid (le plus fiable si l'élève a utilisé /register/)
+    try{
+      const s1=await db.collection("apprenants").where("uid","==",user.uid).limit(1).get();
+      if(!s1.empty)appDoc=s1.docs[0];
+    }catch(_){}
+    // 2. Par email exact
+    if(!appDoc){
+      try{
+        const s2=await db.collection("apprenants").where("email","==",user.email).limit(1).get();
+        if(!s2.empty)appDoc=s2.docs[0];
+      }catch(_){}
+    }
+    // 3. Scan complet insensible à la casse (fallback si CSP bloque where())
+    if(!appDoc){
+      const all=await db.collection("apprenants").get();
+      const emailLow=user.email.toLowerCase();
+      const found=all.docs.find(d=>(d.data().email||'').toLowerCase().trim()===emailLow);
+      if(found)appDoc=found;
+    }
+    if(appDoc)S.apprenant={id:appDoc.id,...appDoc.data()};
+  }catch(e){console.warn('apprenant lookup:',e);}
   if(S.apprenant){
     const start=S.apprenant.date_debut?new Date(S.apprenant.date_debut):null;
     if(start){
