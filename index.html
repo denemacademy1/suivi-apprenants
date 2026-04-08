@@ -1279,11 +1279,22 @@ function openRdvModal(rdv){
     <div class="form-grid">
       <div class="form-group form-full"><label>Apprenant *</label><select id="r-app">${S.apprenants.map(a=>`<option value="${a.id}" data-nom="${a.prenom} ${a.nom}" ${r.apprenant_id===a.id?"selected":""}>${a.prenom} ${a.nom}</option>`).join("")}</select></div>
       <div class="form-group"><label>Type de contact *</label><select id="r-type">${CT.map(c=>`<option value="${c.nom}" ${r.type===c.nom?"selected":""}>${c.nom}</option>`).join("")}<option value="Autre" ${r.type==="Autre"?"selected":""}>Autre</option></select></div>
-      <div class="form-group"><label>Chargé de suivi *</label><select id="r-charge"><option value="">Sélectionner…</option>${S.charges.map(c=>`<option value="${c}" ${r.charge_suivi===c?"selected":""}>${c}</option>`).join("")}</select></div>
+      <div class="form-group"><label>Coach *</label><select id="r-charge">
+        <option value="">Sélectionner…</option>
+        ${S.csmUsers.map(u=>{const name=`${u.prenom||""} ${u.nom||""}`.trim()||u.email;return`<option value="${u.id}" data-name="${name}" ${(r.csm_id===u.id||(r.charge_suivi===name&&!r.csm_id))?"selected":""}>${name}</option>`;}).join("")}
+      </select></div>
       <div class="form-group"><label>Date *</label><input id="r-date" type="date" value="${r.date||today()}"></div>
-      <div class="form-group"><label>Heure</label><input id="r-heure" type="time" value="${r.heure||"10:00"}"></div>
+      <div class="form-group"><label>Heure *</label><input id="r-heure" type="time" value="${r.heure||"10:00"}"></div>
       <div class="form-group"><label>Statut</label><select id="r-statut">${["Planifié","Réalisé","Annulé","Reporté"].map(s=>`<option value="${s}" ${(r.statut||"Planifié")===s?"selected":""}>${s}</option>`).join("")}</select></div>
-      <div class="form-group form-full"><label>Notes</label><textarea id="r-notes">${r.notes||""}</textarea></div>
+      <div class="form-group form-full">
+        <label>Lien Google Meet</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="r-meet" type="url" value="${r.meet_url||""}" placeholder="https://meet.google.com/xxx-xxxx-xxx" style="flex:1">
+          <a href="https://meet.google.com/new" target="_blank" class="btn btn-outline btn-sm" style="white-space:nowrap;text-decoration:none">+ Créer Meet</a>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Ce lien sera visible par l'apprenant dans son espace</div>
+      </div>
+      <div class="form-group form-full"><label>Notes internes</label><textarea id="r-notes">${r.notes||""}</textarea></div>
     </div>
     <div class="form-actions">
       ${rdv?`<button class="btn btn-danger btn-sm" onclick="confirmDelete('rdvs','${r.id}','ce RDV');closeRdvModal()">🗑️ Supprimer</button>`:""}
@@ -1295,10 +1306,24 @@ function openRdvModal(rdv){
 function closeRdvModal(){document.getElementById("mo-rdv").classList.remove("active");}
 function saveRdv(){
   const sel=document.getElementById("r-app");
-  const apprenant_id=sel.value;const apprenant_nom=sel.options[sel.selectedIndex]?.dataset.nom||"";
-  const charge_suivi=document.getElementById("r-charge").value;const date=document.getElementById("r-date").value;
-  if(!apprenant_id||!charge_suivi||!date){toast("Apprenant, chargé et date sont requis","error");return;}
-  const data={apprenant_id,apprenant_nom,charge_suivi,type:document.getElementById("r-type").value,date,heure:document.getElementById("r-heure").value,statut:document.getElementById("r-statut").value,notes:document.getElementById("r-notes").value.trim(),updatedAt:TS()};
+  const apprenant_id=sel.value;
+  const apprenant_nom=sel.options[sel.selectedIndex]?.dataset.nom||"";
+  const chargeEl=document.getElementById("r-charge");
+  const csm_id=chargeEl.value;
+  const charge_suivi=(chargeEl.options[chargeEl.selectedIndex]?.dataset.name||chargeEl.options[chargeEl.selectedIndex]?.textContent||"").trim();
+  const date=document.getElementById("r-date").value;
+  if(!apprenant_id||!csm_id||!date){toast("Apprenant, coach et date sont requis","error");return;}
+  const meet_url=document.getElementById("r-meet").value.trim();
+  const data={
+    apprenant_id,apprenant_nom,
+    csm_id,charge_suivi,
+    type:document.getElementById("r-type").value,
+    date,heure:document.getElementById("r-heure").value,
+    statut:document.getElementById("r-statut").value,
+    meet_url:meet_url||null,
+    notes:document.getElementById("r-notes").value.trim(),
+    updatedAt:TS()
+  };
   const col=db.collection("rdvs");
   const p=S.editRdvId?col.doc(S.editRdvId).update(data):col.add({...data,createdAt:TS()});
   p.then(()=>{toast(S.editRdvId?"RDV mis à jour ✅":"RDV planifié ✅","success");closeRdvModal();}).catch(e=>toast("Erreur: "+e.message,"error"));

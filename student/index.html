@@ -400,6 +400,27 @@ nav::-webkit-scrollbar{width:0}
 .toast-xp-badge{margin-left:auto;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0}
 .toast-badge-badge{margin-left:auto;background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#000;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0}
 
+/* ─── RDV CARD ─── */
+.rdv-home-card{background:linear-gradient(135deg,#0C3B2E,#065F46);border:1px solid rgba(16,185,129,.25);border-radius:18px;padding:22px 26px;margin-bottom:28px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden}
+.rdv-home-card::after{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(16,185,129,.2),transparent 70%);pointer-events:none}
+.rdv-home-card.past{background:linear-gradient(135deg,#1C1A35,#0F0E1F);border-color:rgba(255,255,255,.08)}
+.rdv-cal{width:56px;height:56px;border-radius:14px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;text-align:center}
+.rdv-cal-day{font-size:22px;font-weight:900;color:#34D399;line-height:1}
+.rdv-cal-mon{font-size:9px;font-weight:700;color:rgba(52,211,153,.7);text-transform:uppercase;letter-spacing:.5px}
+.rdv-home-card.past .rdv-cal{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.08)}
+.rdv-home-card.past .rdv-cal-day{color:rgba(255,255,255,.5)}
+.rdv-home-card.past .rdv-cal-mon{color:rgba(255,255,255,.3)}
+.rdv-info{flex:1;min-width:0}
+.rdv-label{font-size:10px;font-weight:700;color:rgba(52,211,153,.8);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.rdv-home-card.past .rdv-label{color:rgba(255,255,255,.4)}
+.rdv-type-title{font-size:16px;font-weight:800;color:#fff;margin-bottom:3px}
+.rdv-details{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.rdv-detail-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:rgba(255,255,255,.55);font-weight:500}
+.rdv-meet-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:#10B981;color:#fff;border-radius:12px;font-size:13px;font-weight:700;text-decoration:none;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.rdv-meet-btn:hover{background:#059669;transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.4)}
+.rdv-meet-btn.disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.35);pointer-events:none}
+.rdv-no-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 24px;margin-bottom:28px;display:flex;align-items:center;gap:14px;color:var(--muted)}
+
 /* ─── CHAT ─── */
 .chat-layout{display:flex;height:calc(100vh - 56px);overflow:hidden}
 .chat-left{width:220px;min-width:220px;background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
@@ -609,6 +630,9 @@ nav::-webkit-scrollbar{width:0}
             <div class="hero-sub" id="hero-sub">Prêt à avancer aujourd'hui ? Chaque module complété te rapproche de <span class="highlight">ton objectif</span>.</div>
           </div>
 
+          <!-- Prochain RDV -->
+          <div id="home-rdv-section"></div>
+
           <!-- Stats -->
           <div class="stats-row">
             <div class="stat-card sc-modules">
@@ -801,7 +825,7 @@ const db=firebase.firestore();
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 const BASE=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
 
-let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home',xp:0,streak:0,badges:[],notes:[],todos:[],currentNote:null,_noteSaveTimer:null,_modulesLoaded:false,_progressionsLoaded:false,_initialBadgesDone:false,
+let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home',xp:0,streak:0,badges:[],notes:[],todos:[],rdvs:[],currentNote:null,_noteSaveTimer:null,_modulesLoaded:false,_progressionsLoaded:false,_initialBadgesDone:false,
   chatTab:'private',cohort:null,csmData:null,_chatPrivateUnsub:null,_chatCohortUnsub:null,_chatInitDone:false,_privateUnread:0,_cohortUnread:0};
 
 const PHASES={
@@ -964,6 +988,15 @@ function loadData(){
     // Todos stored in apprenants doc
     S.todos=S.apprenant.todos||[];
     renderTodos();
+    // RDVs — listen to upcoming rendez-vous for this student
+    db.collection("rdvs").onSnapshot(snap=>{
+      S.rdvs=snap.docs
+        .map(d=>({id:d.id,...d.data()}))
+        .filter(r=>r.apprenant_id===S.apprenant.id&&r.statut!=="Annulé"&&r.statut!=="Réalisé")
+        .sort((a,b)=>a.date.localeCompare(b.date));
+      renderHomeRdv();
+    },_=>{});
+    renderHomeRdv();
   }
 }
 
@@ -976,6 +1009,7 @@ function renderAll(){
   renderBadges();
   updateStreakChip();
   renderHomeQuick();
+  renderHomeRdv();
 }
 
 // ── PROGRESS ──
@@ -2024,6 +2058,48 @@ function chatAutoResize(el){
 
 function escHtml(str){
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\n/g,'<br>');
+}
+
+// ── RDV HOME ──
+function renderHomeRdv(){
+  const el=document.getElementById("home-rdv-section");
+  if(!el)return;
+  const today=new Date().toISOString().split('T')[0];
+  // Next upcoming RDV (today or future, not cancelled/done)
+  const next=S.rdvs.find(r=>r.date>=today);
+  if(!next){el.innerHTML='';return;}
+
+  const rdvDate=new Date(next.date+'T'+(next.heure||'00:00'));
+  const day=rdvDate.getDate();
+  const mon=rdvDate.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
+  const fullDate=rdvDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  const isToday=next.date===today;
+  const isTomorrow=next.date===new Date(Date.now()+86400000).toISOString().split('T')[0];
+  const whenLabel=isToday?'Aujourd\'hui':isTomorrow?'Demain':fullDate;
+  const coachName=next.charge_suivi||'votre coach';
+  const hasMeet=!!next.meet_url;
+
+  el.innerHTML=`<div class="rdv-home-card" style="margin-bottom:28px">
+    <div class="rdv-cal">
+      <div class="rdv-cal-day">${day}</div>
+      <div class="rdv-cal-mon">${mon}</div>
+    </div>
+    <div class="rdv-info">
+      <div class="rdv-label">${isToday?'🔔 RDV aujourd\'hui':'📅 Prochain rendez-vous'}</div>
+      <div class="rdv-type-title">${next.type||'Rendez-vous'}</div>
+      <div class="rdv-details">
+        <span class="rdv-detail-chip">📅 ${whenLabel}</span>
+        ${next.heure?`<span class="rdv-detail-chip">🕐 ${next.heure}</span>`:''}
+        <span class="rdv-detail-chip">👤 ${escHtml(coachName)}</span>
+      </div>
+    </div>
+    ${hasMeet
+      ?`<a href="${next.meet_url}" target="_blank" rel="noopener" class="rdv-meet-btn">
+          <span style="font-size:18px">📹</span> Rejoindre Meet
+        </a>`
+      :`<div class="rdv-meet-btn disabled">📹 Lien à venir</div>`
+    }
+  </div>`;
 }
 
 // ── HELPERS ──
