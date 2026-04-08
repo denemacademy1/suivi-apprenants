@@ -1583,7 +1583,8 @@ function saveRdv(){
   const charge_suivi=(chargeEl.options[chargeEl.selectedIndex]?.dataset.name||chargeEl.options[chargeEl.selectedIndex]?.textContent||"").trim();
   const date=document.getElementById("r-date").value;
   if(!apprenant_id||!csm_id||!date){toast("Apprenant, coach et date sont requis","error");return;}
-  const meet_url=document.getElementById("r-meet").value.trim();
+  let meet_url=document.getElementById("r-meet").value.trim();
+  if(meet_url&&!/^https?:\/\//i.test(meet_url))meet_url='https://'+meet_url;
   const data={
     apprenant_id,apprenant_nom,
     csm_id,charge_suivi,

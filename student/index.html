@@ -2093,7 +2093,9 @@ function renderHomeRdv(){
   const isTomorrow=next.date===new Date(Date.now()+86400000).toISOString().split('T')[0];
   const whenLabel=isToday?'Aujourd\'hui':isTomorrow?'Demain':fullDate;
   const coachName=next.charge_suivi||'votre coach';
-  const hasMeet=!!next.meet_url;
+  let meetUrl=next.meet_url||'';
+  if(meetUrl&&!/^https?:\/\//i.test(meetUrl))meetUrl='https://'+meetUrl;
+  const hasMeet=!!meetUrl;
 
   el.innerHTML=`<div class="rdv-home-card" style="margin-bottom:28px">
     <div class="rdv-cal">
@@ -2110,7 +2112,7 @@ function renderHomeRdv(){
       </div>
     </div>
     ${hasMeet
-      ?`<a href="${escHtml(next.meet_url)}" target="_blank" rel="noopener noreferrer" class="rdv-meet-btn">
+      ?`<a href="${escHtml(meetUrl)}" target="_blank" rel="noopener noreferrer" class="rdv-meet-btn">
           <span style="font-size:18px">📹</span> Rejoindre maintenant
         </a>`
       :`<div class="rdv-meet-btn disabled">📹 Lien à venir</div>`
