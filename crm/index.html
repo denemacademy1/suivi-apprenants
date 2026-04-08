@@ -868,7 +868,7 @@ function renderCurrent(){
     case"rapports":renderRapports();break;
     case"reglages":renderReglages();break;
     case"cohortes":renderCohortes();break;
-    case"messages":initCSMConvListener();break;
+    case"messages":initCSMConvListener();renderCSMConvList();updateCSMConvBadge();break;
   }
 }
 

@@ -969,6 +969,11 @@ function loadData(){
     checkInitialBadges();
   });
   if(S.apprenant){
+    // Pre-load unread message badge without subscribing to all messages
+    db.collection("conversations").doc(S.apprenant.id).onSnapshot(d=>{
+      const unread=d.exists?(d.data().nonLusStudent||0):0;
+      if(S.chatTab!=='private'){S._privateUnread=unread;updateChatNavBadge();}
+    });
     db.collection("progressions").onSnapshot(snap=>{
       S.progressions={};
       snap.docs.filter(d=>d.data().apprenant_id===S.apprenant.id).forEach(d=>{S.progressions[d.data().module_id]=d.data();});
