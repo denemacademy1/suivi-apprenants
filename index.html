@@ -203,6 +203,10 @@ tbody tr:last-child td{border-bottom:none}
 .cohort-empty-state{display:flex;align-items:center;justify-content:center;padding:24px;font-size:12px;color:var(--light);font-style:italic}
 .cohort-full-warning{background:var(--warning-light);color:#92400E;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;text-align:center;display:none}
 .cohort-full-warning.show{display:block}
+/* Name suggestions */
+.name-sug{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;background:var(--card);white-space:nowrap}
+.name-sug:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.name-sug.used{opacity:.38;cursor:not-allowed;pointer-events:none;text-decoration:line-through}
 /* Color picker */
 .color-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .color-chip{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.15s}
@@ -509,7 +513,8 @@ tbody tr:last-child td{border-bottom:none}
       <div class="form-grid" style="margin-bottom:16px">
         <div class="form-group">
           <label>Nom de la cohorte *</label>
-          <input type="text" id="cohort-nom" placeholder="Ex : Promo Janvier, Groupe Alpha…" maxlength="40">
+          <input type="text" id="cohort-nom" placeholder="Choisissez ou tapez un nom…" maxlength="40">
+          <div id="cohort-name-suggestions" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
         </div>
         <div class="form-group">
           <label>Couleur</label>
@@ -1421,6 +1426,32 @@ async function seedData(force){
 // ══════════════════════════════════════
 const COHORT_COLORS=["#4F46E5","#7C3AED","#DB2777","#EA580C","#16A34A","#0891B2","#CA8A04","#9333EA","#DC2626","#059669","#F59E0B","#3B82F6"];
 const COHORT_MAX=8;
+const COHORT_NAMES=[
+  {emoji:"🚀",name:"Odyssée"},
+  {emoji:"⚡",name:"Éclipse"},
+  {emoji:"🔥",name:"Ignition"},
+  {emoji:"🌊",name:"Vortex"},
+  {emoji:"🦁",name:"Apex"},
+  {emoji:"🌟",name:"Zénith"},
+  {emoji:"🏔️",name:"Summit"},
+  {emoji:"🎯",name:"Impact"},
+  {emoji:"💎",name:"Prism"},
+  {emoji:"🌙",name:"Nova"},
+  {emoji:"🦅",name:"Altitude"},
+  {emoji:"🧩",name:"Nexus"},
+  {emoji:"🛡️",name:"Bastion"},
+  {emoji:"🌀",name:"Quantum"},
+  {emoji:"🎖️",name:"Élite"},
+  {emoji:"🌈",name:"Aurora"},
+  {emoji:"⚔️",name:"Titan"},
+  {emoji:"🔮",name:"Horizon"},
+  {emoji:"🏹",name:"Vector"},
+  {emoji:"💡",name:"Spark"},
+  {emoji:"🌺",name:"Momentum"},
+  {emoji:"🦋",name:"Métamorphose"},
+  {emoji:"🔭",name:"Cosmos"},
+  {emoji:"🎯",name:"Catalyst"},
+];
 
 function renderCohortes(){
   const el=document.getElementById("page-cohortes");
@@ -1495,6 +1526,13 @@ function openCohortModal(id){
   S._cohortMembers=Array.from(cohort?.membres||[]);
   document.getElementById("cohort-modal-title").textContent=id?"Gérer la cohorte":"Nouvelle cohorte";
   document.getElementById("cohort-nom").value=cohort?.nom||'';
+  // Name suggestions — grey out already-used names
+  const usedNames=S.cohorts.filter(c=>c.id!==id).map(c=>c.nom||'');
+  document.getElementById("cohort-name-suggestions").innerHTML=COHORT_NAMES.map(n=>{
+    const full=`${n.emoji} ${n.name}`;
+    const isUsed=usedNames.includes(full);
+    return`<span class="name-sug${isUsed?' used':''}" onclick="if(!${isUsed})pickCohortName('${full}')" title="${isUsed?'Déjà utilisé':''}">${full}</span>`;
+  }).join('');
   // Color chips
   document.getElementById("cohort-color-chips").innerHTML=COHORT_COLORS.map(c=>`
     <div class="color-chip${c===S._cohortColor?' selected':''}" style="background:${c}" onclick="selectCohortColor('${c}')" title="${c}"></div>`).join('');
@@ -1507,6 +1545,16 @@ function openCohortModal(id){
 
 function closeCohortModal(){
   document.getElementById("mo-cohort").classList.remove("active");
+}
+
+function pickCohortName(name){
+  document.getElementById("cohort-nom").value=name;
+  // Highlight selected suggestion
+  document.querySelectorAll(".name-sug:not(.used)").forEach(el=>{
+    el.style.borderColor=el.textContent.trim()===name?"var(--primary)":"";
+    el.style.color=el.textContent.trim()===name?"var(--primary)":"";
+    el.style.background=el.textContent.trim()===name?"var(--primary-light)":"";
+  });
 }
 
 function selectCohortColor(c){
