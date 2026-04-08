@@ -826,7 +826,7 @@ const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 const BASE=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
 
 let S={user:null,userData:null,apprenant:null,modules:[],progressions:{},currentModule:null,quizAnswers:{},quizSubmitted:false,currentPage:'home',xp:0,streak:0,badges:[],notes:[],todos:[],rdvs:[],currentNote:null,_noteSaveTimer:null,_modulesLoaded:false,_progressionsLoaded:false,_initialBadgesDone:false,
-  chatTab:'private',cohort:null,csmData:null,_chatPrivateUnsub:null,_chatCohortUnsub:null,_chatInitDone:false,_privateUnread:0,_cohortUnread:0};
+  chatTab:'private',cohort:null,csmData:null,_chatPrivateUnsub:null,_chatCohortUnsub:null,_chatInitDone:false,_privateUnread:0,_cohortUnread:0,_cohortLastSeen:0};
 
 const PHASES={
   onboarding:{label:"Onboarding",icon:"🚀",color:"#8B5CF6"},
@@ -1827,11 +1827,20 @@ function setupCohortChat(){
   msgEl.innerHTML=`<div class="chat-empty"><div class="chat-empty-icon">👥</div><div class="chat-empty-title">Chargement…</div></div>`;
   if(S._chatCohortUnsub)S._chatCohortUnsub();
   const cohortRef=db.collection("cohorts").doc(S.cohort.id).collection("messages");
+  const selfId=S.apprenant?.id;
   const setupListener=(ref)=>{
     S._chatCohortUnsub=ref.onSnapshot(snap=>{
       const msgs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
       renderCohortMessages(msgs);
-      if(S.chatTab==='cohort'){S._cohortUnread=0;updateChatNavBadge();}
+      if(S.chatTab==='cohort'){
+        S._cohortUnread=0;
+        S._cohortLastSeen=Date.now()/1000;
+        updateChatNavBadge();
+      } else {
+        const since=S._cohortLastSeen||0;
+        S._cohortUnread=msgs.filter(m=>m.senderId!==selfId&&(m.timestamp?.seconds||0)>since).length;
+        updateChatNavBadge();
+      }
     });
   };
   try{setupListener(cohortRef.orderBy("timestamp","asc"));}
@@ -2028,7 +2037,7 @@ function switchChatTab(tab){
   document.getElementById("chat-tab-cohort").classList.toggle("active",tab==='cohort');
   // Reset unread
   if(tab==='private')S._privateUnread=0;
-  else S._cohortUnread=0;
+  else{S._cohortUnread=0;S._cohortLastSeen=Date.now()/1000;}
   updateChatNavBadge();
   renderChatLeft();
   if(tab==='private')setupPrivateChat();

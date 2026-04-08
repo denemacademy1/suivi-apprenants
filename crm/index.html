@@ -295,6 +295,10 @@ tbody tr:last-child td{border-bottom:none}
 
 /* ── CONVERSATIONS ── */
 #page-messages{margin:-20px -24px;height:calc(100vh - 60px);overflow:hidden}
+.msg-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 12px;gap:2px;flex-shrink:0;background:var(--card)}
+.msg-tab{flex:1;padding:9px 4px;background:none;border:none;border-bottom:2px solid transparent;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;margin-bottom:-1px}
+.msg-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.msg-tab:hover:not(.active){color:var(--text)}
 .conv-layout{display:flex;width:100%;height:100%}
 .conv-list{width:300px;min-width:300px;border-right:1px solid var(--border);background:var(--card);display:flex;flex-direction:column;overflow:hidden}
 .conv-list-head{padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
@@ -523,7 +527,11 @@ tbody tr:last-child td{border-bottom:none}
               <div class="conv-list-title">💬 Messages</div>
               <span class="conv-total-unread" id="csm-conv-total-unread" style="display:none">0</span>
             </div>
-            <div class="conv-search"><input type="text" id="csm-conv-search" placeholder="Rechercher…" oninput="renderCSMConvList()"></div>
+            <div class="msg-tabs">
+              <button class="msg-tab active" id="tab-private" onclick="switchMsgTab('private')">👤 Privés</button>
+              <button class="msg-tab" id="tab-cohort" onclick="switchMsgTab('cohort')">👥 Cohortes</button>
+            </div>
+            <div class="conv-search"><input type="text" id="csm-conv-search" placeholder="Rechercher un apprenant…" oninput="filterMsgList()"></div>
             <div class="conv-items" id="csm-conv-items">
               <div class="conv-empty"><div style="font-size:32px">💬</div><div style="font-size:13px">Chargement…</div></div>
             </div>
@@ -532,7 +540,7 @@ tbody tr:last-child td{border-bottom:none}
             <div class="conv-placeholder" id="csm-conv-placeholder">
               <div style="font-size:48px">💬</div>
               <div style="font-size:15px;font-weight:700;color:var(--muted)">Sélectionnez une conversation</div>
-              <div style="font-size:13px;max-width:260px;line-height:1.6">Répondez aux messages de vos apprenants en temps réel.</div>
+              <div style="font-size:13px;max-width:260px;line-height:1.6">Messages privés ou chat de groupe par cohorte.</div>
             </div>
             <div id="csm-conv-inner" style="display:none;flex-direction:column;flex:1;overflow:hidden">
               <div class="conv-chat-header">
@@ -545,7 +553,7 @@ tbody tr:last-child td{border-bottom:none}
               <div class="conv-messages" id="csm-conv-messages"></div>
               <div class="conv-input-area">
                 <div class="conv-input-wrap">
-                  <textarea class="conv-input" id="csm-conv-input" placeholder="Votre réponse…" rows="1" onkeydown="csmConvKeydown(event)" oninput="csmConvResize(this)"></textarea>
+                  <textarea class="conv-input" id="csm-conv-input" placeholder="Votre message…" rows="1" onkeydown="csmConvKeydown(event)" oninput="csmConvResize(this)"></textarea>
                 </div>
                 <button class="btn-conv-send" onclick="sendCSMReply()">➤</button>
               </div>
@@ -1950,6 +1958,122 @@ let _csmCurrentConvId=null;
 let _csmConvListUnsub=null;
 let _csmMsgUnsub=null;
 let _csmConvListenerDone=false;
+let _msgTab='private';
+let _csmCurrentCohortId=null;
+let _csmCohortMsgUnsub=null;
+
+function switchMsgTab(tab){
+  _msgTab=tab;
+  document.getElementById('tab-private').classList.toggle('active',tab==='private');
+  document.getElementById('tab-cohort').classList.toggle('active',tab==='cohort');
+  const inp=document.getElementById('csm-conv-search');
+  if(inp)inp.placeholder=tab==='private'?'Rechercher un apprenant…':'Rechercher une cohorte…';
+  document.getElementById("csm-conv-placeholder").style.display="flex";
+  document.getElementById("csm-conv-inner").style.display="none";
+  if(tab==='private'){renderCSMConvList();}
+  else{renderCSMCohortList();}
+}
+
+function filterMsgList(){
+  if(_msgTab==='private')renderCSMConvList();
+  else renderCSMCohortList();
+}
+
+function renderCSMCohortList(){
+  const el=document.getElementById("csm-conv-items");
+  if(!el)return;
+  const search=(document.getElementById("csm-conv-search")?.value||'').toLowerCase().trim();
+  const myUid=_csmUser?.uid||_csmUser?.id;
+  const myStudentIds=new Set(S.apprenants.filter(a=>!myUid||(a.csm_id===myUid)).map(a=>a.id));
+  let cohorts=S.cohorts.filter(c=>(c.membres||[]).some(mid=>myStudentIds.has(mid)));
+  if(!cohorts.length)cohorts=S.cohorts;
+  if(search)cohorts=cohorts.filter(c=>(c.nom||'').toLowerCase().includes(search));
+  if(!cohorts.length){
+    el.innerHTML=`<div class="conv-empty"><div style="font-size:32px">👥</div><div style="font-size:13px">Aucune cohorte</div></div>`;
+    return;
+  }
+  el.innerHTML=cohorts.map(c=>{
+    const count=(c.membres||[]).length;
+    const isActive=c.id===_csmCurrentCohortId;
+    const color=c.couleur||'var(--primary)';
+    return`<div class="conv-item${isActive?' active':''}" onclick="openCSMCohort('${c.id}')">
+      <div class="conv-ava" style="background:${color};font-size:16px">👥</div>
+      <div class="conv-info">
+        <div class="conv-name">${csmEsc(c.nom||'Cohorte')}</div>
+        <div class="conv-preview">${count} apprenant${count>1?'s':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCSMCohort(cohortId){
+  _csmCurrentCohortId=cohortId;
+  if(_csmCohortMsgUnsub){_csmCohortMsgUnsub();_csmCohortMsgUnsub=null;}
+  renderCSMCohortList();
+  const cohort=S.cohorts.find(c=>c.id===cohortId);
+  document.getElementById("csm-conv-placeholder").style.display="none";
+  const inner=document.getElementById("csm-conv-inner");
+  inner.style.display="flex";inner.style.flexDirection="column";
+  const ava=document.getElementById("csm-chat-ava");
+  ava.textContent="👥";ava.style.background=cohort?.couleur||'var(--primary)';ava.style.fontSize='18px';
+  document.getElementById("csm-chat-name").textContent=cohort?.nom||'Cohorte';
+  const count=(cohort?.membres||[]).length;
+  document.getElementById("csm-chat-sub").textContent=`Groupe · ${count} apprenant${count>1?'s':''}`;
+  document.getElementById("csm-conv-messages").innerHTML=`<div style="text-align:center;padding:24px;color:var(--light);font-size:13px">Chargement…</div>`;
+  const setupMsg=(ref)=>{
+    _csmCohortMsgUnsub=ref.onSnapshot(snap=>{
+      const msgs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+      renderCSMCohortMessages(msgs,cohortId);
+    });
+  };
+  try{setupMsg(db.collection("cohorts").doc(cohortId).collection("messages").orderBy("timestamp","asc"));}
+  catch(_){setupMsg(db.collection("cohorts").doc(cohortId).collection("messages"));}
+  document.getElementById("csm-conv-input")?.focus();
+}
+
+function renderCSMCohortMessages(msgs,cohortId){
+  const el=document.getElementById("csm-conv-messages");
+  const cohort=S.cohorts.find(c=>c.id===cohortId);
+  const myUid=_csmUser?.uid||_csmUser?.id;
+  if(!msgs.length){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--light);text-align:center;padding:32px">
+      <div style="font-size:40px">👥</div>
+      <div style="font-size:14px;font-weight:600;color:var(--muted)">${csmEsc(cohort?.nom||'Cohorte')}</div>
+      <div style="font-size:12px">Envoyez un message à tous les apprenants de cette cohorte</div>
+    </div>`;
+    return;
+  }
+  let html='';let lastDay='';
+  msgs.forEach(m=>{
+    const ts=m.timestamp?.seconds?new Date(m.timestamp.seconds*1000):new Date();
+    const day=ts.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const time=ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if(day!==lastDay){lastDay=day;html+=`<div class="adm-day-sep">${day}</div>`;}
+    const isMe=m.senderId===myUid;
+    const isCoach=m.role==='csm'||m.role==='admin';
+    const name=m.senderName||(isCoach?'Coach':'Apprenant');
+    const initial=name.charAt(0).toUpperCase();
+    const avatarBg=isCoach?"linear-gradient(135deg,var(--primary),var(--purple))":"linear-gradient(135deg,#10B981,#059669)";
+    if(m.type==='victory'){
+      html+=`<div style="margin:6px 0;padding:12px 16px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:12px;border-left:4px solid #F59E0B">
+        <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:4px">🏆 Victoire · ${csmEsc(name)}</div>
+        <div style="font-size:13px;color:var(--text)">${csmEsc(m.text||'')}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">${time}</div>
+      </div>`;
+    } else {
+      html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
+        <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
+        <div class="adm-msg-body">
+          <div class="adm-msg-sender">${csmEsc(name)}${isCoach&&!isMe?' · Coach':''}</div>
+          <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+          <div class="adm-msg-time">${time}</div>
+        </div>
+      </div>`;
+    }
+  });
+  el.innerHTML=html;
+  requestAnimationFrame(()=>{const e=document.getElementById("csm-conv-messages");if(e)e.scrollTop=e.scrollHeight;});
+}
 
 function initCSMConvListener(){
   if(_csmConvListenerDone)return;
@@ -2106,28 +2230,40 @@ function renderCSMMessages(msgs,appId){
 }
 
 async function sendCSMReply(){
-  if(!_csmCurrentConvId||!_csmUser)return;
+  if(!_csmUser)return;
   const input=document.getElementById("csm-conv-input");
   const text=input?.value.trim();
   if(!text)return;
   input.value='';csmConvResize(input);
   const name=(_csmUser.prenom&&_csmUser.nom)?`${_csmUser.prenom} ${_csmUser.nom}`.trim():_csmUser.prenom||'Coach';
-  await db.collection("conversations").doc(_csmCurrentConvId).collection("messages").add({
-    text,senderId:_csmUser.uid,senderName:name,role:_csmUser.role||'csm',
-    timestamp:TS(),lu:false
-  });
-  // Update meta: increment student's unread badge, ensure coach/apprenant info is stored
-  const appData=S.apprenants.find(a=>a.id===_csmCurrentConvId);
-  const appName=appData?`${appData.prenom||''} ${appData.nom||''}`.trim()||appData.email:'Apprenant';
-  db.collection("conversations").doc(_csmCurrentConvId).set({
-    apprenant_id:_csmCurrentConvId,
-    apprenantName:appName,
-    csm_id:_csmUser.uid||null,
-    dernierMsg:text,
-    timestamp:TS(),
-    nonLusCSM:0,
-    nonLusStudent:firebase.firestore.FieldValue.increment(1)
-  },{merge:true}).catch(()=>{});
+  const role=_csmUser.role||'csm';
+
+  if(_msgTab==='cohort'){
+    // Message de groupe vers la cohorte
+    if(!_csmCurrentCohortId)return;
+    await db.collection("cohorts").doc(_csmCurrentCohortId).collection("messages").add({
+      text,senderId:_csmUser.uid,senderName:name,role,
+      timestamp:TS(),lu:false,type:'message'
+    });
+  } else {
+    // Message privé vers un apprenant
+    if(!_csmCurrentConvId)return;
+    await db.collection("conversations").doc(_csmCurrentConvId).collection("messages").add({
+      text,senderId:_csmUser.uid,senderName:name,role,
+      timestamp:TS(),lu:false
+    });
+    const appData=S.apprenants.find(a=>a.id===_csmCurrentConvId);
+    const appName=appData?`${appData.prenom||''} ${appData.nom||''}`.trim()||appData.email:'Apprenant';
+    db.collection("conversations").doc(_csmCurrentConvId).set({
+      apprenant_id:_csmCurrentConvId,
+      apprenantName:appName,
+      csm_id:_csmUser.uid||null,
+      dernierMsg:text,
+      timestamp:TS(),
+      nonLusCSM:0,
+      nonLusStudent:firebase.firestore.FieldValue.increment(1)
+    },{merge:true}).catch(()=>{});
+  }
 }
 
 function csmConvKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCSMReply();}}
