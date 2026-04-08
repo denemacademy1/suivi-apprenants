@@ -159,6 +159,62 @@ tbody tr:last-child td{border-bottom:none}
 .modal-close:hover{background:var(--border)}
 .modal-body{padding:24px}
 
+/* ── CONVERSATIONS ── */
+#page-messages{margin:-20px -24px;height:calc(100vh - 60px);overflow:hidden}
+.conv-layout{display:flex;width:100%;height:100%}
+.conv-list{width:300px;min-width:300px;border-right:1px solid var(--border);background:var(--card);display:flex;flex-direction:column;overflow:hidden}
+.conv-list-head{padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.conv-list-title{font-size:13px;font-weight:700;color:var(--text)}
+.conv-total-unread{background:var(--danger);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px}
+.conv-search{padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.conv-search input{width:100%;padding:7px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;color:var(--text);font-family:inherit;background:var(--bg)}
+.conv-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.conv-items{flex:1;overflow-y:auto}
+.conv-items::-webkit-scrollbar{width:4px}
+.conv-items::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.conv-item{display:flex;align-items:center;gap:11px;padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--bg);transition:.15s}
+.conv-item:hover{background:#F8FAFF}
+.conv-item.active{background:var(--primary-light);border-right:3px solid var(--primary)}
+.conv-ava{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.conv-info{flex:1;min-width:0}
+.conv-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-preview{font-size:12px;color:var(--light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.conv-time{font-size:10px;color:var(--light);white-space:nowrap}
+.conv-badge{background:var(--danger);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:8px;min-width:18px;text-align:center}
+.conv-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--light);padding:24px;text-align:center}
+.conv-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.conv-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--light);text-align:center;padding:32px}
+.conv-chat-header{background:var(--card);border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.conv-chat-ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.conv-chat-name{font-size:14px;font-weight:700;color:var(--text)}
+.conv-chat-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.conv-messages{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.conv-messages::-webkit-scrollbar{width:4px}
+.conv-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.adm-day-sep{display:flex;align-items:center;gap:10px;margin:4px 0;font-size:11px;color:var(--light);font-weight:500}
+.adm-day-sep::before,.adm-day-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+.adm-msg-row{display:flex;gap:8px;max-width:72%}
+.adm-msg-row.mine{align-self:flex-end;flex-direction:row-reverse}
+.adm-msg-row.theirs{align-self:flex-start}
+.adm-msg-ava{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-end}
+.adm-msg-body{display:flex;flex-direction:column;gap:3px}
+.adm-msg-row.mine .adm-msg-body{align-items:flex-end}
+.adm-msg-sender{font-size:10px;font-weight:600;color:var(--light);padding:0 4px}
+.adm-msg-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word}
+.adm-msg-row.mine .adm-msg-bubble{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;border-radius:14px 14px 4px 14px}
+.adm-msg-row.theirs .adm-msg-bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.adm-msg-time{font-size:10px;color:var(--light);padding:0 4px}
+.conv-input-area{background:var(--card);border-top:1px solid var(--border);padding:13px 22px;display:flex;gap:10px;align-items:flex-end;flex-shrink:0}
+.conv-input-wrap{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:9px 13px;transition:.2s}
+.conv-input-wrap:focus-within{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-light)}
+.conv-input{width:100%;background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:inherit;resize:none;line-height:1.5;max-height:100px;overflow-y:auto}
+.conv-input::placeholder{color:var(--light)}
+.btn-conv-send{width:38px;height:38px;border-radius:9px;background:var(--primary);border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.btn-conv-send:hover{background:#4338CA;transform:translateY(-1px)}
+/* Nav unread */
+.nav-badge.danger{background:var(--danger)}
+
 /* TOAST */
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
 .toast{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;min-width:240px}
@@ -287,6 +343,7 @@ tbody tr:last-child td{border-bottom:none}
       <div class="nav-item" data-page="apprenants" onclick="nav('apprenants')"><span class="nav-icon">👥</span><span class="nav-label">Apprenants</span><span class="nav-badge" id="badge-apprenants"></span></div>
       <div class="nav-item" data-page="planning" onclick="nav('planning')"><span class="nav-icon">📅</span><span class="nav-label">Planning RDVs</span><span class="nav-badge" id="badge-planning"></span></div>
       <div class="nav-item" data-page="alertes" onclick="nav('alertes')"><span class="nav-icon">⚠️</span><span class="nav-label">Alertes</span><span class="nav-badge danger" id="badge-alertes"></span></div>
+      <div class="nav-item" data-page="messages" onclick="nav('messages')"><span class="nav-icon">💬</span><span class="nav-label">Messages</span><span class="nav-badge danger" id="badge-messages" style="display:none">0</span></div>
       <div class="nav-section-label" style="margin-top:12px">Analyse</div>
       <div class="nav-item" data-page="rapports" onclick="nav('rapports')"><span class="nav-icon">📊</span><span class="nav-label">Rapports</span></div>
       <div class="nav-section-label" style="margin-top:12px">Config</div>
@@ -323,6 +380,43 @@ tbody tr:last-child td{border-bottom:none}
       <div id="page-alertes" class="page"></div>
       <div id="page-rapports" class="page"></div>
       <div id="page-reglages" class="page"></div>
+      <div id="page-messages" class="page">
+        <div class="conv-layout">
+          <div class="conv-list">
+            <div class="conv-list-head">
+              <div class="conv-list-title">💬 Messages</div>
+              <span class="conv-total-unread" id="csm-conv-total-unread" style="display:none">0</span>
+            </div>
+            <div class="conv-search"><input type="text" id="csm-conv-search" placeholder="Rechercher…" oninput="renderCSMConvList()"></div>
+            <div class="conv-items" id="csm-conv-items">
+              <div class="conv-empty"><div style="font-size:32px">💬</div><div style="font-size:13px">Chargement…</div></div>
+            </div>
+          </div>
+          <div class="conv-chat" id="csm-conv-chat">
+            <div class="conv-placeholder" id="csm-conv-placeholder">
+              <div style="font-size:48px">💬</div>
+              <div style="font-size:15px;font-weight:700;color:var(--muted)">Sélectionnez une conversation</div>
+              <div style="font-size:13px;max-width:260px;line-height:1.6">Répondez aux messages de vos apprenants en temps réel.</div>
+            </div>
+            <div id="csm-conv-inner" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+              <div class="conv-chat-header">
+                <div class="conv-chat-ava" id="csm-chat-ava">?</div>
+                <div>
+                  <div class="conv-chat-name" id="csm-chat-name">—</div>
+                  <div class="conv-chat-sub" id="csm-chat-sub">—</div>
+                </div>
+              </div>
+              <div class="conv-messages" id="csm-conv-messages"></div>
+              <div class="conv-input-area">
+                <div class="conv-input-wrap">
+                  <textarea class="conv-input" id="csm-conv-input" placeholder="Votre réponse…" rows="1" onkeydown="csmConvKeydown(event)" oninput="csmConvResize(this)"></textarea>
+                </div>
+                <button class="btn-conv-send" onclick="sendCSMReply()">➤</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -432,6 +526,7 @@ const PAGE_INFO={
   alertes:{title:"Alertes",sub:"Apprenants nécessitant une attention immédiate",action:null},
   rapports:{title:"Rapports & Analyses",sub:"Statistiques de la formation",action:null},
   reglages:{title:"Réglages",sub:"Configuration du dashboard",action:null},
+  messages:{title:"Messages",sub:"Conversations avec les apprenants",action:null},
 };
 
 // ══════════════════════════════════════
@@ -470,6 +565,7 @@ auth.onAuthStateChanged(async user=>{
   // Set sidebar user info
   if(doc.exists){
     const d=doc.data();
+    _csmUser={id:user.uid,uid:user.uid,...d,email:user.email};
     document.getElementById('u-name').textContent=`${d.prenom||''} ${d.nom||''}`.trim()||user.email;
     document.getElementById('u-avatar').textContent=(d.prenom||user.email).charAt(0).toUpperCase();
   }
@@ -572,6 +668,7 @@ function renderCurrent(){
     case"alertes":renderAlertes();break;
     case"rapports":renderRapports();break;
     case"reglages":renderReglages();break;
+    case"messages":initCSMConvListener();break;
   }
 }
 
@@ -1164,6 +1261,161 @@ async function seedData(force){
   }
   toast("Données de démo chargées ✅","success");
 }
+
+// ══════════════════════════════════════
+//  CONVERSATIONS
+// ══════════════════════════════════════
+let _csmUser=null;
+let _csmConvs=[];
+let _csmCurrentConvId=null;
+let _csmConvListUnsub=null;
+let _csmMsgUnsub=null;
+let _csmConvListenerDone=false;
+
+function initCSMConvListener(){
+  if(_csmConvListenerDone)return;
+  _csmConvListenerDone=true;
+  const setup=(ref)=>{
+    _csmConvListUnsub=ref.onSnapshot(snap=>{
+      _csmConvs=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.timestamp?.seconds||0)-(a.timestamp?.seconds||0));
+      renderCSMConvList();
+      updateCSMConvBadge();
+    });
+  };
+  try{setup(db.collection("conversations").orderBy("timestamp","desc"));}
+  catch(_){setup(db.collection("conversations"));}
+}
+
+function renderCSMConvList(){
+  const el=document.getElementById("csm-conv-items");
+  if(!el)return;
+  const search=(document.getElementById("csm-conv-search")?.value||'').toLowerCase().trim();
+  let list=_csmConvs;
+  if(search)list=list.filter(c=>(c.apprenantName||'').toLowerCase().includes(search));
+  if(!list.length){
+    el.innerHTML=`<div class="conv-empty"><div style="font-size:32px">💬</div><div style="font-size:13px">${_csmConvs.length?'Aucun résultat':'Aucune conversation'}</div></div>`;
+    return;
+  }
+  el.innerHTML=list.map(c=>{
+    const name=c.apprenantName||c.apprenant_id||'Apprenant';
+    const initial=name.charAt(0).toUpperCase();
+    const preview=c.dernierMsg?csmTrunc(c.dernierMsg,48):'Aucun message';
+    const unread=c.nonLusCSM||0;
+    const ts=c.timestamp?.seconds?csmFmtTime(new Date(c.timestamp.seconds*1000)):'';
+    const isActive=c.id===_csmCurrentConvId;
+    return`<div class="conv-item${isActive?' active':''}" onclick="openCSMConv('${c.id}')">
+      <div class="conv-ava">${initial}</div>
+      <div class="conv-info">
+        <div class="conv-name">${csmEsc(name)}</div>
+        <div class="conv-preview">${csmEsc(preview)}</div>
+      </div>
+      <div class="conv-meta">
+        <div class="conv-time">${ts}</div>
+        ${unread>0?`<div class="conv-badge">${unread}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateCSMConvBadge(){
+  const total=_csmConvs.reduce((s,c)=>s+(c.nonLusCSM||0),0);
+  const nav=document.getElementById("badge-messages");
+  const top=document.getElementById("csm-conv-total-unread");
+  if(nav){if(total>0){nav.textContent=total;nav.style.display='flex';}else nav.style.display='none';}
+  if(top){if(total>0){top.textContent=total;top.style.display='';}else top.style.display='none';}
+}
+
+function openCSMConv(appId){
+  _csmCurrentConvId=appId;
+  const conv=_csmConvs.find(c=>c.id===appId);
+  renderCSMConvList();
+  document.getElementById("csm-conv-placeholder").style.display="none";
+  const inner=document.getElementById("csm-conv-inner");
+  inner.style.display="flex";inner.style.flexDirection="column";
+  const appData=S.apprenants.find(a=>a.id===appId);
+  const name=appData?`${appData.prenom||''} ${appData.nom||''}`.trim():conv?.apprenantName||appId;
+  const initial=name.charAt(0).toUpperCase()||'?';
+  document.getElementById("csm-chat-ava").textContent=initial;
+  document.getElementById("csm-chat-name").textContent=name;
+  document.getElementById("csm-chat-sub").textContent=appData?.email||conv?.apprenant_id||'Apprenant';
+  // Reset unread
+  db.collection("conversations").doc(appId).update({nonLusCSM:0}).catch(()=>{});
+  // Messages listener
+  if(_csmMsgUnsub){_csmMsgUnsub();_csmMsgUnsub=null;}
+  document.getElementById("csm-conv-messages").innerHTML=`<div style="text-align:center;padding:24px;color:var(--light);font-size:13px">Chargement…</div>`;
+  const setupMsg=(ref)=>{
+    _csmMsgUnsub=ref.onSnapshot(snap=>{
+      const msgs=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+      renderCSMMessages(msgs,appId);
+      msgs.filter(m=>m.role==='student'&&!m.lu).forEach(m=>{
+        db.collection("conversations").doc(appId).collection("messages").doc(m.id).update({lu:true}).catch(()=>{});
+      });
+    });
+  };
+  try{setupMsg(db.collection("conversations").doc(appId).collection("messages").orderBy("timestamp","asc"));}
+  catch(_){setupMsg(db.collection("conversations").doc(appId).collection("messages"));}
+  document.getElementById("csm-conv-input")?.focus();
+}
+
+function renderCSMMessages(msgs,appId){
+  const el=document.getElementById("csm-conv-messages");
+  const appData=S.apprenants.find(a=>a.id===appId);
+  const appName=appData?`${appData.prenom||''}`.trim()||'Apprenant':'Apprenant';
+  const coachName=_csmUser?(_csmUser.prenom||'Coach'):'Coach';
+  if(!msgs.length){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--light);text-align:center">
+      <div style="font-size:40px">💬</div>
+      <div style="font-size:14px;font-weight:600;color:var(--muted)">Aucun message</div>
+      <div style="font-size:12px">Envoyez le premier message à ${csmEsc(appName)}</div>
+    </div>`;
+    return;
+  }
+  let html='';let lastDay='';
+  msgs.forEach(m=>{
+    const isMe=m.role!=='student';
+    const ts=m.timestamp?.seconds?new Date(m.timestamp.seconds*1000):new Date();
+    const day=ts.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const time=ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if(day!==lastDay){lastDay=day;html+=`<div class="adm-day-sep">${day}</div>`;}
+    const name=isMe?coachName:appName;
+    const initial=name.charAt(0).toUpperCase();
+    const avatarBg=isMe?"linear-gradient(135deg,var(--primary),var(--purple))":"linear-gradient(135deg,#10B981,#059669)";
+    html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
+      <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
+      <div class="adm-msg-body">
+        <div class="adm-msg-sender">${csmEsc(name)}</div>
+        <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+        <div class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':''}</div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+  requestAnimationFrame(()=>{const e=document.getElementById("csm-conv-messages");if(e)e.scrollTop=e.scrollHeight;});
+}
+
+async function sendCSMReply(){
+  if(!_csmCurrentConvId||!_csmUser)return;
+  const input=document.getElementById("csm-conv-input");
+  const text=input?.value.trim();
+  if(!text)return;
+  input.value='';csmConvResize(input);
+  const name=(_csmUser.prenom&&_csmUser.nom)?`${_csmUser.prenom} ${_csmUser.nom}`.trim():_csmUser.prenom||'Coach';
+  await db.collection("conversations").doc(_csmCurrentConvId).collection("messages").add({
+    text,senderId:_csmUser.uid,senderName:name,role:_csmUser.role||'csm',
+    timestamp:TS(),lu:false
+  });
+  db.collection("conversations").doc(_csmCurrentConvId).set({
+    dernierMsg:text,timestamp:TS(),nonLusCSM:0
+  },{merge:true}).catch(()=>{});
+}
+
+function csmConvKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCSMReply();}}
+function csmConvResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+function csmFmtTime(d){const now=new Date(),diff=now-d;if(diff<60000)return'À l\'instant';if(diff<3600000)return Math.floor(diff/60000)+'min';if(diff<86400000)return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});if(diff<604800000)return d.toLocaleDateString('fr-FR',{weekday:'short'});return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
+function csmTrunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}
+function csmEsc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ══════════════════════════════════════
 //  INIT
