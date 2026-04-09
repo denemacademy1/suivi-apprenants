@@ -340,7 +340,7 @@ tr:hover td{background:#FAFBFF}
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">Fiches apprenants</div>
-        <a href="../" class="btn btn-secondary btn-sm">→ Dashboard CSM</a>
+        <a href="../crm/" class="btn btn-secondary btn-sm">→ Dashboard CSM</a>
       </div>
       <div id="apprenants-list">
         <div class="empty"><div class="e-icon">🎯</div><div class="e-text">Chargement…</div></div>
@@ -648,6 +648,7 @@ function initListeners(){
     modules=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderModules();
     updateModuleStats();
+    renderStatsPage();
   });
   db.collection("users").orderBy("createdAt","desc").onSnapshot(snap=>{
     users=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -671,7 +672,7 @@ function initListeners(){
 
 // ─── Navigation ───────────────────────────────────────────
 const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales',conv:'Conversations'};
-const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../','_blank')"},stats:{text:'',fn:''},conv:{text:'',fn:''}};
+const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../crm/','_blank')"},stats:{text:'',fn:''},conv:{text:'',fn:''}};
 
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
