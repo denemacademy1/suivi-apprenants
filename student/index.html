@@ -2021,7 +2021,7 @@ function renderCohortMessages(msgs){
     </div>`;
     return;
   }
-  const selfId=S.apprenant?.id;
+  const selfId=S.user?.uid||S.apprenant?.id;
   let html='';
   let lastDay='';
   msgs.forEach(m=>{
