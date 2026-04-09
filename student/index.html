@@ -983,11 +983,13 @@ auth.onAuthStateChanged(async user=>{
 });
 
 // ── DAILY LOGIN STREAK ──
+const localIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 async function handleDailyLogin(){
   if(!S.apprenant)return;
-  const today=new Date().toISOString().split('T')[0];
+  const today=localIso(new Date());
   const lastLogin=S.apprenant.lastLogin||'';
-  const yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  const yest=new Date();yest.setDate(yest.getDate()-1);
+  const yesterday=localIso(yest);
   if(lastLogin===today)return; // Already logged in today
   let newStreak=S.streak;
   if(lastLogin===yesterday){
@@ -2215,7 +2217,7 @@ function escHtml(str){
 function renderHomeRdv(){
   const el=document.getElementById("home-rdv-section");
   if(!el)return;
-  const today=new Date().toISOString().split('T')[0];
+  const today=localIso(new Date());
 
   // Split: réalisés (history) vs à venir
   const done=S.rdvs.filter(r=>r.statut==="Réalisé").sort((a,b)=>b.date.localeCompare(a.date));
@@ -2248,7 +2250,7 @@ function renderHomeRdv(){
     const mon=rdvDate.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
     const fullDate=rdvDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
     const isToday=next.date===today;
-    const isTomorrow=next.date===new Date(Date.now()+86400000).toISOString().split('T')[0];
+    const tom=new Date();tom.setDate(tom.getDate()+1);const isTomorrow=next.date===localIso(tom);
     const whenLabel=isToday?'Aujourd\'hui':isTomorrow?'Demain':fullDate;
     const coachName=next.charge_suivi||'votre coach';
     let meetUrl=next.meet_url||'';

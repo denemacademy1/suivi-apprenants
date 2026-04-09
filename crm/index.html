@@ -888,7 +888,7 @@ const pColor=(p)=>p>=70?"#10B981":p>=40?"#F59E0B":"#EF4444";
 function sBadge(s){const m={"En cours":"b-success","À risque":"b-warning","En retard":"b-danger","Terminé":"b-info","Abandonné":"b-gray"};return`<span class="badge ${m[s]||"b-gray"}">${s}</span>`;}
 function fDate(d){if(!d)return"—";try{return new Date(d).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}catch{return d}}
 function fDateLong(d){if(!d)return"—";try{return new Date(d).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}catch{return d}}
-const today=()=>new Date().toISOString().split("T")[0];
+const today=()=>localIso(new Date());
 const isUpcoming=(d,n=7)=>{if(!d)return false;const dt=new Date(d),t=new Date();t.setHours(0,0,0,0);const l=new Date(t);l.setDate(l.getDate()+n);return dt>=t&&dt<=l;};
 const isPast=(d)=>{if(!d)return false;return new Date(d)<new Date(today());};
 const stuProgs=(appId)=>S.progressions.filter(p=>p.apprenant_id===appId&&(p.statut==="completed"||p.statut==="termine"));
@@ -1115,11 +1115,12 @@ function getWeekDays(offset){
   mon.setHours(0,0,0,0);
   return Array.from({length:7},(_,i)=>{
     const d=new Date(mon);d.setDate(mon.getDate()+i);
-    return{date:d,iso:d.toISOString().split('T')[0],isWeekend:i>=5};
+    return{date:d,iso:localIso(d),isWeekend:i>=5};
   });
 }
 function isoToDate(iso){const[y,m,d]=iso.split('-');return new Date(y,m-1,d);}
-function planToday(){return new Date().toISOString().split('T')[0];}
+function localIso(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function planToday(){return localIso(new Date());}
 
 // ── Planning helpers ──
 function getMonthDays(offset){
@@ -1133,7 +1134,7 @@ function getMonthDays(offset){
   const cells=[];
   for(let i=1-startDow;i<=lastDay.getDate()+(7-((lastDay.getDay()||7)))%7;i++){
     const d=new Date(year,month,i);
-    cells.push({date:d,iso:d.toISOString().split('T')[0],inMonth:i>=1&&i<=lastDay.getDate(),isWeekend:d.getDay()===0||d.getDay()===6});
+    cells.push({date:d,iso:localIso(d),inMonth:i>=1&&i<=lastDay.getDate(),isWeekend:d.getDay()===0||d.getDay()===6});
   }
   // Trim to exactly 5 or 6 weeks
   while(cells.length>42)cells.pop();
@@ -1896,7 +1897,7 @@ async function seedData(force){
   for(const r of rdvsSeed){
     const aid=idMap[r.apprenant_nom]||"";
     const d=new Date();d.setDate(d.getDate()+r.daysOffset);
-    const date=d.toISOString().split("T")[0];
+    const date=localIso(d);
     await db.collection("rdvs").add({...r,apprenant_id:aid,date,createdAt:TS(),updatedAt:TS()});
   }
   toast("Données de démo chargées ✅","success");
