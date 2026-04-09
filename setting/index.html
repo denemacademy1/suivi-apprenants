@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denem Academy — Espace Setting</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sidebar-w:240px;
+  --primary:#6c63ff;--primary-light:#ede9ff;--primary-dark:#5a52e0;
+  --teal:#0f9e75;
+  --bg:#f8f9fc;--surface:#fff;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#1a1a2e;--muted:#64748b;--subtle:#94a3b8;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;
+  --sidebar-bg:#1e2235;--sidebar-text:rgba(255,255,255,.75);--sidebar-active:#fff;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+  --radius:12px;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ─── LOADING ─── */
+#loading{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
+.ld-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#6c63ff,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:28px}
+.ld-bar{width:160px;height:3px;background:#e2e8f0;border-radius:2px;overflow:hidden}
+.ld-fill{height:100%;width:40%;background:var(--primary);border-radius:2px;animation:ldA 1.2s ease-in-out infinite}
+@keyframes ldA{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+.ld-text{font-size:13px;color:var(--muted)}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--sidebar-bg);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.sb-brand{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sb-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6c63ff,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-title{font-size:14px;font-weight:800;color:#fff}
+.sb-badge{display:inline-block;background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto}
+.sb-nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--sidebar-text);cursor:pointer;border-radius:0;transition:all .15s;font-size:13px;font-weight:500;position:relative;user-select:none}
+.sb-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sb-nav-item.active{background:rgba(108,99,255,.2);color:var(--sidebar-active)}
+.sb-nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--primary);border-radius:0 2px 2px 0}
+.sb-nav-icon{font-size:16px;width:20px;text-align:center}
+.sb-notif-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+.sb-bottom{padding:12px 16px 16px;border-top:1px solid rgba(255,255,255,.06)}
+.sb-user{display:flex;align-items:center;gap:10px}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user-name{font-size:13px;font-weight:600;color:#fff}
+.sb-user-status{font-size:11px;color:var(--teal);display:flex;align-items:center;gap:4px}
+.sb-user-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block}
+.sb-section-label{padding:8px 16px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase}
+
+/* ─── MAIN ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.btn-add-lead{background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s}
+.btn-add-lead:hover{background:var(--primary-dark)}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* ─── KPI CARDS ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.kpi-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.kpi-value{font-size:28px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:12px;color:var(--muted)}
+.kpi-card.accent .kpi-value{color:var(--primary)}
+.kpi-card.success .kpi-value{color:var(--success)}
+.kpi-card.warning .kpi-value{color:var(--warning)}
+
+/* ─── SECTIONS ─── */
+.section{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px}
+.section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.section-count{background:var(--primary-light);color:var(--primary);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.section-body{padding:0}
+
+/* ─── PRIORITY LEADS ─── */
+.priority-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:16px}
+.priority-card{border-radius:10px;padding:14px 16px;background:#f0fdf4;border:1px solid #bbf7d0;cursor:pointer;transition:all .15s}
+.priority-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.pc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.pc-name{font-size:14px;font-weight:700;color:var(--text)}
+.pc-email{font-size:12px;color:var(--muted)}
+.pc-badges{display:flex;gap:6px;flex-wrap:wrap}
+.pc-score-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
+.score-high{background:#dcfce7;color:#166534}
+.score-mid{background:#fef3c7;color:#92400e}
+.score-low{background:#fee2e2;color:#991b1b}
+.pc-source{font-size:11px;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:5px}
+.pc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.pc-statut{font-size:11px;font-weight:600;color:var(--success)}
+.pc-days{font-size:11px;color:var(--muted)}
+
+/* ─── LEAD TABLE ─── */
+.lead-filters{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filter-select{padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#fff;color:var(--text);cursor:pointer}
+.filter-input{padding:6px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;flex:1;min-width:180px;color:var(--text)}
+.filter-input:focus,.filter-select:focus{outline:none;border-color:var(--primary)}
+.filter-btn{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:.15s}
+.filter-btn.active{background:var(--primary);color:#fff}
+.filter-btn:not(.active){background:var(--bg);color:var(--muted)}
+.lead-table-wrap{overflow-x:auto}
+table.lead-table{width:100%;border-collapse:collapse}
+.lead-table th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;background:#fafafa}
+.lead-table td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+.lead-table tr:last-child td{border-bottom:none}
+.lead-table tr:hover td{background:#fafbff}
+.lead-name{font-size:13px;font-weight:700;color:var(--text)}
+.lead-email{font-size:12px;color:var(--muted)}
+.score-badge{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-size:13px;font-weight:800}
+.statut-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.statut-nouveau{background:#dbeafe;color:#1e40af}
+.statut-tente{background:#fef3c7;color:#92400e}
+.statut-qualifie{background:#dcfce7;color:#166534}
+.statut-nonqualifie{background:#fee2e2;color:#991b1b}
+.statut-relance{background:#f3e8ff;color:#6b21a8}
+.source-badge{font-size:11px;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:5px;border:1px solid var(--border)}
+.actions-cell{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-icon{width:32px;height:32px;border:none;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.15s;text-decoration:none}
+.btn-call{background:#dcfce7;color:#166534}
+.btn-call:hover{background:#bbf7d0}
+.btn-wa{background:#d1fae5;color:#065f46}
+.btn-wa:hover{background:#a7f3d0}
+.btn-fiche{background:var(--primary-light);color:var(--primary)}
+.btn-fiche:hover{background:#d4d1ff}
+.statut-select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;color:var(--text);cursor:pointer;max-width:140px}
+.last-contact{font-size:12px;color:var(--muted)}
+.empty-state{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-text{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)}
+.empty-sub{font-size:13px}
+
+/* ─── MODAL ─── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.modal-lead-name{font-size:18px;font-weight:800;color:var(--text)}
+.modal-lead-sub{font-size:13px;color:var(--muted);margin-top:2px}
+.modal-header-badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.modal-close{width:32px;height:32px;border:none;background:var(--bg);border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+.modal-close:hover{background:var(--border);color:var(--text)}
+.modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 24px;flex-shrink:0;overflow-x:auto}
+.modal-tab{padding:12px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+.modal-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.modal-tab:hover:not(.active){color:var(--text)}
+.modal-body{flex:1;overflow-y:auto;padding:24px}
+.modal-tab-panel{display:none}
+.modal-tab-panel.active{display:block}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;flex-wrap:wrap}
+
+/* ─── PROFIL TAB ─── */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.info-field{background:var(--bg);border-radius:8px;padding:12px}
+.info-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.info-value{font-size:13px;font-weight:600;color:var(--text)}
+.info-value a{color:var(--primary);text-decoration:none}
+.questionnaire-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.q-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.q-item:last-child{border-bottom:none}
+.q-label{font-size:12px;font-weight:600;color:var(--muted);min-width:160px;flex-shrink:0}
+.q-value{font-size:13px;color:var(--text);font-weight:500}
+
+/* ─── SCORE TAB ─── */
+.score-big{text-align:center;padding:24px 0 20px}
+.score-circle{width:80px;height:80px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;margin-bottom:8px}
+.score-circle.high{background:#dcfce7;color:#166534}
+.score-circle.mid{background:#fef3c7;color:#92400e}
+.score-circle.low{background:#fee2e2;color:#991b1b}
+.score-desc{font-size:13px;color:var(--muted);margin-bottom:4px}
+.score-label-big{font-size:15px;font-weight:700}
+.score-breakdown{border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.score-breakdown-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
+.score-breakdown-row:last-child{border-bottom:none}
+.score-breakdown-row.ok{background:#f0fdf4}
+.score-breakdown-row.nok{background:#fafafa}
+.sbr-label{font-size:13px;color:var(--text)}
+.sbr-pts{font-size:13px;font-weight:700;color:var(--success)}
+.sbr-pts.zero{color:var(--muted)}
+.sbr-icon{margin-right:8px}
+
+/* ─── SCRIPT TAB ─── */
+.script-block{background:#f8f7ff;border-radius:10px;padding:16px;border:1px solid #ddd9ff;margin-bottom:16px}
+.script-block-title{font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.script-text{font-size:13px;line-height:1.7;color:var(--text)}
+.script-var{background:#6c63ff;color:#fff;padding:1px 6px;border-radius:4px;font-weight:600}
+.script-actions{display:flex;gap:10px;margin-top:16px}
+.btn-script-call{background:var(--success);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;text-decoration:none;transition:.15s}
+.btn-script-call:hover{opacity:.9}
+.btn-script-wa{background:#25d366;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;text-decoration:none;transition:.15s}
+.btn-script-wa:hover{opacity:.9}
+
+/* ─── ACTIONS TAB ─── */
+.tentatives-list{margin-bottom:20px}
+.tentative-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border-radius:8px;margin-bottom:6px}
+.tentative-date{font-size:12px;font-weight:600;color:var(--muted);min-width:80px}
+.tentative-result{font-size:13px;color:var(--text)}
+.tentative-setter{font-size:11px;color:var(--subtle)}
+.btn-add-tentative{background:none;border:1.5px dashed var(--border);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--muted);cursor:pointer;width:100%;transition:.15s;margin-bottom:16px}
+.btn-add-tentative:hover{border-color:var(--primary);color:var(--primary)}
+.note-area{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:80px;color:var(--text)}
+.note-area:focus{outline:none;border-color:var(--primary)}
+.note-save-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;margin-bottom:20px}
+.note-counter{font-size:11px;color:var(--muted)}
+.btn-save-note{background:var(--primary);color:#fff;border:none;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-save-note:hover{background:var(--primary-dark)}
+.action-divider{height:1px;background:var(--border);margin:16px 0}
+.action-btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn-qualify{background:var(--success);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;flex:1;transition:.15s}
+.btn-qualify:hover{opacity:.9}
+.btn-disqualify{background:var(--bg);color:var(--danger);border:1.5px solid var(--danger);padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;flex:1;transition:.15s}
+.btn-disqualify:hover{background:#fee2e2}
+
+/* ─── MODAL ADD LEAD ─── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:12px;font-weight:600;color:var(--muted)}
+.form-input,.form-select,.form-textarea{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:#fff;transition:.15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,.1)}
+.form-textarea{resize:vertical;min-height:70px}
+
+/* ─── STATS PAGE ─── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.stat-big{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);text-align:center}
+.stat-big-value{font-size:36px;font-weight:900;color:var(--primary);margin-bottom:4px}
+.stat-big-label{font-size:13px;color:var(--muted);font-weight:600}
+.funnel-wrap{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px}
+.funnel-title{font-size:14px;font-weight:700;margin-bottom:20px}
+.funnel-step{margin-bottom:12px}
+.funnel-step-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.funnel-step-label span:first-child{font-weight:600;color:var(--text)}
+.funnel-step-label span:last-child{font-weight:700;color:var(--primary)}
+.funnel-bar{height:28px;background:var(--bg);border-radius:6px;overflow:hidden}
+.funnel-fill{height:100%;border-radius:6px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+/* ─── SCRIPT PAGE ─── */
+.script-page-header{margin-bottom:24px}
+.script-page-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.script-page-sub{font-size:13px;color:var(--muted)}
+.script-section{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:16px}
+.script-section-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.script-section-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.script-p{font-size:13px;line-height:1.8;color:var(--text);background:#f8f7ff;border-radius:8px;padding:14px 16px;border-left:3px solid var(--primary);margin-bottom:10px}
+.objection-card{background:var(--bg);border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid var(--border)}
+.objection-q{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.objection-a{font-size:13px;line-height:1.7;color:var(--text)}
+
+/* ─── TOAST ─── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;box-shadow:var(--shadow-md);animation:toastIn .3s ease;display:flex;align-items:center;gap:8px}
+.toast-success{background:#059669}.toast-error{background:var(--danger)}.toast-info{background:var(--primary)}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ─── CONFIRM MODAL ─── */
+.confirm-modal{background:#fff;border-radius:14px;padding:28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.confirm-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.confirm-text{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.confirm-btns{display:flex;gap:10px;justify-content:flex-end}
+.btn-cancel{background:var(--bg);color:var(--text);border:1px solid var(--border);padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-confirm-danger{background:var(--danger);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-confirm-ok{background:var(--primary);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+
+/* ─── TENTATIVE MODAL ─── */
+.tentative-form{display:flex;flex-direction:column;gap:12px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-100%;top:0;bottom:0;z-index:400;transition:left .3s}
+  .sidebar.open{left:0}
+  .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:399;display:none}
+  .sidebar-overlay.open{display:block}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .info-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .modal{max-height:95vh}
+  .mobile-menu-btn{display:flex}
+  .actions-cell{gap:4px}
+  .lead-table th:nth-child(3),.lead-table td:nth-child(3),
+  .lead-table th:nth-child(5),.lead-table td:nth-child(5){display:none}
+  .priority-grid{grid-template-columns:1fr}
+}
+.mobile-menu-btn{width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:18px}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="ld-logo">🎯</div>
+  <div class="ld-text">Chargement de l'espace Setting…</div>
+  <div class="ld-bar"><div class="ld-fill"></div></div>
+</div>
+
+<div id="app" style="display:none">
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo-row">
+      <div class="sb-logo">🎯</div>
+      <div>
+        <div class="sb-title">Denem Academy</div>
+        <span class="sb-badge">SETTING</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-section-label">Navigation</div>
+    <div class="sb-nav-item active" data-page="mes-leads" onclick="showPage('mes-leads')">
+      <span class="sb-nav-icon">📋</span>Mes leads
+      <span class="sb-notif-badge" id="badge-mes-leads" style="display:none">0</span>
+    </div>
+    <div class="sb-nav-item" data-page="tous-leads" onclick="showPage('tous-leads')">
+      <span class="sb-nav-icon">📊</span>Tous les leads
+    </div>
+    <div class="sb-section-label" style="margin-top:8px">Outils</div>
+    <div class="sb-nav-item" data-page="stats" onclick="showPage('stats')">
+      <span class="sb-nav-icon">📈</span>Mes stats
+    </div>
+    <div class="sb-nav-item" data-page="script" onclick="showPage('script')">
+      <span class="sb-nav-icon">📝</span>Script d'appel
+    </div>
+    <div class="sb-section-label" style="margin-top:8px">Plateforme</div>
+    <div class="sb-nav-item" onclick="window.location.href='../'" style="opacity:.7">
+      <span class="sb-nav-icon">🏠</span>Accueil
+    </div>
+    <div class="sb-nav-item" onclick="window.open('../pipeline/')" style="opacity:.7">
+      <span class="sb-nav-icon">📊</span>Pipeline admin
+    </div>
+  </nav>
+
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">?</div>
+      <div>
+        <div class="sb-user-name" id="sb-name">Chargement…</div>
+        <div class="sb-user-status">En ligne</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">Mes leads</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-add-lead" onclick="openAddLead()">＋ Nouveau lead</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAGE: MES LEADS -->
+    <div id="page-mes-leads">
+      <div class="kpi-row" id="kpi-row"></div>
+      <div class="section" id="priority-section" style="display:none">
+        <div class="section-header">
+          <div class="section-title">🔥 Priorité maintenant <span class="section-count" id="priority-count">0</span></div>
+          <small style="color:var(--muted);font-size:12px">Score 8-10 · Non contactés</small>
+        </div>
+        <div class="priority-grid" id="priority-grid"></div>
+      </div>
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">📋 Mes leads <span class="section-count" id="mes-leads-count">0</span></div>
+        </div>
+        <div class="lead-filters">
+          <input type="text" class="filter-input" id="mes-leads-search" placeholder="Rechercher…" oninput="renderMesLeads()">
+          <select class="filter-select" id="mes-leads-statut" onchange="renderMesLeads()">
+            <option value="">Tous les statuts</option>
+            <option value="Nouveau">Nouveau</option>
+            <option value="Tenté J1">Tenté J1</option>
+            <option value="Tenté J2">Tenté J2</option>
+            <option value="Tenté J3">Tenté J3</option>
+            <option value="Qualifié">Qualifié</option>
+            <option value="Non qualifié">Non qualifié</option>
+            <option value="Relance planifiée">Relance planifiée</option>
+          </select>
+          <select class="filter-select" id="mes-leads-score" onchange="renderMesLeads()">
+            <option value="">Tous les scores</option>
+            <option value="high">Score élevé (8-10)</option>
+            <option value="mid">Score moyen (5-7)</option>
+            <option value="low">Score faible (1-4)</option>
+          </select>
+        </div>
+        <div class="lead-table-wrap">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Score</th>
+                <th>Source</th>
+                <th>Statut</th>
+                <th>Dernier contact</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="mes-leads-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: TOUS LES LEADS -->
+    <div id="page-tous-leads" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">📊 Tous les leads <span class="section-count" id="tous-leads-count">0</span></div>
+        </div>
+        <div class="lead-filters">
+          <input type="text" class="filter-input" id="tous-leads-search" placeholder="Rechercher…" oninput="renderTousLeads()">
+          <select class="filter-select" id="tous-leads-statut" onchange="renderTousLeads()">
+            <option value="">Tous les statuts</option>
+            <option value="Nouveau">Nouveau</option>
+            <option value="Tenté J1">Tenté J1</option>
+            <option value="Tenté J2">Tenté J2</option>
+            <option value="Tenté J3">Tenté J3</option>
+            <option value="Qualifié">Qualifié</option>
+            <option value="Non qualifié">Non qualifié</option>
+            <option value="Relance planifiée">Relance planifiée</option>
+          </select>
+          <select class="filter-select" id="tous-leads-source" onchange="renderTousLeads()">
+            <option value="">Toutes les sources</option>
+            <option value="Meta Ads">Meta Ads</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="Organique">Organique</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <select class="filter-select" id="tous-leads-score" onchange="renderTousLeads()">
+            <option value="">Tous les scores</option>
+            <option value="high">Score élevé (8-10)</option>
+            <option value="mid">Score moyen (5-7)</option>
+            <option value="low">Score faible (1-4)</option>
+          </select>
+        </div>
+        <div class="lead-table-wrap">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Score</th>
+                <th>Source</th>
+                <th>Setter</th>
+                <th>Statut setter</th>
+                <th>Dernier contact</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tous-leads-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: STATS -->
+    <div id="page-stats" style="display:none">
+      <div class="script-page-header">
+        <div class="script-page-title">📈 Mes statistiques</div>
+        <div class="script-page-sub">Performances de la période</div>
+      </div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="funnel-wrap">
+        <div class="funnel-title">Funnel de qualification</div>
+        <div id="funnel-steps"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: SCRIPT -->
+    <div id="page-script" style="display:none">
+      <div class="script-page-header">
+        <div class="script-page-title">📝 Script d'appel complet</div>
+        <div class="script-page-sub">Guide de conversation pour qualifier les leads Denem Academy</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title">1️⃣ Ouverture <small style="font-weight:400;color:var(--muted)">(30 sec)</small></div>
+        <div class="script-section-sub">Créer la connexion et valider le contexte</div>
+        <div class="script-p">« Bonjour <strong>[Prénom]</strong>, je vous contacte de DENEM Academy. Vous avez répondu à notre questionnaire récemment. Je voulais juste m'assurer que votre situation est toujours la même et voir si je peux vous aider. Vous avez 2 minutes ? »</div>
+        <div class="script-p">Si pas disponible : « Pas de souci, quand est-ce que je peux vous rappeler ? Demain matin ça vous va ? »</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title">2️⃣ Qualification <small style="font-weight:400;color:var(--muted)">(2 min)</small></div>
+        <div class="script-section-sub">Valider les 3 critères clés : projet, budget, timing</div>
+        <div class="script-p">« Vous nous avez indiqué être <strong>[situation]</strong>. Votre objectif c'est de pouvoir générer des revenus en freelance ou de créer une activité ? »</div>
+        <div class="script-p">« Et côté timing, vous souhaitez démarrer plutôt rapidement, ou c'est quelque chose que vous envisagez sur les prochains mois ? »</div>
+        <div class="script-p">« On a des parcours à partir de <strong>X€</strong>, est-ce que c'est quelque chose que vous pouvez envisager maintenant, ou vous avez besoin d'un accompagnement pour le financement ? »</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title">3️⃣ Pitch &amp; transfert <small style="font-weight:400;color:var(--muted)">(1 min)</small></div>
+        <div class="script-section-sub">Présenter la prochaine étape</div>
+        <div class="script-p">« Très bien, sur la base de ce que vous m'avez dit, votre profil correspond vraiment à ce qu'on accompagne. Je vais vous proposer un rendez-vous de 20 minutes avec notre fondateur. Ce n'est pas un cours magistral, c'est un échange pour valider ensemble si on peut vous aider à atteindre votre objectif. Vous seriez disponible <strong>[jour]</strong> ou <strong>[autre jour]</strong> ? »</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title">🛡️ Objections &amp; réponses</div>
+        <div class="script-section-sub">Gérer les blocages les plus fréquents</div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « Je n'ai pas le budget »</div>
+          <div class="objection-a">« Je comprends tout à fait. C'est justement pour ça que j'appelle avant de vous inviter à un rendez-vous. On a mis en place des solutions de financement : paiement en 3x, 10x, et des partenaires CPF/financement pro pour certains profils. La question c'est : est-ce que votre projet vous tient à cœur ? Parce que si oui, on trouve toujours une solution. »</div>
+        </div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « Je ne suis pas technique »</div>
+          <div class="objection-a">« C'est exactement le profil de 90% de nos apprenants au départ. Baptiste est arrivé sans aucune expérience tech — il génère 35k€/mois aujourd'hui. Joseph pareil. Notre méthode est justement conçue pour les profils non techniques. On part de zéro avec vous. »</div>
+        </div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « J'ai déjà essayé des formations »</div>
+          <div class="objection-a">« Je vous entends, et c'est une vraie question. La différence avec DENEM, c'est qu'on n'est pas une formation à regarder seul dans son coin. Vous avez un coach dédié, des sessions live, et on ne lâche pas tant que vous n'avez pas vos premiers clients. Ce n'est pas un cours — c'est un accompagnement à résultats. »</div>
+        </div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « Je n'ai pas le temps »</div>
+          <div class="objection-a">« Je comprends. À quelle heure vous dormez le soir ? … Et vous vous levez à quelle heure ? Souvent nos apprenants dégagent 1h le matin ou le soir. 5h par semaine suffisent pour avancer sérieusement. Et dans 6 mois, ce temps investi vous libère du temps de façon permanente. »</div>
+        </div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « Je dois réfléchir »</div>
+          <div class="objection-a">« Bien sûr. À quoi en particulier ? [Écouter]. Je vous propose ça : on fixe un appel J+3 avec notre fondateur, juste pour répondre à vos questions, sans engagement. Si après ça vous avez encore besoin de temps, on respecte ça. Vous êtes disponible jeudi ou vendredi ? »</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL: FICHE LEAD -->
+<div class="modal-backdrop" id="modal-lead">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-lead-name" id="modal-lead-name">—</div>
+        <div class="modal-lead-sub" id="modal-lead-sub">—</div>
+        <div class="modal-header-badges" id="modal-lead-badges"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-lead')">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab(this,'tab-profil')">👤 Profil</div>
+      <div class="modal-tab" onclick="switchTab(this,'tab-score')">⚡ Score</div>
+      <div class="modal-tab" onclick="switchTab(this,'tab-script')">📝 Script</div>
+      <div class="modal-tab" onclick="switchTab(this,'tab-actions')">✅ Actions</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tab-panel active" id="tab-profil"></div>
+      <div class="modal-tab-panel" id="tab-score"></div>
+      <div class="modal-tab-panel" id="tab-script"></div>
+      <div class="modal-tab-panel" id="tab-actions"></div>
+    </div>
+    <div class="modal-footer" id="modal-lead-footer"></div>
+  </div>
+</div>
+
+<!-- MODAL: ADD LEAD -->
+<div class="modal-backdrop" id="modal-add-lead">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-lead-name">Nouveau lead</div>
+        <div class="modal-lead-sub">Saisie manuelle</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-add-lead')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Prénom *</label>
+          <input class="form-input" id="add-prenom" placeholder="Jean">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nom *</label>
+          <input class="form-input" id="add-nom" placeholder="Dupont">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input class="form-input" id="add-email" type="email" placeholder="jean@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input class="form-input" id="add-tel" type="tel" placeholder="06 12 34 56 78">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Source</label>
+          <select class="form-select" id="add-source">
+            <option>Meta Ads</option><option>LinkedIn</option><option>Organique</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Situation actuelle</label>
+          <input class="form-input" id="add-situation" placeholder="Ex: Salarié en reconversion">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Budget</label>
+          <select class="form-select" id="add-budget">
+            <option>Oui, j'ai le budget</option>
+            <option>J'ai besoin de financement</option>
+            <option>Non</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Disponibilité / sem.</label>
+          <select class="form-select" id="add-dispo">
+            <option>&lt;5h</option><option>5-10h</option><option>10-20h</option><option>&gt;20h</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Délai de lancement</label>
+          <select class="form-select" id="add-delai">
+            <option>Immédiat</option><option>1-3 mois</option><option>3-6 mois</option><option>Je cherche encore</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Motivation principale</label>
+          <input class="form-input" id="add-motivation" placeholder="Ex: Générer un revenu complémentaire">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Commentaire libre</label>
+          <textarea class="form-textarea" id="add-commentaire" placeholder="Notes issues du questionnaire…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-add-lead')">Annuler</button>
+      <button class="btn-confirm-ok" onclick="saveLead()">💾 Créer le lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: QUALIFIER -->
+<div class="modal-backdrop" id="modal-qualifier">
+  <div class="confirm-modal">
+    <div class="confirm-title">✅ Qualifier ce lead</div>
+    <div class="confirm-text">Ce lead sera marqué comme <strong>Qualifié</strong> et transféré automatiquement vers l'espace Closing. Le closer recevra une notification.</div>
+    <div style="margin-bottom:16px">
+      <label class="form-label" style="margin-bottom:6px;display:block">Note pour le closer (optionnel)</label>
+      <textarea class="form-textarea" id="qualify-note" placeholder="Résumé de l'échange, points importants…" style="width:100%"></textarea>
+    </div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-qualifier')">Annuler</button>
+      <button class="btn-confirm-ok" onclick="confirmQualify()">✅ Qualifier & envoyer au closer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NON QUALIFIÉ -->
+<div class="modal-backdrop" id="modal-disqualify">
+  <div class="confirm-modal">
+    <div class="confirm-title">❌ Non qualifié</div>
+    <div class="confirm-text">Indiquez la raison principale pour archiver ce lead correctement.</div>
+    <div style="margin-bottom:16px">
+      <label class="form-label" style="margin-bottom:6px;display:block">Raison *</label>
+      <select class="form-select" id="disqualify-raison" style="width:100%;margin-bottom:10px">
+        <option>Pas de budget</option>
+        <option>Pas le bon timing</option>
+        <option>Pas le bon profil</option>
+        <option>Injoignable après 3 tentatives</option>
+        <option>Pas intéressé</option>
+        <option>Autre</option>
+      </select>
+      <textarea class="form-textarea" id="disqualify-note" placeholder="Précision (optionnel)…" style="width:100%"></textarea>
+    </div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-disqualify')">Annuler</button>
+      <button class="btn-confirm-danger" onclick="confirmDisqualify()">❌ Marquer non qualifié</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TENTATIVE -->
+<div class="modal-backdrop" id="modal-tentative">
+  <div class="confirm-modal">
+    <div class="confirm-title">📞 Enregistrer une tentative</div>
+    <div class="tentative-form">
+      <div class="form-group">
+        <label class="form-label">Résultat</label>
+        <select class="form-select" id="tent-resultat">
+          <option>Pas répondu</option>
+          <option>Messagerie vocale</option>
+          <option>Rappel demandé</option>
+          <option>Refus direct</option>
+          <option>Intéressé, à rappeler</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nouveau statut</label>
+        <select class="form-select" id="tent-statut">
+          <option value="Tenté J1">Tenté J1</option>
+          <option value="Tenté J2">Tenté J2</option>
+          <option value="Tenté J3">Tenté J3</option>
+          <option value="Relance planifiée">Relance planifiée</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note rapide</label>
+        <input class="form-input" id="tent-note" placeholder="Ex: Rappel jeudi matin">
+      </div>
+    </div>
+    <div class="confirm-btns" style="margin-top:16px">
+      <button class="btn-cancel" onclick="closeModal('modal-tentative')">Annuler</button>
+      <button class="btn-confirm-ok" onclick="saveTentative()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIGURATION FIREBASE
+//  ⚠️ Remplacer par votre propre config Firebase
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",
+  authDomain: "denem-academy-5de41.firebaseapp.com",
+  projectId: "denem-academy-5de41",
+  storageBucket: "denem-academy-5de41.firebasestorage.app",
+  messagingSenderId: "570632584566",
+  appId: "1:570632584566:web:ea9b964787b40805a7ce57",
+  measurementId: "G-44GC1P93LK"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// ══════════════════════════════════════════════
+//  ÉTAT GLOBAL
+// ══════════════════════════════════════════════
+const S = {
+  user: null,
+  userData: null,
+  leads: [],
+  currentPage: 'mes-leads',
+  activeLead: null,      // lead ouvert dans la fiche
+  pendingQualifyId: null,
+  pendingDisqualifyId: null,
+  pendingTentativeId: null,
+};
+
+// ══════════════════════════════════════════════
+//  UTILITAIRES
+// ══════════════════════════════════════════════
+function TS() { return firebase.firestore.FieldValue.serverTimestamp(); }
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `${type==='success'?'✅':type==='error'?'❌':'ℹ️'} ${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'2-digit'});
+}
+function fmtDateTime(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) + ' ' +
+         d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Paris'});
+}
+function daysAgo(ts) {
+  if (!ts) return null;
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return Math.round((Date.now() - d.getTime()) / 86400000);
+}
+function myFullName() {
+  if (!S.userData) return '';
+  return `${S.userData.prenom||''} ${S.userData.nom||''}`.trim();
+}
+function isMyLead(lead) {
+  const me = myFullName().toLowerCase();
+  return !lead.setterAssigne || lead.setterAssigne.toLowerCase() === me;
+}
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════════
+//  SCORING AUTOMATIQUE
+// ══════════════════════════════════════════════
+function calcScore(q = {}) {
+  let pts = 0;
+  const detail = [];
+
+  const budget = q.budgetDisponible || '';
+  if (budget === "Oui, j'ai le budget") {
+    pts += 4; detail.push({label:'Budget disponible', pts:4, ok:true});
+  } else if (budget === "J'ai besoin de financement") {
+    pts += 2; detail.push({label:'Financement envisageable', pts:2, ok:true});
+  } else {
+    detail.push({label:'Pas de budget déclaré', pts:0, ok:false});
+  }
+
+  const dispo = q.disponibiliteHebdo || '';
+  if (dispo === '>20h') {
+    pts += 2; detail.push({label:'Disponibilité >20h/sem', pts:2, ok:true});
+  } else if (dispo === '10-20h') {
+    pts += 1; detail.push({label:'Disponibilité 10-20h/sem', pts:1, ok:true});
+  } else {
+    detail.push({label:`Disponibilité: ${dispo||'non renseignée'}`, pts:0, ok:false});
+  }
+
+  const delai = q.delaiLancement || '';
+  if (delai === 'Immédiat') {
+    pts += 2; detail.push({label:'Lancement immédiat', pts:2, ok:true});
+  } else if (delai === '1-3 mois') {
+    pts += 1; detail.push({label:'Lancement dans 1-3 mois', pts:1, ok:true});
+  } else {
+    detail.push({label:`Délai: ${delai||'non renseigné'}`, pts:0, ok:false});
+  }
+
+  if ((q.situationActuelle||'').toLowerCase().includes('reconversion')) {
+    pts += 1; detail.push({label:'En reconversion', pts:1, ok:true});
+  }
+
+  return { score: Math.min(pts, 10), detail };
+}
+
+function scoreClass(score) {
+  if (score >= 8) return 'high';
+  if (score >= 5) return 'mid';
+  return 'low';
+}
+function scoreCss(score) {
+  if (score >= 8) return 'score-high';
+  if (score >= 5) return 'score-mid';
+  return 'score-low';
+}
+function statutCss(statut) {
+  if (!statut || statut === 'Nouveau') return 'statut-nouveau';
+  if (['Tenté J1','Tenté J2','Tenté J3','Relance planifiée'].includes(statut)) return 'statut-tente';
+  if (statut === 'Qualifié') return 'statut-qualifie';
+  if (statut === 'Non qualifié') return 'statut-nonqualifie';
+  return 'statut-relance';
+}
+
+// ══════════════════════════════════════════════
+//  AUTHENTIFICATION
+// ══════════════════════════════════════════════
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    document.getElementById('loading').innerHTML = `
+      <div class="ld-logo">🔒</div>
+      <div style="text-align:center;padding:0 20px">
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Accès restreint</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:20px">Connectez-vous avec votre compte Denem Academy</div>
+        <button onclick="signIn()" style="background:#6c63ff;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Se connecter avec Google</button>
+      </div>`;
+    return;
+  }
+
+  // Récupérer le rôle de l'utilisateur
+  const userDoc = await db.collection('users').doc(user.uid).get();
+  if (!userDoc.exists) {
+    document.getElementById('loading').innerHTML = `<div style="text-align:center;padding:20px"><div style="font-size:40px">🚫</div><div>Compte non configuré. Contactez l'admin.</div></div>`;
+    return;
+  }
+
+  const userData = userDoc.data();
+  const role = userData.role || '';
+
+  if (!['setter','admin'].includes(role)) {
+    document.getElementById('loading').innerHTML = `<div style="text-align:center;padding:20px"><div style="font-size:40px">🚫</div><div style="margin-top:12px">Accès non autorisé pour le rôle <strong>${role}</strong>.<br>Cet espace est réservé aux setters.</div><br><button onclick="auth.signOut()" style="background:#ef4444;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">Se déconnecter</button></div>`;
+    return;
+  }
+
+  S.user = user;
+  S.userData = userData;
+
+  // Interface utilisateur
+  const initials = ((userData.prenom||'?')[0]+(userData.nom||'?')[0]).toUpperCase();
+  document.getElementById('sb-avatar').textContent = initials;
+  document.getElementById('sb-name').textContent = `${userData.prenom||''} ${userData.nom||''}`.trim();
+
+  // Lancer l'app
+  initApp();
+});
+
+async function signIn() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  await auth.signInWithPopup(provider);
+}
+
+// ══════════════════════════════════════════════
+//  INITIALISATION
+// ══════════════════════════════════════════════
+function initApp() {
+  // Écouter les leads en temps réel
+  db.collection('leads').orderBy('dateCreation','desc').onSnapshot(snap => {
+    S.leads = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    // Recalculer le score si absent
+    S.leads.forEach(l => {
+      if (!l.scoreQualification) {
+        const {score} = calcScore(l.reponsesQuestionnaire||{});
+        l.scoreQualification = score;
+      }
+    });
+    renderCurrentPage();
+  }, err => {
+    // Fallback sans orderBy si pas d'index
+    db.collection('leads').onSnapshot(snap => {
+      S.leads = snap.docs.map(d => ({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.dateCreation?.seconds||0)-(a.dateCreation?.seconds||0));
+      S.leads.forEach(l=>{
+        if(!l.scoreQualification){const{score}=calcScore(l.reponsesQuestionnaire||{});l.scoreQualification=score;}
+      });
+      renderCurrentPage();
+    });
+  });
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+const PAGE_TITLES = {
+  'mes-leads': 'Mes leads',
+  'tous-leads': 'Tous les leads',
+  'stats': 'Mes statistiques',
+  'script': "Script d'appel",
+};
+
+function showPage(page) {
+  S.currentPage = page;
+  document.querySelectorAll('.sb-nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  document.querySelectorAll('[id^="page-"]').forEach(el => el.style.display='none');
+  document.getElementById(`page-${page}`).style.display='block';
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[page]||page;
+  renderCurrentPage();
+  closeSidebar();
+}
+
+function renderCurrentPage() {
+  if (S.currentPage === 'mes-leads') { renderKPIs(); renderPriority(); renderMesLeads(); }
+  else if (S.currentPage === 'tous-leads') renderTousLeads();
+  else if (S.currentPage === 'stats') renderStats();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+//  KPI CARDS
+// ══════════════════════════════════════════════
+function renderKPIs() {
+  const today = new Date().toISOString().slice(0,10);
+  const weekAgo = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+  const me = myFullName().toLowerCase();
+
+  const todayLeads = S.leads.filter(l => {
+    const d = l.dateCreation?.toDate?.()?.toISOString?.()?.slice(0,10)||'';
+    return d === today;
+  }).length;
+
+  const toContact = S.leads.filter(l =>
+    ['Nouveau','Tenté J1','Tenté J2','Tenté J3'].includes(l.statutSetter||'Nouveau') && isMyLead(l)
+  ).length;
+
+  const myLeads = S.leads.filter(l => (l.setterAssigne||'').toLowerCase()===me);
+  const myQualified = myLeads.filter(l => l.statutSetter==='Qualifié').length;
+  const myContacted = myLeads.filter(l => l.statutSetter && l.statutSetter!=='Nouveau').length;
+  const tauxQualif = myContacted ? Math.round((myQualified/myContacted)*100) : 0;
+
+  const qualifWeek = S.leads.filter(l => {
+    const d = l.dateLastContactSetter?.toDate?.()?.toISOString?.()?.slice(0,10)||'';
+    return l.statutSetter==='Qualifié' && d>=weekAgo && isMyLead(l);
+  }).length;
+
+  document.getElementById('kpi-row').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Nouveaux aujourd'hui</div>
+      <div class="kpi-value">${todayLeads}</div>
+      <div class="kpi-sub">leads reçus ce jour</div>
+    </div>
+    <div class="kpi-card warning">
+      <div class="kpi-label">À contacter</div>
+      <div class="kpi-value">${toContact}</div>
+      <div class="kpi-sub">mes leads en attente</div>
+    </div>
+    <div class="kpi-card success">
+      <div class="kpi-label">Qualifiés cette semaine</div>
+      <div class="kpi-value">${qualifWeek}</div>
+      <div class="kpi-sub">envoyés au closer</div>
+    </div>
+    <div class="kpi-card accent">
+      <div class="kpi-label">Mon taux de qualif.</div>
+      <div class="kpi-value">${tauxQualif}%</div>
+      <div class="kpi-sub">${myContacted} leads contactés</div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  SECTION PRIORITÉS
+// ══════════════════════════════════════════════
+function renderPriority() {
+  const priority = S.leads.filter(l =>
+    (l.scoreQualification||0) >= 8 &&
+    (!l.statutSetter || l.statutSetter === 'Nouveau') &&
+    isMyLead(l)
+  ).slice(0,5);
+
+  const section = document.getElementById('priority-section');
+  const grid = document.getElementById('priority-grid');
+  const count = document.getElementById('priority-count');
+
+  if (!priority.length) { section.style.display='none'; return; }
+  section.style.display='block';
+  count.textContent = priority.length;
+
+  grid.innerHTML = priority.map(l => {
+    const da = daysAgo(l.dateCreation);
+    return `<div class="priority-card" onclick="openLead('${l.id}')">
+      <div class="pc-top">
+        <div>
+          <div class="pc-name">${escHtml(l.prenom)} ${escHtml(l.nom)}</div>
+          <div class="pc-email">${escHtml(l.email||'')}</div>
+        </div>
+        <div class="pc-badges">
+          <span class="pc-score-badge score-high">⚡ ${l.scoreQualification}/10</span>
+          <span class="pc-source">${l.sourceCanal||'—'}</span>
+        </div>
+      </div>
+      <div class="pc-footer">
+        <span class="pc-statut">🟢 Score élevé</span>
+        <span class="pc-days">${da!==null?`Il y a ${da} j`:'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  TABLEAU LEADS
+// ══════════════════════════════════════════════
+function filterLeads(leads, searchId, statutId, scoreId, sourceId) {
+  const q = (document.getElementById(searchId)?.value||'').toLowerCase();
+  const st = document.getElementById(statutId)?.value||'';
+  const sc = document.getElementById(scoreId)?.value||'';
+  const src = sourceId ? document.getElementById(sourceId)?.value||'' : '';
+
+  return leads.filter(l => {
+    const fullName = `${l.prenom||''} ${l.nom||''} ${l.email||''}`.toLowerCase();
+    if (q && !fullName.includes(q)) return false;
+    if (st && (l.statutSetter||'Nouveau') !== st) return false;
+    if (src && l.sourceCanal !== src) return false;
+    const s = l.scoreQualification||0;
+    if (sc==='high' && s<8) return false;
+    if (sc==='mid' && (s<5||s>7)) return false;
+    if (sc==='low' && s>=5) return false;
+    return true;
+  });
+}
+
+function buildLeadRow(l, showSetter=false) {
+  const score = l.scoreQualification||0;
+  const statut = l.statutSetter||'Nouveau';
+  const phone = (l.telephone||'').replace(/\s/g,'');
+  const waMsg = encodeURIComponent(`Bonjour ${l.prenom} ! Je suis ${myFullName()} de DENEM Academy. Vous avez répondu à notre questionnaire et je vous contacte pour en savoir plus sur votre projet. Avez-vous 2 minutes pour qu'on en parle ? 🎯`);
+
+  return `<tr>
+    <td>
+      <div class="lead-name">${escHtml(l.prenom)} ${escHtml(l.nom)}</div>
+      <div class="lead-email">${escHtml(l.email||'')}</div>
+    </td>
+    <td><span class="score-badge ${scoreCss(score)}">${score}</span></td>
+    <td><span class="source-badge">${l.sourceCanal||'—'}</span></td>
+    ${showSetter?`<td style="font-size:12px;color:var(--muted)">${escHtml(l.setterAssigne||'Non assigné')}</td>`:''}
+    <td><span class="statut-badge ${statutCss(statut)}">${statut}</span></td>
+    <td class="last-contact">${fmtDate(l.dateLastContactSetter)||'Jamais'}</td>
+    <td>
+      <div class="actions-cell">
+        ${phone?`<a href="tel:${phone}" class="btn-icon btn-call" title="Appeler">📞</a>`:''}
+        ${phone?`<a href="https://wa.me/${phone.replace('+','')}?text=${waMsg}" target="_blank" class="btn-icon btn-wa" title="WhatsApp">💬</a>`:''}
+        <select class="statut-select" onchange="changeStatut('${l.id}',this.value)">
+          ${['Nouveau','Tenté J1','Tenté J2','Tenté J3','Qualifié','Non qualifié','Relance planifiée'].map(s=>`<option ${statut===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <button class="btn-icon btn-fiche" onclick="openLead('${l.id}')" title="Ouvrir la fiche">🔍</button>
+      </div>
+    </td>
+  </tr>`;
+}
+
+function renderMesLeads() {
+  const me = myFullName().toLowerCase();
+  const myLeads = S.leads.filter(l => isMyLead(l));
+  const filtered = filterLeads(myLeads,'mes-leads-search','mes-leads-statut','mes-leads-score',null);
+  const tbody = document.getElementById('mes-leads-tbody');
+  document.getElementById('mes-leads-count').textContent = filtered.length;
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Aucun lead</div><div class="empty-sub">Modifiez les filtres ou ajoutez un lead</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(l => buildLeadRow(l,false)).join('');
+}
+
+function renderTousLeads() {
+  const filtered = filterLeads(S.leads,'tous-leads-search','tous-leads-statut','tous-leads-score','tous-leads-source');
+  const tbody = document.getElementById('tous-leads-tbody');
+  document.getElementById('tous-leads-count').textContent = filtered.length;
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-text">Aucun lead trouvé</div><div class="empty-sub">Modifiez les filtres</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(l => buildLeadRow(l,true)).join('');
+}
+
+// ══════════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════════
+function renderStats() {
+  const me = myFullName().toLowerCase();
+  const myLeads = S.leads.filter(l=>(l.setterAssigne||'').toLowerCase()===me);
+  const total = myLeads.length;
+  const contacted = myLeads.filter(l=>l.statutSetter&&l.statutSetter!=='Nouveau').length;
+  const qualified = myLeads.filter(l=>l.statutSetter==='Qualifié').length;
+  const nq = myLeads.filter(l=>l.statutSetter==='Non qualifié').length;
+  const tauxQualif = contacted?Math.round(qualified/contacted*100):0;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-big"><div class="stat-big-value">${total}</div><div class="stat-big-label">Leads assignés</div></div>
+    <div class="stat-big"><div class="stat-big-value">${qualified}</div><div class="stat-big-label">Leads qualifiés</div></div>
+    <div class="stat-big"><div class="stat-big-value" style="color:var(--success)">${tauxQualif}%</div><div class="stat-big-label">Taux de qualification</div></div>`;
+
+  const steps = [
+    {label:'Leads assignés',val:total,color:'#6c63ff'},
+    {label:'Leads contactés',val:contacted,color:'#3b82f6'},
+    {label:'Leads qualifiés',val:qualified,color:'#10b981'},
+    {label:'Non qualifiés',val:nq,color:'#ef4444'},
+  ];
+  const max = total||1;
+  document.getElementById('funnel-steps').innerHTML = steps.map(s=>`
+    <div class="funnel-step">
+      <div class="funnel-step-label"><span>${s.label}</span><span>${s.val}</span></div>
+      <div class="funnel-bar"><div class="funnel-fill" style="width:${Math.round(s.val/max*100)}%;background:${s.color}"></div></div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  FICHE LEAD (MODAL)
+// ══════════════════════════════════════════════
+function openLead(id) {
+  const l = S.leads.find(x=>x.id===id);
+  if (!l) return;
+  S.activeLead = l;
+
+  const q = l.reponsesQuestionnaire||{};
+  const {score, detail} = calcScore(q);
+  const phone = (l.telephone||'').replace(/\s/g,'');
+  const waMsg = encodeURIComponent(`Bonjour ${l.prenom} ! Je suis ${myFullName()} de DENEM Academy. Vous avez répondu à notre questionnaire et je vous contacte pour votre projet. Avez-vous 2 minutes ? 🎯`);
+  const da = daysAgo(l.dateCreation);
+
+  document.getElementById('modal-lead-name').textContent = `${l.prenom||''} ${l.nom||''}`;
+  document.getElementById('modal-lead-sub').textContent = l.email||'';
+  document.getElementById('modal-lead-badges').innerHTML = `
+    <span class="score-badge ${scoreCss(score)}">${score}/10</span>
+    <span class="statut-badge ${statutCss(l.statutSetter||'Nouveau')}">${l.statutSetter||'Nouveau'}</span>
+    <span class="source-badge">${l.sourceCanal||'—'}</span>`;
+
+  // TAB PROFIL
+  document.getElementById('tab-profil').innerHTML = `
+    <div class="info-grid">
+      <div class="info-field"><div class="info-label">Prénom & Nom</div><div class="info-value">${escHtml(l.prenom)} ${escHtml(l.nom)}</div></div>
+      <div class="info-field"><div class="info-label">Email</div><div class="info-value"><a href="mailto:${l.email}">${escHtml(l.email||'—')}</a></div></div>
+      <div class="info-field"><div class="info-label">Téléphone</div><div class="info-value">${phone?`<a href="tel:${phone}">${escHtml(l.telephone)}</a>`:'—'}</div></div>
+      <div class="info-field"><div class="info-label">Source</div><div class="info-value">${l.sourceCanal||'—'}</div></div>
+      <div class="info-field"><div class="info-label">Date de contact</div><div class="info-value">${fmtDate(l.dateCreation)}${da!==null?` (il y a ${da} j)`:''}</div></div>
+      <div class="info-field"><div class="info-label">Setter assigné</div><div class="info-value">${l.setterAssigne||'Non assigné'}</div></div>
+    </div>
+    <div class="questionnaire-title">📋 Réponses au questionnaire</div>
+    <div class="q-item"><div class="q-label">Situation actuelle</div><div class="q-value">${escHtml(q.situationActuelle||'Non renseigné')}</div></div>
+    <div class="q-item"><div class="q-label">Budget</div><div class="q-value">${escHtml(q.budgetDisponible||'Non renseigné')}</div></div>
+    <div class="q-item"><div class="q-label">Disponibilité</div><div class="q-value">${escHtml(q.disponibiliteHebdo||'Non renseigné')}</div></div>
+    <div class="q-item"><div class="q-label">Délai de lancement</div><div class="q-value">${escHtml(q.delaiLancement||'Non renseigné')}</div></div>
+    <div class="q-item"><div class="q-label">Motivation</div><div class="q-value">${escHtml(q.motivationPrincipale||'Non renseigné')}</div></div>
+    ${q.commentaireLibre?`<div class="q-item"><div class="q-label">Commentaire</div><div class="q-value">${escHtml(q.commentaireLibre)}</div></div>`:''}`;
+
+  // TAB SCORE
+  const scoreClass2 = scoreClass(score);
+  const scoreLabel = score>=8?'Lead chaud 🔥':score>=5?'Lead tiède ⚠️':'Lead froid ❄️';
+  document.getElementById('tab-score').innerHTML = `
+    <div class="score-big">
+      <div class="score-circle ${scoreClass2}">${score}</div>
+      <div class="score-label-big">${scoreLabel}</div>
+      <div class="score-desc">Score sur 10 points maximum</div>
+    </div>
+    <div class="score-breakdown">
+      ${detail.map(d=>`
+        <div class="score-breakdown-row ${d.ok?'ok':'nok'}">
+          <div class="sbr-label"><span class="sbr-icon">${d.ok?'✅':'⬜'}</span>${d.label}</div>
+          <div class="sbr-pts ${d.pts===0?'zero':''}">+${d.pts} pt${d.pts>1?'s':''}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // TAB SCRIPT
+  const scriptText = generateScript(l, da);
+  document.getElementById('tab-script').innerHTML = `
+    ${scriptText}
+    <div class="script-actions">
+      ${phone?`<a href="tel:${phone}" class="btn-script-call">📞 Appeler ${l.prenom}</a>`:''}
+      ${phone?`<a href="https://wa.me/${phone.replace('+','')}?text=${waMsg}" target="_blank" class="btn-script-wa">💬 WhatsApp</a>`:''}
+    </div>`;
+
+  // TAB ACTIONS
+  const tentatives = l.tentatives||[];
+  const isQualified = l.statutSetter==='Qualifié';
+  const isNQ = l.statutSetter==='Non qualifié';
+  document.getElementById('tab-actions').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📞 Historique des tentatives</div>
+      <div class="tentatives-list">
+        ${tentatives.length?tentatives.map(t=>`
+          <div class="tentative-item">
+            <div class="tentative-date">${fmtDateTime(t.date)}</div>
+            <div class="tentative-result">${escHtml(t.resultat)}</div>
+            ${t.note?`<div class="tentative-setter" style="margin-left:auto">${escHtml(t.note)}</div>`:''}
+          </div>`).join(''):'<div style="font-size:13px;color:var(--muted);padding:10px 0">Aucune tentative enregistrée</div>'}
+      </div>
+      <button class="btn-add-tentative" onclick="openTentative('${l.id}')">+ Enregistrer une tentative</button>
+    </div>
+    <div class="action-divider"></div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📝 Note setter</div>
+    <textarea class="note-area" id="lead-note-area" maxlength="200" oninput="updateNoteCounter()">${escHtml(l.noteSetter||'')}</textarea>
+    <div class="note-save-row">
+      <div class="note-counter" id="note-counter">${(l.noteSetter||'').length}/200</div>
+      <button class="btn-save-note" onclick="saveNote('${l.id}')">💾 Sauvegarder</button>
+    </div>
+    <div class="action-divider"></div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">🎯 Actions de qualification</div>
+    <div class="action-btns">
+      ${!isQualified&&!isNQ?`<button class="btn-qualify" onclick="openQualify('${l.id}')">✅ Qualifier → Envoyer au Closer</button>`:''}
+      ${!isNQ?`<button class="btn-disqualify" onclick="openDisqualify('${l.id}')">❌ Non qualifié</button>`:''}
+      ${isQualified?`<div style="background:#dcfce7;border-radius:8px;padding:12px;width:100%;font-size:13px;color:#166534;font-weight:600">✅ Lead qualifié — transféré au closer</div>`:''}
+      ${isNQ?`<div style="background:#fee2e2;border-radius:8px;padding:12px;width:100%;font-size:13px;color:#991b1b;font-weight:600">❌ Lead non qualifié — ${escHtml(l.raisonRefus||'')}</div>`:''}
+    </div>`;
+
+  // Footer
+  document.getElementById('modal-lead-footer').innerHTML = `
+    <button class="btn-cancel" onclick="closeModal('modal-lead')">Fermer</button>`;
+
+  // Reset tabs
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  document.querySelectorAll('.modal-tab-panel').forEach((p,i)=>p.classList.toggle('active',i===0));
+  openModal('modal-lead');
+}
+
+function generateScript(l, da) {
+  const q = l.reponsesQuestionnaire||{};
+  const prenom = `<span class="script-var">${escHtml(l.prenom||'[Prénom]')}</span>`;
+  const situation = `<span class="script-var">${escHtml(q.situationActuelle||'votre situation')}</span>`;
+  const canal = `<span class="script-var">${escHtml(l.sourceCanal||'notre questionnaire')}</span>`;
+  const jours = `<span class="script-var">${da!==null?da+' jour'+(da>1?'s':''):'quelques jours'}</span>`;
+  const dispo = `<span class="script-var">${escHtml(q.disponibiliteHebdo||'du temps disponible')}</span>`;
+
+  let script = `<div class="script-block">
+    <div class="script-block-title">🎙️ Accroche</div>
+    <div class="script-text">« Bonjour ${prenom}, je vous contacte de DENEM Academy. Vous avez répondu à notre questionnaire il y a ${jours} via ${canal}. Vous nous avez indiqué ${situation} — est-ce toujours d'actualité ? »</div>
+  </div>`;
+
+  if (q.budgetDisponible==="Oui, j'ai le budget") {
+    script += `<div class="script-block">
+      <div class="script-block-title">💰 Budget OK → Proposition RDV</div>
+      <div class="script-text">« Parfait. Votre profil correspond vraiment à ce qu'on accompagne. Je vous propose un appel de 20 minutes avec notre fondateur — pas une formation, juste un échange pour voir si on peut vous aider. Vous avez ${dispo} par semaine, c'est tout à fait compatible. Vous êtes disponible quand cette semaine ? »</div>
+    </div>`;
+  } else if (q.budgetDisponible==="J'ai besoin de financement") {
+    script += `<div class="script-block">
+      <div class="script-block-title">💳 Financement → Rassurer</div>
+      <div class="script-text">« Je comprends. On a justement des solutions : paiement en 3x ou 10x, et des options de financement pro pour certains profils. La vraie question c'est : est-ce que votre projet vous tient à cœur ? Si oui, on regarde ça ensemble dans l'appel avec notre fondateur. Vous êtes disponible quand ? »</div>
+    </div>`;
+  } else {
+    script += `<div class="script-block">
+      <div class="script-block-title">⚠️ Pas de budget → Explorer</div>
+      <div class="script-text">« Je comprends. Est-ce que c'est une question de timing, ou vraiment de budget en ce moment ? Parce qu'on a parfois des solutions adaptées — et ça vaut le coup d'en parler 20 minutes avec notre fondateur pour voir ce qui est faisable. »</div>
+    </div>`;
+  }
+
+  return script;
+}
+
+function updateNoteCounter() {
+  const area = document.getElementById('lead-note-area');
+  if (area) document.getElementById('note-counter').textContent = `${area.value.length}/200`;
+}
+
+// ══════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════
+async function changeStatut(id, newStatut) {
+  try {
+    await db.collection('leads').doc(id).update({
+      statutSetter: newStatut,
+      dateLastContactSetter: TS(),
+      setterAssigne: myFullName(),
+      updatedAt: TS()
+    });
+    toast(`Statut → ${newStatut}`,'success');
+  } catch(e) { toast('Erreur lors de la mise à jour','error'); }
+}
+
+async function saveNote(id) {
+  const note = document.getElementById('lead-note-area')?.value||'';
+  try {
+    await db.collection('leads').doc(id).update({noteSetter:note, updatedAt:TS()});
+    toast('Note sauvegardée','success');
+  } catch(e) { toast('Erreur','error'); }
+}
+
+function openQualify(id) {
+  S.pendingQualifyId = id;
+  document.getElementById('qualify-note').value = '';
+  openModal('modal-qualifier');
+}
+
+async function confirmQualify() {
+  const id = S.pendingQualifyId;
+  if (!id) return;
+  const note = document.getElementById('qualify-note').value.trim();
+  try {
+    await db.collection('leads').doc(id).update({
+      statutSetter: 'Qualifié',
+      statutCloser: 'En attente RDV',
+      setterAssigne: myFullName(),
+      dateLastContactSetter: TS(),
+      noteSetter: note || (S.leads.find(l=>l.id===id)?.noteSetter||''),
+      updatedAt: TS()
+    });
+    // Notification pour les closers
+    const l = S.leads.find(x=>x.id===id);
+    await db.collection('notifications').add({
+      type: 'lead_qualifie',
+      message: `Nouveau lead qualifié : ${l?.prenom} ${l?.nom} — Score ${l?.scoreQualification}/10 — RDV à planifier`,
+      destinataireRole: 'closer',
+      lu: false,
+      timestamp: TS(),
+      leadId: id,
+      leadNom: `${l?.prenom} ${l?.nom}`,
+    });
+    closeModal('modal-qualifier');
+    closeModal('modal-lead');
+    toast(`✅ ${l?.prenom} ${l?.nom} qualifié et envoyé au closer`,'success');
+  } catch(e) { toast('Erreur lors de la qualification','error'); console.error(e); }
+}
+
+function openDisqualify(id) {
+  S.pendingDisqualifyId = id;
+  document.getElementById('disqualify-note').value='';
+  openModal('modal-disqualify');
+}
+
+async function confirmDisqualify() {
+  const id = S.pendingDisqualifyId;
+  if (!id) return;
+  const raison = document.getElementById('disqualify-raison').value;
+  const note = document.getElementById('disqualify-note').value.trim();
+  try {
+    await db.collection('leads').doc(id).update({
+      statutSetter: 'Non qualifié',
+      raisonRefus: raison+(note?` — ${note}`:''),
+      dateLastContactSetter: TS(),
+      updatedAt: TS()
+    });
+    closeModal('modal-disqualify');
+    closeModal('modal-lead');
+    toast('Lead marqué non qualifié','success');
+  } catch(e) { toast('Erreur','error'); }
+}
+
+function openTentative(id) {
+  S.pendingTentativeId = id;
+  const l = S.leads.find(x=>x.id===id);
+  // Pré-sélectionner le prochain statut logique
+  const cur = l?.statutSetter||'Nouveau';
+  const nextMap = {'Nouveau':'Tenté J1','Tenté J1':'Tenté J2','Tenté J2':'Tenté J3'};
+  const next = nextMap[cur]||'Relance planifiée';
+  document.getElementById('tent-statut').value = next;
+  document.getElementById('tent-resultat').value = 'Pas répondu';
+  document.getElementById('tent-note').value = '';
+  openModal('modal-tentative');
+}
+
+async function saveTentative() {
+  const id = S.pendingTentativeId;
+  if (!id) return;
+  const resultat = document.getElementById('tent-resultat').value;
+  const newStatut = document.getElementById('tent-statut').value;
+  const note = document.getElementById('tent-note').value.trim();
+  try {
+    const tent = {date: new Date().toISOString(), resultat, note, setterNom: myFullName()};
+    await db.collection('leads').doc(id).update({
+      statutSetter: newStatut,
+      tentatives: firebase.firestore.FieldValue.arrayUnion(tent),
+      dateLastContactSetter: TS(),
+      setterAssigne: myFullName(),
+      updatedAt: TS()
+    });
+    closeModal('modal-tentative');
+    toast('Tentative enregistrée','success');
+    // Rouvrir la fiche si elle était ouverte
+    if (S.activeLead?.id === id) {
+      setTimeout(()=>openLead(id),300);
+    }
+  } catch(e) { toast('Erreur','error'); console.error(e); }
+}
+
+// ══════════════════════════════════════════════
+//  AJOUT LEAD MANUEL
+// ══════════════════════════════════════════════
+function openAddLead() {
+  ['add-prenom','add-nom','add-email','add-tel','add-situation','add-motivation','add-commentaire']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  openModal('modal-add-lead');
+}
+
+async function saveLead() {
+  const prenom = document.getElementById('add-prenom').value.trim();
+  const nom = document.getElementById('add-nom').value.trim();
+  const email = document.getElementById('add-email').value.trim();
+  if (!prenom||!nom||!email) { toast('Prénom, nom et email requis','error'); return; }
+
+  const q = {
+    situationActuelle: document.getElementById('add-situation').value.trim(),
+    budgetDisponible: document.getElementById('add-budget').value,
+    disponibiliteHebdo: document.getElementById('add-dispo').value,
+    delaiLancement: document.getElementById('add-delai').value,
+    motivationPrincipale: document.getElementById('add-motivation').value.trim(),
+    commentaireLibre: document.getElementById('add-commentaire').value.trim(),
+  };
+  const {score} = calcScore(q);
+
+  try {
+    await db.collection('leads').add({
+      prenom, nom, email,
+      telephone: document.getElementById('add-tel').value.trim(),
+      sourceCanal: document.getElementById('add-source').value,
+      reponsesQuestionnaire: q,
+      scoreQualification: score,
+      statutSetter: 'Nouveau',
+      setterAssigne: myFullName(),
+      dateCreation: TS(),
+      updatedAt: TS(),
+    });
+    closeModal('modal-add-lead');
+    toast(`Lead ${prenom} ${nom} ajouté (score: ${score}/10)`,'success');
+  } catch(e) { toast('Erreur lors de la création','error'); console.error(e); }
+}
+
+// ══════════════════════════════════════════════
+//  MODAUX & TABS
+// ══════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-backdrop').forEach(b =>
+  b.addEventListener('click', e => { if(e.target===b) b.classList.remove('open'); })
+);
+
+function switchTab(el, panelId) {
+  el.closest('.modal').querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  el.closest('.modal').querySelectorAll('.modal-tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+//  DONNÉES DE TEST (8 leads fictifs)
+// ══════════════════════════════════════════════
+async function seedLeads() {
+  const snap = await db.collection('leads').limit(1).get();
+  if (!snap.empty) return; // Déjà des données
+
+  const SEED = [
+    // Score élevé, statut Nouveau
+    {prenom:'Sophie',nom:'Laurent',email:'sophie.laurent@gmail.com',telephone:'0612345678',sourceCanal:'Meta Ads',
+     reponsesQuestionnaire:{situationActuelle:'Salariée en reconversion',budgetDisponible:"Oui, j'ai le budget",disponibiliteHebdo:'>20h',delaiLancement:'Immédiat',motivationPrincipale:'Quitter mon CDI et générer 5k€/mois en freelance',commentaireLibre:'Très motivée, disponible la semaine prochaine'},
+     statutSetter:'Nouveau',setterAssigne:''},
+    {prenom:'Thomas',nom:'Moreau',email:'thomas.moreau@gmail.com',telephone:'0623456789',sourceCanal:'LinkedIn',
+     reponsesQuestionnaire:{situationActuelle:'Freelance en reconversion digitale',budgetDisponible:"Oui, j'ai le budget",disponibiliteHebdo:'>20h',delaiLancement:'Immédiat',motivationPrincipale:'Automatiser des process avec l\'IA',commentaireLibre:'Déjà dev junior, veut monter en compétences IA'},
+     statutSetter:'Nouveau',setterAssigne:''},
+
+    // En cours de qualification
+    {prenom:'Camille',nom:'Dubois',email:'camille.dubois@gmail.com',telephone:'0634567890',sourceCanal:'Meta Ads',
+     reponsesQuestionnaire:{situationActuelle:'En recherche d\'emploi',budgetDisponible:"J'ai besoin de financement",disponibiliteHebdo:'10-20h',delaiLancement:'1-3 mois',motivationPrincipale:'Trouver un métier porteur',commentaireLibre:''},
+     statutSetter:'Tenté J1',setterAssigne:'Marie Setter',tentatives:[{date:new Date(Date.now()-86400000).toISOString(),resultat:'Pas répondu',note:'',setterNom:'Marie Setter'}]},
+    {prenom:'Julien',nom:'Bernard',email:'julien.bernard@gmail.com',telephone:'0645678901',sourceCanal:'Organique',
+     reponsesQuestionnaire:{situationActuelle:'Salarié RH souhaitant se reconvertir',budgetDisponible:"J'ai besoin de financement",disponibiliteHebdo:'5-10h',delaiLancement:'3-6 mois',motivationPrincipale:'Liberté financière',commentaireLibre:'A vu notre contenu sur YouTube'},
+     statutSetter:'Tenté J2',setterAssigne:'Marie Setter',tentatives:[
+       {date:new Date(Date.now()-2*86400000).toISOString(),resultat:'Pas répondu',note:'',setterNom:'Marie Setter'},
+       {date:new Date(Date.now()-86400000).toISOString(),resultat:'Messagerie vocale',note:'Laissé message',setterNom:'Marie Setter'},
+     ]},
+
+    // Qualifiés en attente RDV
+    {prenom:'Emma',nom:'Petit',email:'emma.petit@gmail.com',telephone:'0656789012',sourceCanal:'Meta Ads',
+     reponsesQuestionnaire:{situationActuelle:'Entrepreneuse en reconversion tech',budgetDisponible:"Oui, j'ai le budget",disponibiliteHebdo:'>20h',delaiLancement:'Immédiat',motivationPrincipale:'Créer des outils IA pour mon activité',commentaireLibre:'Très enthousiaste'},
+     statutSetter:'Qualifié',statutCloser:'En attente RDV',setterAssigne:'Marie Setter',noteSetter:'Très motivée, budget ok, profil parfait'},
+    {prenom:'Lucas',nom:'Richard',email:'lucas.richard@gmail.com',telephone:'0667890123',sourceCanal:'LinkedIn',
+     reponsesQuestionnaire:{situationActuelle:'Consultant en reconversion',budgetDisponible:"Oui, j'ai le budget",disponibiliteHebdo:'10-20h',delaiLancement:'1-3 mois',motivationPrincipale:'Développer une offre IA consulting',commentaireLibre:''},
+     statutSetter:'Qualifié',statutCloser:'En attente RDV',setterAssigne:'Paul Setter',noteSetter:'Profil consultant, budget confirmé'},
+
+    // Signé
+    {prenom:'Marie',nom:'Simon',email:'marie.simon@gmail.com',telephone:'0678901234',sourceCanal:'Meta Ads',
+     reponsesQuestionnaire:{situationActuelle:'Salariée en reconversion complète',budgetDisponible:"Oui, j'ai le budget",disponibiliteHebdo:'>20h',delaiLancement:'Immédiat',motivationPrincipale:'Générer 5k€/mois avec l\'IA',commentaireLibre:''},
+     statutSetter:'Qualifié',statutCloser:'Signé',montantSigne:3500,modePaiement:'3x',closerAssigne:'Alex Closer',converti:true,
+     setterAssigne:'Marie Setter'},
+
+    // Refusé
+    {prenom:'Pierre',nom:'Durand',email:'pierre.durand@gmail.com',telephone:'0689012345',sourceCanal:'Organique',
+     reponsesQuestionnaire:{situationActuelle:'Étudiant',budgetDisponible:'Non',disponibiliteHebdo:'<5h',delaiLancement:'Je cherche encore',motivationPrincipale:'Curiosité',commentaireLibre:''},
+     statutSetter:'Non qualifié',raisonRefus:'Pas de budget',setterAssigne:'Paul Setter'},
+  ];
+
+  const batch = db.batch();
+  SEED.forEach(s => {
+    const ref = db.collection('leads').doc();
+    const {score} = calcScore(s.reponsesQuestionnaire||{});
+    batch.set(ref,{...s, scoreQualification:score, dateCreation:TS(), updatedAt:TS()});
+  });
+  await batch.commit();
+  toast('8 leads de test créés','success');
+}
+
+// Lancer le seed au chargement si la base est vide (après auth)
+// seedLeads() est appelé manuellement ou depuis la console si besoin
+
+</script>
+</body>
+</html>

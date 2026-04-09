@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denem Academy — Pipeline Commercial</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sidebar-w:240px;
+  --primary:#6366f1;--primary-light:#eef2ff;--primary-dark:#4f46e5;
+  --teal:#0f9e75;--violet:#8b5cf6;--orange:#f59e0b;
+  --bg:#f8f9fc;--surface:#fff;
+  --border:#e2e8f0;
+  --text:#1a1a2e;--muted:#64748b;--subtle:#94a3b8;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;
+  --sidebar-bg:#1e2235;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+  --radius:12px;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ─── LOADING ─── */
+#loading{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
+.ld-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:28px}
+.ld-bar{width:160px;height:3px;background:#e2e8f0;border-radius:2px;overflow:hidden}
+.ld-fill{height:100%;width:40%;background:var(--primary);animation:ldA 1.2s ease-in-out infinite}
+@keyframes ldA{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--sidebar-bg);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.sb-brand{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sb-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-title{font-size:14px;font-weight:800;color:#fff}
+.sb-badge{display:inline-block;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto}
+.sb-nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;color:rgba(255,255,255,.75);cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;position:relative;user-select:none}
+.sb-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sb-nav-item.active{background:rgba(99,102,241,.2);color:#fff}
+.sb-nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--primary);border-radius:0 2px 2px 0}
+.sb-nav-icon{font-size:16px;width:20px;text-align:center}
+.sb-notif-dot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.sb-section-label{padding:8px 16px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase}
+.sb-bottom{padding:12px 16px 16px;border-top:1px solid rgba(255,255,255,.06)}
+.sb-user{display:flex;align-items:center;gap:10px}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user-name{font-size:13px;font-weight:600;color:#fff}
+.sb-link{display:block;margin-top:8px;font-size:11px;color:rgba(255,255,255,.4);text-decoration:none;transition:.15s}
+.sb-link:hover{color:rgba(255,255,255,.8)}
+
+/* ─── MAIN ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* ─── FUNNEL ─── */
+.funnel-section{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:24px;margin-bottom:24px}
+.funnel-title{font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.funnel-steps{display:flex;align-items:stretch;gap:0}
+.funnel-step{flex:1;position:relative;text-align:center}
+.funnel-step-inner{padding:20px 12px;background:var(--bg);border:1px solid var(--border);border-right:none;position:relative;transition:.15s}
+.funnel-step:first-child .funnel-step-inner{border-radius:10px 0 0 10px}
+.funnel-step:last-child .funnel-step-inner{border-right:1px solid var(--border);border-radius:0 10px 10px 0}
+.funnel-step-inner::after{content:'→';position:absolute;right:-12px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--muted);z-index:1}
+.funnel-step:last-child .funnel-step-inner::after{display:none}
+.funnel-step-icon{font-size:24px;margin-bottom:6px}
+.funnel-step-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.funnel-step-value{font-size:28px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px}
+.funnel-step-sub{font-size:11px;color:var(--muted)}
+.funnel-step-bar{height:4px;border-radius:0 0 0 0;margin-top:12px}
+.funnel-step:first-child .funnel-step-bar{border-radius:0 0 0 10px}
+.funnel-step:last-child .funnel-step-bar{border-radius:0 0 10px 0}
+
+/* ─── KPI CARDS ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.kpi-row-6{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.kpi-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.kpi-value{font-size:26px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--muted)}
+.kpi-card.primary .kpi-value{color:var(--primary)}
+.kpi-card.success .kpi-value{color:var(--success)}
+.kpi-card.warning .kpi-value{color:var(--warning)}
+.kpi-card.danger .kpi-value{color:var(--danger)}
+.kpi-card.teal .kpi-value{color:var(--teal)}
+.kpi-trend{font-size:11px;font-weight:600;margin-top:2px}
+.kpi-trend.up{color:var(--success)}.kpi-trend.down{color:var(--danger)}
+
+/* ─── SECTIONS ─── */
+.section{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px}
+.section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.section-sub{font-size:12px;color:var(--muted)}
+
+/* ─── TABLES ─── */
+.table-wrap{overflow-x:auto}
+table.data-table{width:100%;border-collapse:collapse}
+.data-table th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:#fafafa;white-space:nowrap}
+.data-table td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:#fafbff}
+.lead-name{font-size:13px;font-weight:700}
+.lead-email{font-size:12px;color:var(--muted)}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-orange{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-purple{background:#f3e8ff;color:#6b21a8}
+.badge-gray{background:#f1f5f9;color:#475569}
+.score-b{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;font-size:12px;font-weight:800}
+.sh{background:#dcfce7;color:#166534}.sm{background:#fef3c7;color:#92400e}.sl{background:#fee2e2;color:#991b1b}
+.progress-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;min-width:80px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+.btn-assign{background:var(--primary-light);color:var(--primary);border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-assign:hover{background:#c7d2fe}
+.btn-view{background:#f1f5f9;color:var(--muted);border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-view:hover{background:var(--border);color:var(--text)}
+.actions-cell{display:flex;gap:6px}
+
+/* ─── LEAD FILTERS ─── */
+.lead-filters{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filter-input{padding:7px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;flex:1;min-width:200px;color:var(--text)}
+.filter-select{padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#fff;color:var(--text);cursor:pointer}
+.filter-input:focus,.filter-select:focus{outline:none;border-color:var(--primary)}
+
+/* ─── CA PROJECTION ─── */
+.projection-box{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:var(--radius);padding:24px;color:#fff;margin-bottom:24px}
+.proj-title{font-size:13px;font-weight:700;opacity:.8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.proj-value{font-size:40px;font-weight:900;line-height:1;margin-bottom:4px}
+.proj-sub{font-size:13px;opacity:.75}
+.proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+.proj-item{background:rgba(255,255,255,.12);border-radius:10px;padding:14px}
+.proj-item-label{font-size:11px;font-weight:700;opacity:.7;margin-bottom:4px}
+.proj-item-value{font-size:20px;font-weight:900}
+
+/* ─── MODAL ─── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:17px;font-weight:800}
+.modal-sub{font-size:13px;color:var(--muted);margin-top:2px}
+.modal-close{width:32px;height:32px;border:none;background:var(--bg);border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+.modal-close:hover{background:var(--border)}
+.modal-body{flex:1;overflow-y:auto;padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.info-field{background:var(--bg);border-radius:8px;padding:12px}
+.info-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.info-value{font-size:13px;font-weight:600;color:var(--text)}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--muted)}
+.form-select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:#fff}
+.form-select:focus{outline:none;border-color:var(--primary)}
+.btn-primary{background:var(--primary);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-cancel{background:var(--bg);color:var(--text);border:1px solid var(--border);padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.q-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.q-item:last-child{border-bottom:none}
+.q-label{font-size:12px;font-weight:600;color:var(--muted);min-width:140px;flex-shrink:0}
+.q-value{font-size:13px;color:var(--text)}
+.timeline-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.timeline-dot{width:10px;height:10px;border-radius:50%;background:var(--primary);margin-top:4px;flex-shrink:0}
+.timeline-date{font-size:12px;color:var(--muted);min-width:90px}
+.timeline-text{font-size:13px;color:var(--text)}
+
+/* ─── NOTIF BELL ─── */
+.notif-bell{position:relative;cursor:pointer;font-size:18px;padding:6px}
+.notif-count{position:absolute;top:-2px;right:-2px;background:var(--danger);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.notif-dropdown{position:absolute;right:0;top:calc(100% + 8px);background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);border:1px solid var(--border);width:340px;z-index:200;overflow:hidden}
+.notif-header{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700}
+.notif-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--bg)}
+.notif-item.unread{background:#fefce8}
+.notif-item-msg{font-size:13px;color:var(--text);line-height:1.4}
+.notif-item-time{font-size:11px;color:var(--muted);margin-top:4px}
+.notif-empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ─── TOAST ─── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;box-shadow:var(--shadow-md);animation:toastIn .3s ease;display:flex;align-items:center;gap:8px}
+.toast-success{background:#059669}.toast-error{background:var(--danger)}.toast-info{background:var(--primary)}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+@media(max-width:900px){
+  .kpi-row-6{grid-template-columns:repeat(3,1fr)}
+  .funnel-steps{flex-direction:column}
+  .funnel-step-inner::after{display:none}
+  .funnel-step-inner{border-radius:8px!important;border:1px solid var(--border)!important;margin-bottom:8px}
+  .proj-grid{grid-template-columns:1fr 1fr}
+  .info-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="ld-logo">📊</div>
+  <div style="font-size:13px;color:#64748b">Chargement du pipeline…</div>
+  <div class="ld-bar"><div class="ld-fill"></div></div>
+</div>
+
+<div id="app" style="display:none">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo-row">
+      <div class="sb-logo">📊</div>
+      <div>
+        <div class="sb-title">Denem Academy</div>
+        <span class="sb-badge">ADMIN</span>
+      </div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section-label">Pipeline</div>
+    <div class="sb-nav-item active" data-page="overview" onclick="showPage('overview')">
+      <span class="sb-nav-icon">🔭</span>Vue globale
+    </div>
+    <div class="sb-nav-item" data-page="leads" onclick="showPage('leads')">
+      <span class="sb-nav-icon">👥</span>Tous les leads
+    </div>
+    <div class="sb-nav-item" data-page="setters" onclick="showPage('setters')">
+      <span class="sb-nav-icon">📞</span>Vue setters
+    </div>
+    <div class="sb-nav-item" data-page="closers" onclick="showPage('closers')">
+      <span class="sb-nav-icon">🤝</span>Vue closers
+    </div>
+    <div class="sb-nav-item" data-page="conversions" onclick="showPage('conversions')">
+      <span class="sb-nav-icon">🎉</span>Conversions
+      <span class="sb-notif-dot" id="conv-dot" style="display:none"></span>
+    </div>
+    <div class="sb-section-label" style="margin-top:8px">Espaces</div>
+    <div class="sb-nav-item" onclick="window.location.href='../'" style="opacity:.7">
+      <span class="sb-nav-icon">🏠</span>Accueil
+    </div>
+    <div class="sb-nav-item" onclick="window.open('../crm/')">
+      <span class="sb-nav-icon">🎓</span>Espace CSM
+    </div>
+    <div class="sb-nav-item" onclick="window.open('../setting/')">
+      <span class="sb-nav-icon">🎯</span>Espace Setting
+    </div>
+    <div class="sb-nav-item" onclick="window.open('../closing/')">
+      <span class="sb-nav-icon">🤝</span>Espace Closing
+    </div>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">A</div>
+      <div>
+        <div class="sb-user-name" id="sb-name">Admin</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Administrateur</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Vue globale du pipeline</div>
+    <div class="topbar-right">
+      <!-- Cloche notifications -->
+      <div style="position:relative" id="notif-wrap">
+        <div class="notif-bell" id="notif-bell" onclick="toggleNotifs()">
+          🔔
+          <div class="notif-count" id="notif-count" style="display:none">0</div>
+        </div>
+        <div class="notif-dropdown" id="notif-dropdown" style="display:none">
+          <div class="notif-header">Notifications</div>
+          <div id="notif-list"></div>
+        </div>
+      </div>
+      <button onclick="auth.signOut()" style="background:var(--bg);border:1px solid var(--border);padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;color:var(--muted)">Déconnexion</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAGE: VUE GLOBALE -->
+    <div id="page-overview">
+      <!-- Funnel visuel -->
+      <div class="funnel-section">
+        <div class="funnel-title">📊 Funnel commercial temps réel</div>
+        <div class="funnel-steps" id="funnel-steps"></div>
+      </div>
+
+      <!-- KPIs globaux -->
+      <div class="kpi-row-6" id="kpi-global"></div>
+
+      <!-- Projection CA -->
+      <div class="projection-box" id="projection-box"></div>
+
+      <!-- Grille setter + closer côte à côte -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title">📞 Setters — Ce mois</div>
+          </div>
+          <div class="table-wrap"><table class="data-table" id="setters-mini"></table></div>
+        </div>
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title">🤝 Closers — Ce mois</div>
+          </div>
+          <div class="table-wrap"><table class="data-table" id="closers-mini"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: TOUS LES LEADS -->
+    <div id="page-leads" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">👥 Tous les leads <span id="leads-total" style="background:var(--primary-light);color:var(--primary);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:4px">0</span></div>
+        </div>
+        <div class="lead-filters">
+          <input class="filter-input" type="text" id="f-search" placeholder="Rechercher par nom, email…" oninput="renderLeadsTable()">
+          <select class="filter-select" id="f-statut-setter" onchange="renderLeadsTable()">
+            <option value="">Statut setter</option>
+            <option>Nouveau</option><option>Tenté J1</option><option>Tenté J2</option><option>Tenté J3</option>
+            <option>Qualifié</option><option>Non qualifié</option><option>Relance planifiée</option>
+          </select>
+          <select class="filter-select" id="f-statut-closer" onchange="renderLeadsTable()">
+            <option value="">Statut closer</option>
+            <option>En attente RDV</option><option>RDV planifié</option><option>RDV passé</option>
+            <option>Signé</option><option>Refus</option><option>Relance</option>
+          </select>
+          <select class="filter-select" id="f-source" onchange="renderLeadsTable()">
+            <option value="">Toutes sources</option>
+            <option>Meta Ads</option><option>LinkedIn</option><option>Organique</option><option>Autre</option>
+          </select>
+          <select class="filter-select" id="f-score" onchange="renderLeadsTable()">
+            <option value="">Tous scores</option>
+            <option value="high">Score 8-10</option><option value="mid">Score 5-7</option><option value="low">Score 1-4</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Lead</th><th>Score</th><th>Source</th>
+                <th>Setter</th><th>Statut setter</th>
+                <th>Closer</th><th>Statut closer</th>
+                <th>Date créa.</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: SETTERS -->
+    <div id="page-setters" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">📞 Performance setters</div>
+          <div class="section-sub">Mise à jour en temps réel</div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Setter</th><th>Leads assignés</th><th>Contactés</th>
+                <th>Qualifiés</th><th>Taux qualif.</th><th>Non qualifiés</th><th>Dernière activité</th>
+              </tr>
+            </thead>
+            <tbody id="setters-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: CLOSERS -->
+    <div id="page-closers" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🤝 Performance closers</div>
+          <div class="section-sub">Mise à jour en temps réel</div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Closer</th><th>RDVs reçus</th><th>RDVs passés</th>
+                <th>Signés</th><th>Taux closing</th><th>CA généré</th><th>Commission est. (12%)</th>
+              </tr>
+            </thead>
+            <tbody id="closers-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: CONVERSIONS -->
+    <div id="page-conversions" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🎉 Conversions — Apprenants créés</div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Apprenant</th><th>Montant</th><th>Paiement</th>
+                <th>Closer</th><th>Date signature</th><th>Statut apprenant</th>
+              </tr>
+            </thead>
+            <tbody id="conv-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODAL: FICHE LEAD ADMIN -->
+<div class="modal-backdrop" id="modal-lead">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="m-lead-name">—</div>
+        <div class="modal-sub" id="m-lead-sub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-lead')">✕</button>
+    </div>
+    <div class="modal-body" id="m-lead-body"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-lead')">Fermer</button>
+      <button class="btn-primary" id="m-lead-save" onclick="saveAssignment()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIGURATION FIREBASE — même config que les autres espaces
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",
+  authDomain: "denem-academy-5de41.firebaseapp.com",
+  projectId: "denem-academy-5de41",
+  storageBucket: "denem-academy-5de41.firebasestorage.app",
+  messagingSenderId: "570632584566",
+  appId: "1:570632584566:web:ea9b964787b40805a7ce57",
+  measurementId: "G-44GC1P93LK"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// ══════════════════════════════════════════════
+//  ÉTAT
+// ══════════════════════════════════════════════
+const S = {
+  user: null, userData: null,
+  leads: [], users: [], conversions: [], notifications: [],
+  currentPage: 'overview',
+  activeLead: null,
+};
+
+// ══════════════════════════════════════════════
+//  UTILITAIRES
+// ══════════════════════════════════════════════
+function TS(){return firebase.firestore.FieldValue.serverTimestamp();}
+function toast(msg,type='info'){
+  const el=document.createElement('div');el.className=`toast toast-${type}`;
+  el.innerHTML=`${type==='success'?'✅':type==='error'?'❌':'ℹ️'} ${msg}`;
+  document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3500);
+}
+function fmtDate(ts){
+  if(!ts)return'—';const d=ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+}
+function fmtDateISO(ts){
+  if(!ts)return'';try{const d=ts.toDate?ts.toDate():new Date(ts);return d.toISOString().slice(0,10);}catch{return'';}
+}
+function monthStart(){return new Date().toISOString().slice(0,7)+'-01';}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function scoreB(s){const sc=s>=8?'sh':s>=5?'sm':'sl';return`<span class="score-b ${sc}">${s}</span>`;}
+function statutSetterBadge(st){
+  const map={Nouveau:'badge-blue','Tenté J1':'badge-orange','Tenté J2':'badge-orange','Tenté J3':'badge-orange',Qualifié:'badge-green','Non qualifié':'badge-red','Relance planifiée':'badge-purple'};
+  return`<span class="badge ${map[st]||'badge-gray'}">${st||'Nouveau'}</span>`;
+}
+function statutCloserBadge(st){
+  const map={'En attente RDV':'badge-blue','RDV planifié':'badge-orange','RDV passé':'badge-purple',Signé:'badge-green',Refus:'badge-red',Relance:'badge-gray'};
+  return`<span class="badge ${map[st]||'badge-gray'}">${st||'—'}</span>`;
+}
+function calcScore(q={}){
+  let p=0;
+  if(q.budgetDisponible==="Oui, j'ai le budget")p+=4;
+  else if(q.budgetDisponible==="J'ai besoin de financement")p+=2;
+  if(q.disponibiliteHebdo==='>20h')p+=2;else if(q.disponibiliteHebdo==='10-20h')p+=1;
+  if(q.delaiLancement==='Immédiat')p+=2;else if(q.delaiLancement==='1-3 mois')p+=1;
+  if((q.situationActuelle||'').toLowerCase().includes('reconversion'))p+=1;
+  return Math.min(p,10);
+}
+
+// ══════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    document.getElementById('loading').innerHTML=`
+      <div class="ld-logo">🔒</div>
+      <div style="text-align:center;padding:0 20px">
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Accès admin requis</div>
+        <button onclick="signIn()" style="background:#6366f1;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px">Se connecter</button>
+      </div>`;
+    return;
+  }
+  const doc=await db.collection('users').doc(user.uid).get();
+  if(!doc.exists||doc.data().role!=='admin'){
+    document.getElementById('loading').innerHTML=`<div style="text-align:center;padding:20px"><div style="font-size:40px">🚫</div><div style="margin-top:12px">Accès réservé aux administrateurs.</div><br><button onclick="auth.signOut()" style="background:#ef4444;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">Se déconnecter</button></div>`;
+    return;
+  }
+  S.user=user;S.userData=doc.data();
+  const init=((S.userData.prenom||'A')[0]+(S.userData.nom||'D')[0]).toUpperCase();
+  document.getElementById('sb-avatar').textContent=init;
+  document.getElementById('sb-name').textContent=`${S.userData.prenom||''} ${S.userData.nom||''}`.trim();
+  initApp();
+});
+function signIn(){const p=new firebase.auth.GoogleAuthProvider();auth.signInWithPopup(p);}
+
+// ══════════════════════════════════════════════
+//  INITIALISATION
+// ══════════════════════════════════════════════
+function initApp(){
+  // Tous les leads
+  db.collection('leads').orderBy('dateCreation','desc').onSnapshot(snap=>{
+    S.leads=snap.docs.map(d=>({id:d.id,...d.data()}));
+    S.leads.forEach(l=>{if(!l.scoreQualification)l.scoreQualification=calcScore(l.reponsesQuestionnaire||{});});
+    renderCurrentPage();
+  },_=>{
+    db.collection('leads').onSnapshot(snap=>{
+      S.leads=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.dateCreation?.seconds||0)-(a.dateCreation?.seconds||0));
+      S.leads.forEach(l=>{if(!l.scoreQualification)l.scoreQualification=calcScore(l.reponsesQuestionnaire||{});});
+      renderCurrentPage();
+    });
+  });
+
+  // Utilisateurs (setters, closers)
+  db.collection('users').onSnapshot(snap=>{
+    S.users=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderCurrentPage();
+  });
+
+  // Conversions
+  db.collection('conversions').orderBy('createdAt','desc').onSnapshot(snap=>{
+    S.conversions=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const dot=document.getElementById('conv-dot');
+    const unseen=S.conversions.filter(c=>!c.vuAdmin);
+    dot.style.display=unseen.length?'block':'none';
+    if(S.currentPage==='conversions')renderConversions();
+  },_=>{
+    db.collection('conversions').onSnapshot(snap=>{S.conversions=snap.docs.map(d=>({id:d.id,...d.data()}));});
+  });
+
+  // Notifications admin
+  db.collection('notifications').where('destinataireRole','==','admin').where('lu','==',false)
+    .onSnapshot(snap=>{
+      S.notifications=snap.docs.map(d=>({id:d.id,...d.data()}));
+      const count=document.getElementById('notif-count');
+      if(S.notifications.length){count.style.display='flex';count.textContent=S.notifications.length;}
+      else count.style.display='none';
+      renderNotifs();
+    },_=>{});
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='flex';
+
+  // Fermer notifs en cliquant ailleurs
+  document.addEventListener('click',e=>{
+    if(!document.getElementById('notif-wrap').contains(e.target))
+      document.getElementById('notif-dropdown').style.display='none';
+  });
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+const PAGE_TITLES={'overview':'Vue globale du pipeline','leads':'Tous les leads','setters':'Vue setters','closers':'Vue closers','conversions':'Conversions'};
+function showPage(page){
+  S.currentPage=page;
+  document.querySelectorAll('.sb-nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+  document.querySelectorAll('[id^="page-"]').forEach(el=>el.style.display='none');
+  document.getElementById(`page-${page}`).style.display='block';
+  document.getElementById('topbar-title').textContent=PAGE_TITLES[page]||page;
+  renderCurrentPage();
+}
+function renderCurrentPage(){
+  if(S.currentPage==='overview'){renderFunnel();renderKPIGlobal();renderProjection();renderSettersMini();renderClosersMini();}
+  else if(S.currentPage==='leads')renderLeadsTable();
+  else if(S.currentPage==='setters')renderSettersTable();
+  else if(S.currentPage==='closers')renderClosersTable();
+  else if(S.currentPage==='conversions')renderConversions();
+}
+
+// ══════════════════════════════════════════════
+//  FUNNEL VISUEL
+// ══════════════════════════════════════════════
+function renderFunnel(){
+  const leads=S.leads;
+  const total=leads.length;
+  const contactes=leads.filter(l=>l.statutSetter&&l.statutSetter!=='Nouveau').length;
+  const qualifies=leads.filter(l=>l.statutSetter==='Qualifié').length;
+  const rdvPlanifies=leads.filter(l=>['RDV planifié','RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||'')).length;
+  const signes=leads.filter(l=>l.statutCloser==='Signé').length;
+
+  const steps=[
+    {icon:'📥',label:'Leads reçus',val:total,color:'#6366f1',pct:100},
+    {icon:'📞',label:'Contactés',val:contactes,color:'#3b82f6',pct:total?Math.round(contactes/total*100):0},
+    {icon:'✅',label:'Qualifiés',val:qualifies,color:'#f59e0b',pct:total?Math.round(qualifies/total*100):0},
+    {icon:'📅',label:'RDV planifiés',val:rdvPlanifies,color:'#8b5cf6',pct:total?Math.round(rdvPlanifies/total*100):0},
+    {icon:'🎉',label:'Signés',val:signes,color:'#10b981',pct:total?Math.round(signes/total*100):0},
+  ];
+
+  document.getElementById('funnel-steps').innerHTML=steps.map(s=>`
+    <div class="funnel-step">
+      <div class="funnel-step-inner">
+        <div class="funnel-step-icon">${s.icon}</div>
+        <div class="funnel-step-label">${s.label}</div>
+        <div class="funnel-step-value" style="color:${s.color}">${s.val}</div>
+        <div class="funnel-step-sub">${s.pct}% du total</div>
+        <div class="funnel-step-bar" style="background:${s.color}22">
+          <div style="height:100%;width:${s.pct}%;background:${s.color};border-radius:4px;transition:width .6s"></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  KPIs GLOBAUX
+// ══════════════════════════════════════════════
+function renderKPIGlobal(){
+  const ms=monthStart();
+  const weekAgo=new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+  const leads=S.leads;
+
+  const leadsWeek=leads.filter(l=>(l.dateCreation?.toDate?.()?.toISOString?.()?.slice(0,10)||'')>=weekAgo).length;
+  const leadsMois=leads.filter(l=>(l.dateCreation?.toDate?.()?.toISOString?.()?.slice(0,10)||'')>=ms).length;
+  const qualifies=leads.filter(l=>l.statutSetter==='Qualifié').length;
+  const contactes=leads.filter(l=>l.statutSetter&&l.statutSetter!=='Nouveau').length;
+  const tauxQualif=contactes?Math.round(qualifies/contactes*100):0;
+  const rdvPasses=leads.filter(l=>['RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||'')).length;
+  const signes=leads.filter(l=>l.statutCloser==='Signé');
+  const tauxClose=rdvPasses?Math.round(signes.length/rdvPasses*100):0;
+  const caMois=signes.filter(l=>(fmtDateISO(l.dateSignature)||'')>=ms).reduce((s,l)=>s+(l.montantSigne||0),0);
+  const caFraction=signes.filter(l=>l.modePaiement&&l.modePaiement!=='1x').reduce((s,l)=>s+(l.montantSigne||0),0);
+
+  document.getElementById('kpi-global').innerHTML=`
+    <div class="kpi-card primary"><div class="kpi-label">Leads ce mois</div><div class="kpi-value">${leadsMois}</div><div class="kpi-sub">${leadsWeek} cette semaine</div></div>
+    <div class="kpi-card warning"><div class="kpi-label">Taux qualification</div><div class="kpi-value">${tauxQualif}%</div><div class="kpi-sub">${qualifies} qualifiés / ${contactes} contactés</div></div>
+    <div class="kpi-card success"><div class="kpi-label">Taux de closing</div><div class="kpi-value">${tauxClose}%</div><div class="kpi-sub">${signes.length} signés / ${rdvPasses} RDV passés</div></div>
+    <div class="kpi-card warning"><div class="kpi-label">CA signé ce mois</div><div class="kpi-value">${caMois.toLocaleString('fr-FR')}€</div><div class="kpi-sub">${signes.filter(l=>(fmtDateISO(l.dateSignature)||'')>=ms).length} ventes</div></div>
+    <div class="kpi-card danger"><div class="kpi-label">CA fractionné</div><div class="kpi-value">${caFraction.toLocaleString('fr-FR')}€</div><div class="kpi-sub">paiements étalés</div></div>
+    <div class="kpi-card teal"><div class="kpi-label">Pipeline actif</div><div class="kpi-value">${leads.filter(l=>l.statutCloser&&!['Signé','Refus'].includes(l.statutCloser)).length}</div><div class="kpi-sub">leads en cours</div></div>`;
+}
+
+// ══════════════════════════════════════════════
+//  PROJECTION CA
+// ══════════════════════════════════════════════
+function renderProjection(){
+  const pipelineActif=S.leads.filter(l=>l.statutCloser&&!['Signé','Refus'].includes(l.statutCloser));
+  const avgDeal=S.leads.filter(l=>l.montantSigne).reduce((s,l,i,a)=>s+l.montantSigne/a.length,0)||3500;
+  const tauxClose30=0.30;
+  const proj=Math.round(pipelineActif.length*avgDeal*tauxClose30);
+  const totalCA=S.leads.filter(l=>l.montantSigne).reduce((s,l)=>s+(l.montantSigne||0),0);
+  const signes=S.leads.filter(l=>l.statutCloser==='Signé').length;
+
+  document.getElementById('projection-box').innerHTML=`
+    <div class="proj-title">💡 Projection CA — Pipeline actuel à 30% de conversion</div>
+    <div class="proj-value">${proj.toLocaleString('fr-FR')} €</div>
+    <div class="proj-sub">${pipelineActif.length} leads actifs × ${avgDeal.toFixed(0)}€ panier moyen × 30%</div>
+    <div class="proj-grid">
+      <div class="proj-item"><div class="proj-item-label">CA total généré</div><div class="proj-item-value">${totalCA.toLocaleString('fr-FR')}€</div></div>
+      <div class="proj-item"><div class="proj-item-label">Panier moyen</div><div class="proj-item-value">${avgDeal.toFixed(0)}€</div></div>
+      <div class="proj-item"><div class="proj-item-label">Total signatures</div><div class="proj-item-value">${signes}</div></div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  SETTERS MINI (overview)
+// ══════════════════════════════════════════════
+function renderSettersMini(){
+  const setters=getSettersStats();
+  const el=document.getElementById('setters-mini');
+  el.innerHTML=`<thead><tr><th>Setter</th><th>Assignés</th><th>Qualifiés</th><th>Taux</th></tr></thead>
+  <tbody>${setters.map(s=>`<tr>
+    <td style="font-weight:700;font-size:13px">${escHtml(s.nom)}</td>
+    <td>${s.assigned}</td>
+    <td style="color:var(--success);font-weight:700">${s.qualified}</td>
+    <td><span style="font-weight:700;color:${s.taux>=40?'var(--success)':s.taux>=20?'var(--warning)':'var(--danger)'}">${s.taux}%</span></td>
+  </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée</td></tr>'}</tbody>`;
+}
+
+function renderClosersMini(){
+  const closers=getClosersStats();
+  const el=document.getElementById('closers-mini');
+  el.innerHTML=`<thead><tr><th>Closer</th><th>RDVs</th><th>Signés</th><th>CA</th></tr></thead>
+  <tbody>${closers.map(c=>`<tr>
+    <td style="font-weight:700;font-size:13px">${escHtml(c.nom)}</td>
+    <td>${c.rdvs}</td>
+    <td style="color:var(--success);font-weight:700">${c.signed}</td>
+    <td style="font-weight:700;color:var(--warning)">${c.ca.toLocaleString('fr-FR')}€</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée</td></tr>'}</tbody>`;
+}
+
+// ══════════════════════════════════════════════
+//  STATS SETTERS (page dédiée)
+// ══════════════════════════════════════════════
+function getSettersStats(){
+  const settersMap={};
+  S.leads.forEach(l=>{
+    const nom=l.setterAssigne||'Non assigné';
+    if(!settersMap[nom])settersMap[nom]={nom,assigned:0,contacted:0,qualified:0,nq:0,lastActivity:null};
+    const s=settersMap[nom];
+    s.assigned++;
+    if(l.statutSetter&&l.statutSetter!=='Nouveau')s.contacted++;
+    if(l.statutSetter==='Qualifié')s.qualified++;
+    if(l.statutSetter==='Non qualifié')s.nq++;
+    const d=l.dateLastContactSetter?.seconds||0;
+    if(!s.lastActivity||d>s.lastActivity)s.lastActivity=d;
+  });
+  return Object.values(settersMap).map(s=>({
+    ...s,
+    taux:s.contacted?Math.round(s.qualified/s.contacted*100):0,
+    lastStr:s.lastActivity?new Date(s.lastActivity*1000).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'—'
+  })).sort((a,b)=>b.qualified-a.qualified);
+}
+
+function renderSettersTable(){
+  const setters=getSettersStats();
+  document.getElementById('setters-tbody').innerHTML=setters.map(s=>`<tr>
+    <td><div class="lead-name">${escHtml(s.nom)}</div></td>
+    <td>${s.assigned}</td>
+    <td>${s.contacted}</td>
+    <td><span style="font-weight:700;color:var(--success)">${s.qualified}</span></td>
+    <td>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="progress-bar"><div class="progress-fill" style="width:${s.taux}%;background:${s.taux>=40?'var(--success)':s.taux>=20?'var(--warning)':'var(--danger)'}"></div></div>
+        <span style="font-weight:700;font-size:13px;min-width:32px">${s.taux}%</span>
+      </div>
+    </td>
+    <td style="color:var(--danger);font-weight:600">${s.nq}</td>
+    <td style="color:var(--muted);font-size:12px">${s.lastStr}</td>
+  </tr>`).join('')||`<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Aucun setter actif</td></tr>`;
+}
+
+// ══════════════════════════════════════════════
+//  STATS CLOSERS (page dédiée)
+// ══════════════════════════════════════════════
+function getClosersStats(){
+  const map={};
+  S.leads.filter(l=>l.statutSetter==='Qualifié').forEach(l=>{
+    const nom=l.closerAssigne||'Non assigné';
+    if(!map[nom])map[nom]={nom,rdvs:0,passed:0,signed:0,ca:0};
+    const c=map[nom];
+    c.rdvs++;
+    if(['RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||''))c.passed++;
+    if(l.statutCloser==='Signé'){c.signed++;c.ca+=(l.montantSigne||0);}
+  });
+  return Object.values(map).map(c=>({
+    ...c,
+    taux:c.passed?Math.round(c.signed/c.passed*100):0,
+    commission:Math.round(c.ca*0.12)
+  })).sort((a,b)=>b.ca-a.ca);
+}
+
+function renderClosersTable(){
+  const closers=getClosersStats();
+  document.getElementById('closers-tbody').innerHTML=closers.map(c=>`<tr>
+    <td><div class="lead-name">${escHtml(c.nom)}</div></td>
+    <td>${c.rdvs}</td>
+    <td>${c.passed}</td>
+    <td><span style="font-weight:700;color:var(--success)">${c.signed}</span></td>
+    <td>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="progress-bar"><div class="progress-fill" style="width:${c.taux}%;background:${c.taux>=40?'var(--success)':c.taux>=20?'var(--warning)':'var(--danger)'}"></div></div>
+        <span style="font-weight:700;font-size:13px;min-width:32px">${c.taux}%</span>
+      </div>
+    </td>
+    <td style="font-weight:800;color:var(--warning)">${c.ca.toLocaleString('fr-FR')}€</td>
+    <td style="font-weight:700;color:var(--teal)">${c.commission.toLocaleString('fr-FR')}€</td>
+  </tr>`).join('')||`<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Aucun closer actif</td></tr>`;
+}
+
+// ══════════════════════════════════════════════
+//  TABLEAU LEADS COMPLET
+// ══════════════════════════════════════════════
+function renderLeadsTable(){
+  const q=(document.getElementById('f-search')?.value||'').toLowerCase();
+  const ss=document.getElementById('f-statut-setter')?.value||'';
+  const sc=document.getElementById('f-statut-closer')?.value||'';
+  const src=document.getElementById('f-source')?.value||'';
+  const scoreF=document.getElementById('f-score')?.value||'';
+
+  const filtered=S.leads.filter(l=>{
+    const name=`${l.prenom||''} ${l.nom||''} ${l.email||''}`.toLowerCase();
+    if(q&&!name.includes(q))return false;
+    if(ss&&(l.statutSetter||'Nouveau')!==ss)return false;
+    if(sc&&(l.statutCloser||'')!==sc)return false;
+    if(src&&l.sourceCanal!==src)return false;
+    const s=l.scoreQualification||0;
+    if(scoreF==='high'&&s<8)return false;
+    if(scoreF==='mid'&&(s<5||s>7))return false;
+    if(scoreF==='low'&&s>=5)return false;
+    return true;
+  });
+
+  document.getElementById('leads-total').textContent=filtered.length;
+  document.getElementById('leads-tbody').innerHTML=filtered.map(l=>`<tr>
+    <td>
+      <div class="lead-name">${escHtml(l.prenom)} ${escHtml(l.nom)}</div>
+      <div class="lead-email">${escHtml(l.email||'')}</div>
+    </td>
+    <td>${scoreB(l.scoreQualification||0)}</td>
+    <td><span class="badge badge-gray">${l.sourceCanal||'—'}</span></td>
+    <td style="font-size:12px;color:var(--muted)">${escHtml(l.setterAssigne||'—')}</td>
+    <td>${statutSetterBadge(l.statutSetter||'Nouveau')}</td>
+    <td style="font-size:12px;color:var(--muted)">${escHtml(l.closerAssigne||'—')}</td>
+    <td>${l.statutCloser?statutCloserBadge(l.statutCloser):'<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+    <td style="font-size:12px;color:var(--muted);white-space:nowrap">${fmtDate(l.dateCreation)}</td>
+    <td>
+      <div class="actions-cell">
+        <button class="btn-view" onclick="openLeadModal('${l.id}')">🔍 Voir</button>
+        <button class="btn-assign" onclick="openLeadModal('${l.id}')">↔ Assigner</button>
+      </div>
+    </td>
+  </tr>`).join('')||`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">Aucun lead correspondant</td></tr>`;
+}
+
+// ══════════════════════════════════════════════
+//  CONVERSIONS
+// ══════════════════════════════════════════════
+function renderConversions(){
+  const signed=S.leads.filter(l=>l.statutCloser==='Signé')
+    .sort((a,b)=>(b.dateSignature?.seconds||0)-(a.dateSignature?.seconds||0));
+  document.getElementById('conv-tbody').innerHTML=signed.map(l=>`<tr>
+    <td>
+      <div class="lead-name">${escHtml(l.prenom)} ${escHtml(l.nom)}</div>
+      <div class="lead-email">${escHtml(l.email||'')}</div>
+    </td>
+    <td style="font-weight:800;color:var(--warning)">${(l.montantSigne||0).toLocaleString('fr-FR')}€</td>
+    <td><span class="badge badge-blue">${l.modePaiement||'1x'}</span></td>
+    <td style="font-size:13px;color:var(--muted)">${escHtml(l.closerAssigne||'—')}</td>
+    <td style="font-size:12px;white-space:nowrap">${fmtDate(l.dateSignature)}</td>
+    <td><span class="badge ${l.converti?'badge-green':'badge-orange'}">${l.converti?'✅ Converti':'En attente'}</span></td>
+  </tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">Aucune conversion encore</td></tr>`;
+}
+
+// ══════════════════════════════════════════════
+//  MODAL FICHE LEAD (admin)
+// ══════════════════════════════════════════════
+function openLeadModal(id){
+  const l=S.leads.find(x=>x.id===id);
+  if(!l)return;
+  S.activeLead=l;
+  const q=l.reponsesQuestionnaire||{};
+  const sc=l.scoreQualification||0;
+
+  document.getElementById('m-lead-name').textContent=`${l.prenom||''} ${l.nom||''}`;
+  document.getElementById('m-lead-sub').textContent=l.email||'';
+
+  const settersList=S.users.filter(u=>['setter','admin'].includes(u.role||''));
+  const closersList=S.users.filter(u=>['closer','admin'].includes(u.role||''));
+
+  document.getElementById('m-lead-body').innerHTML=`
+    <div class="info-grid">
+      <div class="info-field"><div class="info-label">Score</div><div class="info-value">${scoreB(sc)} <span style="font-size:13px;margin-left:4px">${sc}/10</span></div></div>
+      <div class="info-field"><div class="info-label">Source</div><div class="info-value">${l.sourceCanal||'—'}</div></div>
+      <div class="info-field"><div class="info-label">Téléphone</div><div class="info-value">${l.telephone||'—'}</div></div>
+      <div class="info-field"><div class="info-label">Date création</div><div class="info-value">${fmtDate(l.dateCreation)}</div></div>
+      <div class="info-field"><div class="info-label">Statut setter</div><div class="info-value">${statutSetterBadge(l.statutSetter||'Nouveau')}</div></div>
+      <div class="info-field"><div class="info-label">Statut closer</div><div class="info-value">${l.statutCloser?statutCloserBadge(l.statutCloser):'—'}</div></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">📋 Réponses questionnaire</div>
+    <div class="q-item"><div class="q-label">Situation</div><div class="q-value">${escHtml(q.situationActuelle||'—')}</div></div>
+    <div class="q-item"><div class="q-label">Budget</div><div class="q-value">${escHtml(q.budgetDisponible||'—')}</div></div>
+    <div class="q-item"><div class="q-label">Disponibilité</div><div class="q-value">${escHtml(q.disponibiliteHebdo||'—')}</div></div>
+    <div class="q-item"><div class="q-label">Délai</div><div class="q-value">${escHtml(q.delaiLancement||'—')}</div></div>
+    ${q.motivationPrincipale?`<div class="q-item"><div class="q-label">Motivation</div><div class="q-value">${escHtml(q.motivationPrincipale)}</div></div>`:''}
+    ${l.noteSetter?`<div class="q-item"><div class="q-label">Note setter</div><div class="q-value">${escHtml(l.noteSetter)}</div></div>`:''}
+    ${l.noteCloser?`<div class="q-item"><div class="q-label">Note closer</div><div class="q-value">${escHtml(l.noteCloser)}</div></div>`:''}
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px">↔ Réassigner</div>
+      <div class="form-group">
+        <label class="form-label">Setter</label>
+        <select class="form-select" id="assign-setter">
+          <option value="">— Non assigné —</option>
+          ${settersList.map(u=>`<option value="${escHtml(`${u.prenom||''} ${u.nom||''}`.trim())}" ${l.setterAssigne===`${u.prenom||''} ${u.nom||''}`.trim()?'selected':''}>${escHtml(`${u.prenom||''} ${u.nom||''}`.trim())} (${u.role})</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Closer</label>
+        <select class="form-select" id="assign-closer">
+          <option value="">— Non assigné —</option>
+          ${closersList.map(u=>`<option value="${escHtml(`${u.prenom||''} ${u.nom||''}`.trim())}" ${l.closerAssigne===`${u.prenom||''} ${u.nom||''}`.trim()?'selected':''}>${escHtml(`${u.prenom||''} ${u.nom||''}`.trim())} (${u.role})</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    ${l.montantSigne?`<div style="margin-top:16px;background:#dcfce7;border-radius:10px;padding:14px;text-align:center"><div style="font-size:18px;font-weight:900;color:#166534">🎉 ${l.montantSigne.toLocaleString('fr-FR')}€ signé</div><div style="font-size:12px;color:#166534;margin-top:4px">le ${fmtDate(l.dateSignature)} · ${l.modePaiement}</div></div>`:''}`;
+
+  openModal('modal-lead');
+}
+
+async function saveAssignment(){
+  const l=S.activeLead;if(!l)return;
+  const setter=document.getElementById('assign-setter').value;
+  const closer=document.getElementById('assign-closer').value;
+  try{
+    const update={updatedAt:TS()};
+    if(setter!==undefined)update.setterAssigne=setter||'';
+    if(closer!==undefined)update.closerAssigne=closer||'';
+    await db.collection('leads').doc(l.id).update(update);
+
+    // Notifier le setter réassigné
+    if(setter&&setter!==l.setterAssigne){
+      await db.collection('notifications').add({
+        type:'lead_reassigne',
+        message:`Lead réassigné : ${l.prenom} ${l.nom}`,
+        destinataireRole:'setter',
+        lu:false,timestamp:TS(),leadId:l.id,leadNom:`${l.prenom} ${l.nom}`
+      });
+    }
+    closeModal('modal-lead');
+    toast('Assignation mise à jour','success');
+  }catch(e){toast('Erreur','error');console.error(e);}
+}
+
+// ══════════════════════════════════════════════
+//  NOTIFICATIONS
+// ══════════════════════════════════════════════
+function toggleNotifs(){
+  const dd=document.getElementById('notif-dropdown');
+  dd.style.display=dd.style.display==='none'?'block':'none';
+  if(dd.style.display==='block')markNotifsRead();
+}
+function renderNotifs(){
+  const list=document.getElementById('notif-list');
+  if(!S.notifications.length){list.innerHTML=`<div class="notif-empty">Aucune notification</div>`;return;}
+  list.innerHTML=S.notifications.slice(0,10).map(n=>`
+    <div class="notif-item unread" onclick="markNotifRead('${n.id}')">
+      <div class="notif-item-msg">${escHtml(n.message||'')}</div>
+      <div class="notif-item-time">${fmtDate(n.timestamp)}</div>
+    </div>`).join('');
+}
+async function markNotifsRead(){
+  const batch=db.batch();
+  S.notifications.forEach(n=>batch.update(db.collection('notifications').doc(n.id),{lu:true}));
+  await batch.commit().catch(()=>{});
+}
+async function markNotifRead(id){
+  await db.collection('notifications').doc(id).update({lu:true}).catch(()=>{});
+}
+
+// ══════════════════════════════════════════════
+//  MODAUX
+// ══════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
+</script>
+</body>
+</html>

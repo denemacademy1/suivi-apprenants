@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denem Academy — Espace Closing</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sidebar-w:240px;
+  --primary:#0f9e75;--primary-light:#d1fae5;--primary-dark:#0a7a5a;
+  --violet:#6c63ff;
+  --bg:#f8f9fc;--surface:#fff;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#1a1a2e;--muted:#64748b;--subtle:#94a3b8;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;
+  --sidebar-bg:#1e2235;--sidebar-text:rgba(255,255,255,.75);--sidebar-active:#fff;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+  --radius:12px;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ─── LOADING ─── */
+#loading{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
+.ld-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#0f9e75,#0d8563);display:flex;align-items:center;justify-content:center;font-size:28px}
+.ld-bar{width:160px;height:3px;background:#e2e8f0;border-radius:2px;overflow:hidden}
+.ld-fill{height:100%;width:40%;background:var(--primary);border-radius:2px;animation:ldA 1.2s ease-in-out infinite}
+@keyframes ldA{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--sidebar-bg);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.sb-brand{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sb-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0f9e75,#10b981);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-title{font-size:14px;font-weight:800;color:#fff}
+.sb-badge{display:inline-block;background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto}
+.sb-nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--sidebar-text);cursor:pointer;border-radius:0;transition:all .15s;font-size:13px;font-weight:500;position:relative;user-select:none}
+.sb-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sb-nav-item.active{background:rgba(15,158,117,.2);color:var(--sidebar-active)}
+.sb-nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--primary);border-radius:0 2px 2px 0}
+.sb-nav-icon{font-size:16px;width:20px;text-align:center}
+.sb-notif-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+.sb-bottom{padding:12px 16px 16px;border-top:1px solid rgba(255,255,255,.06)}
+.sb-user{display:flex;align-items:center;gap:10px}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#0f9e75,#10b981);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user-name{font-size:13px;font-weight:600;color:#fff}
+.sb-user-status{font-size:11px;color:var(--primary);display:flex;align-items:center;gap:4px}
+.sb-user-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--primary);display:inline-block}
+.sb-section-label{padding:8px 16px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase}
+
+/* ─── MAIN ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* ─── KPI CARDS ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.kpi-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.kpi-value{font-size:28px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:12px;color:var(--muted)}
+.kpi-card.accent .kpi-value{color:var(--primary)}
+.kpi-card.success .kpi-value{color:var(--success)}
+.kpi-card.ca .kpi-value{color:#f59e0b}
+
+/* ─── TODAY SECTION ─── */
+.section{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px}
+.section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.section-count{background:var(--primary-light);color:var(--primary);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.today-list{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.today-card{border-radius:10px;padding:14px 16px;border:1px solid var(--border);background:#f8fffc;display:flex;gap:16px;align-items:flex-start}
+.today-time{font-size:20px;font-weight:900;color:var(--primary);min-width:50px;line-height:1.2}
+.today-time small{font-size:11px;font-weight:500;color:var(--muted);display:block}
+.today-info{flex:1}
+.today-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.today-note{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.5}
+.today-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-prep{background:var(--primary-light);color:var(--primary);border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-prep:hover{background:#a7f3d0}
+.btn-signe{background:#dcfce7;color:#166534;border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-signe:hover{background:#bbf7d0}
+.btn-refus{background:#fee2e2;color:#991b1b;border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-refus:hover{background:#fecaca}
+.btn-relance{background:#fef3c7;color:#92400e;border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-relance:hover{background:#fde68a}
+.score-badge{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;font-size:12px;font-weight:800}
+.score-high{background:#dcfce7;color:#166534}
+.score-mid{background:#fef3c7;color:#92400e}
+.score-low{background:#fee2e2;color:#991b1b}
+
+/* ─── KANBAN ─── */
+.kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px}
+.kanban-col{min-width:220px;flex:1;background:var(--bg);border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column}
+.kanban-col-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.kanban-col-title{font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.kanban-col-dot{width:8px;height:8px;border-radius:50%}
+.kanban-col-count{font-size:11px;font-weight:700;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:1px 7px;border-radius:8px}
+.kanban-cards{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:80px}
+.kanban-card{background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border);cursor:grab;transition:all .15s;user-select:none}
+.kanban-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.kanban-card.dragging{opacity:.5;cursor:grabbing}
+.kanban-card.drag-over{border:2px dashed var(--primary)}
+.kc-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.kc-meta{font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.kc-rdv{font-size:11px;color:var(--info);font-weight:600;margin-top:4px}
+.kanban-drop-zone{min-height:80px;border:2px dashed transparent;border-radius:8px;transition:border-color .15s}
+.kanban-drop-zone.drag-over{border-color:var(--primary);background:var(--primary-light)}
+
+/* ─── TABLES ─── */
+.lead-table-wrap{overflow-x:auto}
+table.lead-table{width:100%;border-collapse:collapse}
+.lead-table th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:#fafafa;white-space:nowrap}
+.lead-table td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+.lead-table tr:last-child td{border-bottom:none}
+.lead-table tr:hover td{background:#f8fffc}
+.lead-name{font-size:13px;font-weight:700;color:var(--text)}
+.lead-email{font-size:12px;color:var(--muted)}
+.statut-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.statut-attente{background:#dbeafe;color:#1e40af}
+.statut-planifie{background:#fef3c7;color:#92400e}
+.statut-passe{background:#f3e8ff;color:#6b21a8}
+.statut-signe{background:#dcfce7;color:#166534}
+.statut-refus{background:#fee2e2;color:#991b1b}
+.statut-relance{background:#fef9c3;color:#713f12}
+.actions-cell{display:flex;align-items:center;gap:6px}
+.btn-icon{width:32px;height:32px;border:none;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;text-decoration:none}
+.btn-fiche{background:var(--primary-light);color:var(--primary)}
+.btn-fiche:hover{background:#a7f3d0}
+.empty-state{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-text{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)}
+
+/* ─── STATS ─── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.stat-big{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);text-align:center}
+.stat-big-value{font-size:36px;font-weight:900;color:var(--primary);margin-bottom:4px}
+.stat-big-label{font-size:13px;color:var(--muted);font-weight:600}
+.funnel-wrap{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px}
+.funnel-title{font-size:14px;font-weight:700;margin-bottom:20px}
+.funnel-step{margin-bottom:14px}
+.funnel-step-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.funnel-bar{height:28px;background:var(--bg);border-radius:6px;overflow:hidden}
+.funnel-fill{height:100%;border-radius:6px;transition:width .6s}
+
+/* ─── MODAL ─── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-sm{max-width:460px}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.modal-lead-name{font-size:18px;font-weight:800}
+.modal-lead-sub{font-size:13px;color:var(--muted);margin-top:2px}
+.modal-header-badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.modal-close{width:32px;height:32px;border:none;background:var(--bg);border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+.modal-close:hover{background:var(--border)}
+.modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 24px;flex-shrink:0;overflow-x:auto}
+.modal-tab{padding:12px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+.modal-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.modal-body{flex:1;overflow-y:auto;padding:24px}
+.modal-tab-panel{display:none}
+.modal-tab-panel.active{display:block}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;flex-wrap:wrap}
+
+/* ─── FICHE CLOSER ─── */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.info-field{background:var(--bg);border-radius:8px;padding:12px}
+.info-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.info-value{font-size:13px;font-weight:600;color:var(--text)}
+.info-value a{color:var(--primary);text-decoration:none}
+.q-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.q-item:last-child{border-bottom:none}
+.q-label{font-size:12px;font-weight:600;color:var(--muted);min-width:160px;flex-shrink:0}
+.q-value{font-size:13px;color:var(--text);font-weight:500}
+.setter-note-box{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.setter-note-label{font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px}
+.setter-note-text{font-size:13px;color:#78350f;line-height:1.6}
+.rdv-datetime-row{display:flex;gap:12px;margin-bottom:16px;align-items:flex-end}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:12px;font-weight:600;color:var(--muted)}
+.form-input,.form-select,.form-textarea{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:#fff;transition:.15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,158,117,.1)}
+.form-textarea{resize:vertical;min-height:70px}
+.note-area{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:80px;color:var(--text)}
+.note-area:focus{outline:none;border-color:var(--primary)}
+.btn-save-note{background:var(--primary);color:#fff;border:none;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;transition:.15s}
+.btn-save-note:hover{background:var(--primary-dark)}
+
+/* ─── RESULT BTNS ─── */
+.result-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px}
+.btn-result{border:none;padding:14px 10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:4px}
+.btn-result-signe{background:#dcfce7;color:#166534}
+.btn-result-signe:hover{background:#bbf7d0}
+.btn-result-refus{background:#fee2e2;color:#991b1b}
+.btn-result-refus:hover{background:#fecaca}
+.btn-result-relance{background:#fef3c7;color:#92400e}
+.btn-result-relance:hover{background:#fde68a}
+
+/* ─── SCRIPT PAGE ─── */
+.script-page-header{margin-bottom:24px}
+.script-page-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.script-page-sub{font-size:13px;color:var(--muted)}
+.script-section{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:16px}
+.script-section-title{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.script-section-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.script-p{font-size:13px;line-height:1.8;color:var(--text);background:#f0fdf8;border-radius:8px;padding:14px 16px;border-left:3px solid var(--primary);margin-bottom:10px}
+.step-badge{width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.objection-card{background:var(--bg);border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid var(--border)}
+.objection-q{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:8px}
+.objection-a{font-size:13px;line-height:1.7;color:var(--text)}
+
+/* ─── CLOSING FORMS ─── */
+.closing-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.amount-field{display:flex;gap:8px;align-items:center}
+.amount-field input{flex:1}
+.amount-suffix{font-size:13px;color:var(--muted);white-space:nowrap}
+
+/* ─── TOAST ─── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;box-shadow:var(--shadow-md);animation:toastIn .3s ease;display:flex;align-items:center;gap:8px}
+.toast-success{background:#059669}.toast-error{background:var(--danger)}.toast-info{background:var(--violet)}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ─── CONFIRM ─── */
+.confirm-modal{background:#fff;border-radius:14px;padding:28px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.confirm-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.confirm-text{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.confirm-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.btn-cancel{background:var(--bg);color:var(--text);border:1px solid var(--border);padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-confirm-danger{background:var(--danger);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-confirm-ok{background:var(--primary);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-100%;top:0;bottom:0;z-index:400;transition:left .3s}
+  .sidebar.open{left:0}
+  .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:399;display:none}
+  .sidebar-overlay.open{display:block}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .info-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr}
+  .result-btns{grid-template-columns:1fr}
+  .closing-form{grid-template-columns:1fr}
+  .kanban-wrap{flex-direction:column}
+  .kanban-col{min-width:unset}
+  .mobile-menu-btn{display:flex}
+}
+.mobile-menu-btn{width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:18px}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="ld-logo">🤝</div>
+  <div style="font-size:13px;color:#64748b">Chargement de l'espace Closing…</div>
+  <div class="ld-bar"><div class="ld-fill"></div></div>
+</div>
+
+<div id="app" style="display:none">
+
+<div class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo-row">
+      <div class="sb-logo">🤝</div>
+      <div>
+        <div class="sb-title">Denem Academy</div>
+        <span class="sb-badge">CLOSING</span>
+      </div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section-label">Navigation</div>
+    <div class="sb-nav-item active" data-page="mes-rdvs" onclick="showPage('mes-rdvs')">
+      <span class="sb-nav-icon">📅</span>Mes RDVs
+      <span class="sb-notif-badge" id="badge-rdvs" style="display:none">0</span>
+    </div>
+    <div class="sb-nav-item" data-page="pipeline" onclick="showPage('pipeline')">
+      <span class="sb-nav-icon">🗂️</span>Pipeline Kanban
+    </div>
+    <div class="sb-section-label" style="margin-top:8px">Outils</div>
+    <div class="sb-nav-item" data-page="stats" onclick="showPage('stats')">
+      <span class="sb-nav-icon">📈</span>Mes stats
+    </div>
+    <div class="sb-nav-item" data-page="script" onclick="showPage('script')">
+      <span class="sb-nav-icon">📝</span>Script closing
+    </div>
+    <div class="sb-section-label" style="margin-top:8px">Plateforme</div>
+    <div class="sb-nav-item" onclick="window.location.href='../'" style="opacity:.7">
+      <span class="sb-nav-icon">🏠</span>Accueil
+    </div>
+    <div class="sb-nav-item" onclick="window.open('../pipeline/')" style="opacity:.7">
+      <span class="sb-nav-icon">📊</span>Pipeline admin
+    </div>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">?</div>
+      <div>
+        <div class="sb-user-name" id="sb-name">Chargement…</div>
+        <div class="sb-user-status">En ligne</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">Mes RDVs</div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAGE: MES RDVs -->
+    <div id="page-mes-rdvs">
+      <div class="kpi-row" id="kpi-row"></div>
+
+      <div class="section" id="today-section">
+        <div class="section-header">
+          <div class="section-title">📅 Aujourd'hui <span class="section-count" id="today-count">0</span></div>
+        </div>
+        <div class="today-list" id="today-list"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">📋 Tous mes RDVs <span class="section-count" id="rdv-count">0</span></div>
+        </div>
+        <div class="lead-table-wrap">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Score</th>
+                <th>Date RDV</th>
+                <th>Statut</th>
+                <th>Setter note</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rdv-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: PIPELINE KANBAN -->
+    <div id="page-pipeline" style="display:none">
+      <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:18px;font-weight:800;margin-bottom:2px">Pipeline Kanban</div>
+          <div style="font-size:13px;color:var(--muted)">Glissez les cartes pour mettre à jour le statut</div>
+        </div>
+      </div>
+      <div class="kanban-wrap" id="kanban-wrap"></div>
+    </div>
+
+    <!-- PAGE: STATS -->
+    <div id="page-stats" style="display:none">
+      <div style="margin-bottom:24px">
+        <div style="font-size:20px;font-weight:800;margin-bottom:4px">📈 Mes statistiques</div>
+        <div style="font-size:13px;color:var(--muted)">Performances de closing</div>
+      </div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="funnel-wrap">
+        <div class="funnel-title">Funnel de closing</div>
+        <div id="funnel-steps"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: SCRIPT -->
+    <div id="page-script" style="display:none">
+      <div class="script-page-header">
+        <div class="script-page-title">📝 Script de closing</div>
+        <div class="script-page-sub">Structure de l'appel en 5 étapes</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title"><span class="step-badge">1</span> Ouverture <small style="font-weight:400;color:var(--muted)">(2 min)</small></div>
+        <div class="script-section-sub">Créer le lien, cadrer l'appel</div>
+        <div class="script-p">« Bonjour <strong>[Prénom]</strong>, c'est <strong>[Votre nom]</strong> de DENEM Academy. On a <strong>20 minutes</strong> ensemble, est-ce que vous êtes dans un endroit tranquille ? »</div>
+        <div class="script-p">« Je voulais d'abord comprendre exactement où vous en êtes aujourd'hui, avant de vous parler de ce qu'on fait. Donc ma première question : qu'est-ce qui vous a poussé à répondre à notre questionnaire ? »</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title"><span class="step-badge">2</span> Diagnostic <small style="font-weight:400;color:var(--muted)">(5 min)</small></div>
+        <div class="script-section-sub">Comprendre la douleur réelle et le désir profond</div>
+        <div class="script-p">« Aujourd'hui, si on ne faisait rien ensemble, où est-ce que vous seriez dans 12 mois ? »</div>
+        <div class="script-p">« Et à l'inverse, si tout se passait exactement comme vous le souhaitez dans 12 mois — vous gagnez combien, vous vivez comment ? »</div>
+        <div class="script-p">« Qu'est-ce qui vous a empêché jusqu'ici de vous lancer ? »</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title"><span class="step-badge">3</span> Projection <small style="font-weight:400;color:var(--muted)">(5 min)</small></div>
+        <div class="script-section-sub">Montrer que c'est possible avec des preuves concrètes</div>
+        <div class="script-p">« Laissez-moi vous montrer deux exemples concrets. Baptiste, il est arrivé chez nous sans aucune expérience tech — aujourd'hui il génère <strong>35 000€/mois</strong> en automatisant des process pour des entreprises. Joseph, lui, était consultant RH — en 8 mois il a construit une offre à <strong>20 000€/mois</strong>. »</div>
+        <div class="script-p">« La vraie question ce n'est pas "est-ce que c'est possible ?" — on a la preuve que oui. La question c'est : est-ce que vous êtes prêt à faire ce qu'il faut pendant 6 mois pour y arriver ? »</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title"><span class="step-badge">4</span> Présentation offre <small style="font-weight:400;color:var(--muted)">(5 min)</small></div>
+        <div class="script-section-sub">Présenter la transformation, pas le produit</div>
+        <div class="script-p">« Ce qu'on fait chez DENEM, c'est pas une formation à regarder seul. C'est un accompagnement complet : vous avez votre coach dédié, des sessions live chaque semaine, et un accès à notre communauté de 200+ praticiens actifs. »</div>
+        <div class="script-p">« Le parcours dure 6 mois. À l'issue, notre objectif — et notre engagement — c'est que vous ayez vos premiers clients payants. Pas un certificat. De vrais clients. »</div>
+        <div class="script-p">« L'investissement est de <strong>[montant]€</strong>, avec des options en 3x ou 10x. Et pour certains profils on a des solutions de financement. »</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title"><span class="step-badge">5</span> Closing <small style="font-weight:400;color:var(--muted)">(3 min)</small></div>
+        <div class="script-section-sub">Obtenir une décision claire</div>
+        <div class="script-p">« Est-ce que vous voyez comment ça pourrait marcher pour vous, ce que je viens de vous décrire ? »</div>
+        <div class="script-p">Si oui : « Parfait. On peut commencer les formalités maintenant — ça prend 10 minutes. Vous avez votre carte bancaire sous la main ? »</div>
+        <div class="script-p">Si hésitation : « Qu'est-ce qui vous retient en ce moment ? » [Écouter, traiter l'objection]</div>
+      </div>
+
+      <div class="script-section">
+        <div class="script-section-title">🛡️ Objections closing</div>
+        <div class="script-section-sub">Les 5 objections les plus fréquentes en closing</div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « C'est trop cher »</div>
+          <div class="objection-a">« Je comprends. Si je vous demandais combien ça vous coûterait de rester dans votre situation actuelle pendant encore 2 ans — est-ce que c'est moins cher ? … Le vrai coût, c'est l'inaction. Et on a des options en 10x pour que ça ne pèse pas sur votre trésorerie immédiate. »</div>
+        </div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « Je dois en parler à ma femme / mon mari »</div>
+          <div class="objection-a">« Bien sûr, c'est une décision qui vous implique tous les deux. Est-ce qu'on peut les appeler maintenant ? Ou bien est-ce que vous pouvez me dire ce qui pourrait les bloquer — je peux peut-être vous aider à préparer la conversation. »</div>
+        </div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « Je vais attendre encore un peu »</div>
+          <div class="objection-a">« J'entends ça souvent. Mais attendez quoi exactement ? Dans 3 mois, votre situation aura changé comment ? … Le moment idéal n'existe pas. Le bon moment, c'est quand vous décidez que ça l'est. »</div>
+        </div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « Comment je suis sûr que ça marche ? »</div>
+          <div class="objection-a">« Bonne question. Vous avez vu Baptiste et Joseph. En plus de ça, on a X apprenants qui ont suivi le parcours. Et je peux vous partager leurs témoignages après l'appel. Mais la vraie garantie, c'est vous — votre engagement pendant 6 mois. On donne les outils, vous faites le travail. »</div>
+        </div>
+
+        <div class="objection-card">
+          <div class="objection-q">❌ « Je ne suis pas sûr d'avoir le temps »</div>
+          <div class="objection-a">« Combien d'heures par semaine est-ce que vous regardez Netflix ou scrollez les réseaux ? … 5h par semaine, c'est 40 minutes par jour. La question n'est pas le temps — c'est la priorité. Et si vous ne vous donnez pas la priorité maintenant, qui le fera ? »</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODAL: FICHE LEAD CLOSER -->
+<div class="modal-backdrop" id="modal-lead">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-lead-name" id="modal-lead-name">—</div>
+        <div class="modal-lead-sub" id="modal-lead-sub">—</div>
+        <div class="modal-header-badges" id="modal-lead-badges"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-lead')">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab(this,'tab-profil')">👤 Profil</div>
+      <div class="modal-tab" onclick="switchTab(this,'tab-rdv')">📅 RDV</div>
+      <div class="modal-tab" onclick="switchTab(this,'tab-precall')">📝 Pré-call</div>
+      <div class="modal-tab" onclick="switchTab(this,'tab-resultat')">✅ Résultat</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tab-panel active" id="tab-profil"></div>
+      <div class="modal-tab-panel" id="tab-rdv"></div>
+      <div class="modal-tab-panel" id="tab-precall"></div>
+      <div class="modal-tab-panel" id="tab-resultat"></div>
+    </div>
+    <div class="modal-footer" id="modal-lead-footer"></div>
+  </div>
+</div>
+
+<!-- MODAL: SIGNÉ -->
+<div class="modal-backdrop" id="modal-signe">
+  <div class="confirm-modal" style="max-width:500px">
+    <div class="confirm-title">🎉 Marquer comme Signé</div>
+    <div class="confirm-text">Félicitations ! Renseignez les détails de la signature. Un profil apprenant sera créé automatiquement.</div>
+    <div class="closing-form">
+      <div class="form-group">
+        <label class="form-label">Montant HT (€) *</label>
+        <input class="form-input" id="sign-montant" type="number" placeholder="3500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mode de paiement</label>
+        <select class="form-select" id="sign-mode">
+          <option value="1x">1x — Paiement comptant</option>
+          <option value="3x">3x — En 3 fois</option>
+          <option value="10x">10x — En 10 fois</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Date de signature</label>
+        <input class="form-input" id="sign-date" type="date">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Note interne</label>
+        <textarea class="form-textarea" id="sign-note" placeholder="Contexte de la signature…"></textarea>
+      </div>
+    </div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-signe')">Annuler</button>
+      <button class="btn-confirm-ok" onclick="confirmSigne()">🎉 Confirmer la signature</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REFUS -->
+<div class="modal-backdrop" id="modal-refus">
+  <div class="confirm-modal">
+    <div class="confirm-title">❌ Marquer comme Refus</div>
+    <div class="confirm-text">Indiquez la raison du refus pour améliorer vos prochains appels.</div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Raison principale *</label>
+      <select class="form-select" id="refus-raison" style="width:100%">
+        <option>Budget insuffisant</option>
+        <option>Pas convaincu de la valeur</option>
+        <option>Mauvais timing</option>
+        <option>Décision repoussée</option>
+        <option>Profil non adapté</option>
+        <option>A choisi un concurrent</option>
+        <option>Autre</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label">Note (optionnel)</label>
+      <textarea class="form-textarea" id="refus-note" placeholder="Ce qui aurait pu changer la décision…" style="width:100%"></textarea>
+    </div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-refus')">Annuler</button>
+      <button class="btn-confirm-danger" onclick="confirmRefus()">❌ Confirmer le refus</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: RELANCE -->
+<div class="modal-backdrop" id="modal-relance">
+  <div class="confirm-modal">
+    <div class="confirm-title">🔁 Planifier une relance</div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Date de relance *</label>
+      <input class="form-input" id="relance-date" type="date" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label">Note</label>
+      <textarea class="form-textarea" id="relance-note" placeholder="Raison de la relance, point à aborder…" style="width:100%"></textarea>
+    </div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-relance')">Annuler</button>
+      <button class="btn-confirm-ok" onclick="confirmRelance()">🔁 Planifier la relance</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIGURATION FIREBASE
+//  ⚠️ Même config que les autres espaces
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",
+  authDomain: "denem-academy-5de41.firebaseapp.com",
+  projectId: "denem-academy-5de41",
+  storageBucket: "denem-academy-5de41.firebasestorage.app",
+  messagingSenderId: "570632584566",
+  appId: "1:570632584566:web:ea9b964787b40805a7ce57",
+  measurementId: "G-44GC1P93LK"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// ══════════════════════════════════════════════
+//  ÉTAT GLOBAL
+// ══════════════════════════════════════════════
+const S = {
+  user: null,
+  userData: null,
+  leads: [],
+  currentPage: 'mes-rdvs',
+  activeLead: null,
+  pendingSigneId: null,
+  pendingRefusId: null,
+  pendingRelanceId: null,
+};
+
+const KANBAN_COLS = [
+  {id:'En attente RDV', label:'En attente RDV', color:'#3b82f6'},
+  {id:'RDV planifié',   label:'RDV planifié',   color:'#f59e0b'},
+  {id:'RDV passé',      label:'RDV passé',       color:'#8b5cf6'},
+  {id:'Signé',          label:'Signé',           color:'#10b981'},
+  {id:'Relance',        label:'Relance',         color:'#64748b'},
+];
+
+// ══════════════════════════════════════════════
+//  UTILITAIRES
+// ══════════════════════════════════════════════
+function TS() { return firebase.firestore.FieldValue.serverTimestamp(); }
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `${type==='success'?'✅':type==='error'?'❌':'ℹ️'} ${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(), 3500);
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',timeZone:'Europe/Paris'});
+}
+function fmtDateFull(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Paris'});
+}
+function todayISO() { return new Date().toISOString().slice(0,10); }
+function myFullName() { return `${S.userData?.prenom||''} ${S.userData?.nom||''}`.trim(); }
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function scoreClass(s){return s>=8?'score-high':s>=5?'score-mid':'score-low';}
+function statutCloserCss(st) {
+  const map = {'En attente RDV':'statut-attente','RDV planifié':'statut-planifie','RDV passé':'statut-passe','Signé':'statut-signe','Refus':'statut-refus','Relance':'statut-relance'};
+  return map[st]||'statut-attente';
+}
+function isMyLead(l) {
+  const me = myFullName().toLowerCase();
+  return !l.closerAssigne || l.closerAssigne.toLowerCase()===me;
+}
+function calcScore(q={}) {
+  let pts=0;
+  if(q.budgetDisponible==="Oui, j'ai le budget")pts+=4;
+  else if(q.budgetDisponible==="J'ai besoin de financement")pts+=2;
+  if(q.disponibiliteHebdo==='>20h')pts+=2;
+  else if(q.disponibiliteHebdo==='10-20h')pts+=1;
+  if(q.delaiLancement==='Immédiat')pts+=2;
+  else if(q.delaiLancement==='1-3 mois')pts+=1;
+  if((q.situationActuelle||'').toLowerCase().includes('reconversion'))pts+=1;
+  return Math.min(pts,10);
+}
+
+// ══════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    document.getElementById('loading').innerHTML = `
+      <div class="ld-logo">🔒</div>
+      <div style="text-align:center;padding:0 20px">
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Accès restreint</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:20px">Espace réservé aux closers</div>
+        <button onclick="signIn()" style="background:#0f9e75;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Se connecter avec Google</button>
+      </div>`;
+    return;
+  }
+  const userDoc = await db.collection('users').doc(user.uid).get();
+  if (!userDoc.exists) {
+    document.getElementById('loading').innerHTML = `<div style="text-align:center;padding:20px"><div style="font-size:40px">🚫</div><div>Compte non configuré.</div></div>`;
+    return;
+  }
+  const userData = userDoc.data();
+  if (!['closer','admin'].includes(userData.role||'')) {
+    document.getElementById('loading').innerHTML = `<div style="text-align:center;padding:20px"><div style="font-size:40px">🚫</div><div style="margin-top:12px">Accès non autorisé.<br>Espace réservé aux closers.</div><br><button onclick="auth.signOut()" style="background:#ef4444;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">Se déconnecter</button></div>`;
+    return;
+  }
+  S.user = user; S.userData = userData;
+  const initials = ((userData.prenom||'?')[0]+(userData.nom||'?')[0]).toUpperCase();
+  document.getElementById('sb-avatar').textContent = initials;
+  document.getElementById('sb-name').textContent = myFullName();
+  initApp();
+});
+
+async function signIn() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  await auth.signInWithPopup(provider);
+}
+
+// ══════════════════════════════════════════════
+//  INITIALISATION
+// ══════════════════════════════════════════════
+function initApp() {
+  // Leads qualifiés = ceux que le closer doit gérer
+  db.collection('leads')
+    .where('statutSetter','==','Qualifié')
+    .onSnapshot(snap => {
+      S.leads = snap.docs.map(d=>({id:d.id,...d.data()}));
+      S.leads.forEach(l=>{
+        if(!l.scoreQualification){l.scoreQualification=calcScore(l.reponsesQuestionnaire||{});}
+      });
+      renderCurrentPage();
+      updateNotifBadge();
+    }, _=>{
+      // Fallback
+      db.collection('leads').onSnapshot(snap=>{
+        S.leads=snap.docs.map(d=>({id:d.id,...d.data()}))
+          .filter(l=>l.statutSetter==='Qualifié');
+        S.leads.forEach(l=>{if(!l.scoreQualification)l.scoreQualification=calcScore(l.reponsesQuestionnaire||{});});
+        renderCurrentPage(); updateNotifBadge();
+      });
+    });
+
+  document.getElementById('sign-date').value = todayISO();
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='flex';
+}
+
+function updateNotifBadge() {
+  const waiting = S.leads.filter(l=>l.statutCloser==='En attente RDV').length;
+  const badge = document.getElementById('badge-rdvs');
+  if (waiting > 0) { badge.style.display='inline'; badge.textContent=waiting; }
+  else badge.style.display='none';
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+const PAGE_TITLES = {'mes-rdvs':'Mes RDVs','pipeline':'Pipeline Kanban','stats':'Statistiques','script':'Script closing'};
+
+function showPage(page) {
+  S.currentPage=page;
+  document.querySelectorAll('.sb-nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+  document.querySelectorAll('[id^="page-"]').forEach(el=>el.style.display='none');
+  document.getElementById(`page-${page}`).style.display='block';
+  document.getElementById('topbar-title').textContent=PAGE_TITLES[page]||page;
+  renderCurrentPage();
+  closeSidebar();
+}
+function renderCurrentPage() {
+  if(S.currentPage==='mes-rdvs'){renderKPIs();renderToday();renderRdvTable();}
+  else if(S.currentPage==='pipeline')renderKanban();
+  else if(S.currentPage==='stats')renderStats();
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebar-overlay').classList.toggle('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('open');}
+
+// ══════════════════════════════════════════════
+//  KPIs
+// ══════════════════════════════════════════════
+function renderKPIs() {
+  const today = todayISO();
+  const monthStart = today.slice(0,7)+'-01';
+
+  const rdvsToday = S.leads.filter(l=>l.dateRDV&&fmtDateISO(l.dateRDV)===today).length;
+  const rdvsWeek = S.leads.filter(l=>{
+    if(!l.dateRDV) return false;
+    const d=fmtDateISO(l.dateRDV);
+    const weekEnd=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
+    return d>=today&&d<=weekEnd;
+  }).length;
+  const myLeads = S.leads.filter(l=>isMyLead(l));
+  const signed = myLeads.filter(l=>l.statutCloser==='Signé');
+  const rdvPasse = myLeads.filter(l=>['RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||'')).length;
+  const tauxClosing = rdvPasse?Math.round(signed.length/rdvPasse*100):0;
+  const caMois = signed.filter(l=>{
+    const d=l.dateSignature?.toDate?.()?.toISOString?.()?.slice?.(0,10)||'';
+    return d>=monthStart;
+  }).reduce((s,l)=>s+(l.montantSigne||0),0);
+
+  document.getElementById('kpi-row').innerHTML=`
+    <div class="kpi-card"><div class="kpi-label">RDVs aujourd'hui</div><div class="kpi-value">${rdvsToday}</div><div class="kpi-sub">appels prévus</div></div>
+    <div class="kpi-card accent"><div class="kpi-label">RDVs cette semaine</div><div class="kpi-value">${rdvsWeek}</div><div class="kpi-sub">à venir</div></div>
+    <div class="kpi-card success"><div class="kpi-label">Taux de closing</div><div class="kpi-value">${tauxClosing}%</div><div class="kpi-sub">${rdvPasse} RDVs passés</div></div>
+    <div class="kpi-card ca"><div class="kpi-label">CA signé ce mois</div><div class="kpi-value">${caMois.toLocaleString('fr-FR')}€</div><div class="kpi-sub">${signed.filter(l=>{const d=l.dateSignature?.toDate?.()?.toISOString?.()?.slice?.(0,10)||'';return d>=monthStart;}).length} ventes</div></div>`;
+}
+
+function fmtDateISO(ts) {
+  if(!ts)return'';
+  try{const d=ts.toDate?ts.toDate():new Date(ts);return d.toISOString().slice(0,10);}
+  catch{return'';}
+}
+
+// ══════════════════════════════════════════════
+//  SECTION AUJOURD'HUI
+// ══════════════════════════════════════════════
+function renderToday() {
+  const today = todayISO();
+  const todayLeads = S.leads
+    .filter(l=>l.dateRDV&&fmtDateISO(l.dateRDV)===today&&['RDV planifié','En attente RDV'].includes(l.statutCloser||'En attente RDV'))
+    .sort((a,b)=>(a.heureRDV||'').localeCompare(b.heureRDV||''));
+
+  document.getElementById('today-count').textContent=todayLeads.length;
+  const list=document.getElementById('today-list');
+
+  if(!todayLeads.length){
+    list.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Aucun RDV planifié aujourd'hui 🎉</div>`;
+    return;
+  }
+  list.innerHTML=todayLeads.map(l=>{
+    const q=l.reponsesQuestionnaire||{};
+    const score=l.scoreQualification||0;
+    const heure=l.heureRDV||'—';
+    return`<div class="today-card">
+      <div class="today-time">${heure.slice(0,5)}<small>aujourd'hui</small></div>
+      <div class="today-info">
+        <div class="today-name">${escHtml(l.prenom)} ${escHtml(l.nom)} <span class="score-badge ${scoreClass(score)}" style="width:24px;height:24px;font-size:11px;margin-left:4px">${score}</span></div>
+        ${l.noteSetter?`<div class="today-note">💬 Setter : « ${escHtml(l.noteSetter.slice(0,120))}${l.noteSetter.length>120?'…':''} »</div>`:''}
+        <div class="today-actions">
+          <button class="btn-prep" onclick="openLead('${l.id}','tab-precall')">🎯 Préparer l'appel</button>
+          <button class="btn-signe" onclick="openSign('${l.id}')">✅ Signé</button>
+          <button class="btn-refus" onclick="openRefus('${l.id}')">❌ Refus</button>
+          <button class="btn-relance" onclick="openRelance('${l.id}')">🔁 Relance</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  TABLEAU RDVs
+// ══════════════════════════════════════════════
+function renderRdvTable() {
+  const my = S.leads.filter(l=>isMyLead(l))
+    .sort((a,b)=>(fmtDateISO(b.dateRDV)||'').localeCompare(fmtDateISO(a.dateRDV)||''));
+  document.getElementById('rdv-count').textContent=my.length;
+  const tbody=document.getElementById('rdv-tbody');
+  if(!my.length){
+    tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Aucun RDV</div><div class="empty-sub">Les leads qualifiés par le setter apparaîtront ici</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=my.map(l=>{
+    const sc=l.scoreQualification||0;
+    const st=l.statutCloser||'En attente RDV';
+    return`<tr>
+      <td><div class="lead-name">${escHtml(l.prenom)} ${escHtml(l.nom)}</div><div class="lead-email">${escHtml(l.email||'')}</div></td>
+      <td><span class="score-badge ${scoreClass(sc)}">${sc}</span></td>
+      <td style="font-size:13px;white-space:nowrap">${l.dateRDV?fmtDate(l.dateRDV):''} ${l.heureRDV||''}</td>
+      <td><span class="statut-badge ${statutCloserCss(st)}">${st}</span></td>
+      <td style="font-size:12px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml((l.noteSetter||'').slice(0,80))}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn-icon btn-fiche" onclick="openLead('${l.id}','tab-profil')" title="Ouvrir la fiche">🔍</button>
+          <button class="btn-icon" style="background:#dcfce7;color:#166534" onclick="openSign('${l.id}')" title="Marquer signé">✅</button>
+          <button class="btn-icon" style="background:#fee2e2;color:#991b1b" onclick="openRefus('${l.id}')" title="Marquer refus">❌</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  KANBAN
+// ══════════════════════════════════════════════
+let _dragId = null;
+
+function renderKanban() {
+  const wrap = document.getElementById('kanban-wrap');
+  wrap.innerHTML = KANBAN_COLS.map(col=>{
+    const cards = S.leads.filter(l=>(l.statutCloser||'En attente RDV')===col.id);
+    return`<div class="kanban-col" id="kc-${col.id.replace(/ /g,'-')}"
+            ondragover="event.preventDefault();this.querySelector('.kanban-drop-zone').classList.add('drag-over')"
+            ondragleave="this.querySelector('.kanban-drop-zone').classList.remove('drag-over')"
+            ondrop="dropCard(event,'${col.id}')">
+      <div class="kanban-col-header">
+        <div class="kanban-col-title">
+          <div class="kanban-col-dot" style="background:${col.color}"></div>
+          ${col.label}
+        </div>
+        <span class="kanban-col-count">${cards.length}</span>
+      </div>
+      <div class="kanban-cards">
+        ${cards.map(l=>buildKanbanCard(l)).join('')}
+        <div class="kanban-drop-zone"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildKanbanCard(l) {
+  const sc=l.scoreQualification||0;
+  const rdvDate=l.dateRDV?fmtDate(l.dateRDV):'';
+  return`<div class="kanban-card" draggable="true"
+    ondragstart="_dragId='${l.id}';this.classList.add('dragging')"
+    ondragend="this.classList.remove('dragging');document.querySelectorAll('.kanban-drop-zone').forEach(z=>z.classList.remove('drag-over'))"
+    onclick="openLead('${l.id}','tab-profil')">
+    <div class="kc-name">${escHtml(l.prenom)} ${escHtml(l.nom)}</div>
+    <div class="kc-meta">
+      <span class="score-badge ${scoreClass(sc)}" style="width:22px;height:22px;font-size:10px">${sc}</span>
+      <span>${escHtml(l.sourceCanal||'')}</span>
+    </div>
+    ${rdvDate?`<div class="kc-rdv">📅 ${rdvDate} ${l.heureRDV||''}</div>`:''}
+  </div>`;
+}
+
+async function dropCard(event, newStatut) {
+  event.preventDefault();
+  document.querySelectorAll('.kanban-drop-zone').forEach(z=>z.classList.remove('drag-over'));
+  if (!_dragId) return;
+  const id=_dragId; _dragId=null;
+  try {
+    await db.collection('leads').doc(id).update({statutCloser:newStatut, updatedAt:TS()});
+    toast(`Statut → ${newStatut}`,'success');
+  } catch(e){toast('Erreur','error');}
+}
+
+// ══════════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════════
+function renderStats() {
+  const my = S.leads.filter(l=>isMyLead(l));
+  const rdvPasse = my.filter(l=>['RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||'')).length;
+  const signed = my.filter(l=>l.statutCloser==='Signé');
+  const ca = signed.reduce((s,l)=>s+(l.montantSigne||0),0);
+  const taux = rdvPasse?Math.round(signed.length/rdvPasse*100):0;
+
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-big"><div class="stat-big-value">${my.length}</div><div class="stat-big-label">Leads reçus</div></div>
+    <div class="stat-big"><div class="stat-big-value">${signed.length}</div><div class="stat-big-label">Signatures</div></div>
+    <div class="stat-big"><div class="stat-big-value" style="color:var(--warning)">${ca.toLocaleString('fr-FR')}€</div><div class="stat-big-label">CA généré</div></div>`;
+
+  const steps=[
+    {label:'Leads reçus',val:my.length,color:'#6c63ff'},
+    {label:'RDV planifiés',val:my.filter(l=>l.dateRDV).length,color:'#f59e0b'},
+    {label:'RDV passés',val:rdvPasse,color:'#8b5cf6'},
+    {label:'Signés',val:signed.length,color:'#10b981'},
+  ];
+  const max=my.length||1;
+  document.getElementById('funnel-steps').innerHTML=steps.map(s=>`
+    <div class="funnel-step">
+      <div class="funnel-step-label"><span style="font-weight:600">${s.label}</span><span style="font-weight:700;color:var(--primary)">${s.val}</span></div>
+      <div class="funnel-bar"><div class="funnel-fill" style="width:${Math.round(s.val/max*100)}%;background:${s.color}"></div></div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  FICHE LEAD (MODAL)
+// ══════════════════════════════════════════════
+function openLead(id, tabId='tab-profil') {
+  const l=S.leads.find(x=>x.id===id);
+  if(!l)return;
+  S.activeLead=l;
+  const q=l.reponsesQuestionnaire||{};
+  const sc=l.scoreQualification||0;
+
+  document.getElementById('modal-lead-name').textContent=`${l.prenom||''} ${l.nom||''}`;
+  document.getElementById('modal-lead-sub').textContent=l.email||'';
+  document.getElementById('modal-lead-badges').innerHTML=`
+    <span class="score-badge ${scoreClass(sc)}">${sc}/10</span>
+    <span class="statut-badge ${statutCloserCss(l.statutCloser||'En attente RDV')}">${l.statutCloser||'En attente RDV'}</span>`;
+
+  // TAB PROFIL
+  document.getElementById('tab-profil').innerHTML=`
+    ${l.noteSetter?`<div class="setter-note-box"><div class="setter-note-label">📌 Note du setter</div><div class="setter-note-text">${escHtml(l.noteSetter)}</div></div>`:''}
+    <div class="info-grid">
+      <div class="info-field"><div class="info-label">Prénom & Nom</div><div class="info-value">${escHtml(l.prenom)} ${escHtml(l.nom)}</div></div>
+      <div class="info-field"><div class="info-label">Email</div><div class="info-value"><a href="mailto:${l.email}">${escHtml(l.email||'—')}</a></div></div>
+      <div class="info-field"><div class="info-label">Téléphone</div><div class="info-value">${l.telephone?`<a href="tel:${l.telephone}">${escHtml(l.telephone)}</a>`:'—'}</div></div>
+      <div class="info-field"><div class="info-label">Source</div><div class="info-value">${l.sourceCanal||'—'}</div></div>
+      <div class="info-field"><div class="info-label">Setter</div><div class="info-value">${escHtml(l.setterAssigne||'—')}</div></div>
+      <div class="info-field"><div class="info-label">Score qualification</div><div class="info-value"><span class="score-badge ${scoreClass(sc)}">${sc}/10</span></div></div>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">📋 Réponses questionnaire</div>
+    <div class="q-item"><div class="q-label">Situation</div><div class="q-value">${escHtml(q.situationActuelle||'—')}</div></div>
+    <div class="q-item"><div class="q-label">Budget</div><div class="q-value">${escHtml(q.budgetDisponible||'—')}</div></div>
+    <div class="q-item"><div class="q-label">Disponibilité</div><div class="q-value">${escHtml(q.disponibiliteHebdo||'—')}</div></div>
+    <div class="q-item"><div class="q-label">Délai lancement</div><div class="q-value">${escHtml(q.delaiLancement||'—')}</div></div>
+    <div class="q-item"><div class="q-label">Motivation</div><div class="q-value">${escHtml(q.motivationPrincipale||'—')}</div></div>
+    ${q.commentaireLibre?`<div class="q-item"><div class="q-label">Commentaire</div><div class="q-value">${escHtml(q.commentaireLibre)}</div></div>`:''}`;
+
+  // TAB RDV
+  const rdvDateVal = l.dateRDV?fmtDateISO(l.dateRDV):'';
+  document.getElementById('tab-rdv').innerHTML=`
+    <div style="font-size:13px;font-weight:700;margin-bottom:16px">📅 Planification du RDV</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="form-group">
+        <label class="form-label">Date du RDV</label>
+        <input class="form-input" id="rdv-date" type="date" value="${rdvDateVal}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heure</label>
+        <input class="form-input" id="rdv-heure" type="time" value="${l.heureRDV||'10:00'}">
+      </div>
+    </div>
+    <button class="btn-save-note" onclick="saveRdvDate('${l.id}')">💾 Enregistrer le RDV</button>
+    ${rdvDateVal?`<div style="margin-top:16px;padding:12px;background:#f0fdf8;border-radius:8px;font-size:13px;color:var(--primary);font-weight:600">✅ RDV planifié le ${fmtDate(l.dateRDV)} ${l.heureRDV?'à '+l.heureRDV:''}</div>`:''}`;
+
+  // TAB PRÉ-CALL
+  const prenom = `<strong>${escHtml(l.prenom)}</strong>`;
+  const q2 = l.reponsesQuestionnaire||{};
+  document.getElementById('tab-precall').innerHTML=`
+    <div style="font-size:13px;font-weight:700;margin-bottom:16px;color:var(--primary)">🎯 Préparation de l'appel avec ${prenom}</div>
+    <div style="background:#f0fdf8;border-radius:10px;padding:16px;border-left:3px solid var(--primary);margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:8px">CONTEXTE À MÉMORISER</div>
+      <div style="font-size:13px;line-height:1.8">
+        • Situation : <strong>${escHtml(q2.situationActuelle||'—')}</strong><br>
+        • Budget : <strong>${escHtml(q2.budgetDisponible||'—')}</strong><br>
+        • Disponibilité : <strong>${escHtml(q2.disponibiliteHebdo||'—')}</strong><br>
+        • Délai souhaité : <strong>${escHtml(q2.delaiLancement||'—')}</strong><br>
+        • Motivation : <strong>${escHtml(q2.motivationPrincipale||'—')}</strong>
+      </div>
+    </div>
+    ${l.noteSetter?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px;margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">NOTE DU SETTER</div><div style="font-size:13px;color:#78350f">${escHtml(l.noteSetter)}</div></div>`:''}
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">📝 Note pré-call</div>
+    <textarea class="note-area" id="precall-note" placeholder="Stratégie, points à aborder, objections anticipées…">${escHtml(l.notePreCall||'')}</textarea>
+    <button class="btn-save-note" onclick="savePreCall('${l.id}')">💾 Sauvegarder</button>`;
+
+  // TAB RÉSULTAT
+  document.getElementById('tab-resultat').innerHTML=`
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">✅ Résultat de l'appel</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Sélectionnez le résultat pour mettre à jour le pipeline automatiquement</div>
+    <div class="result-btns">
+      <button class="btn-result btn-result-signe" onclick="openSign('${l.id}')">
+        <span style="font-size:24px">🎉</span>Signé
+      </button>
+      <button class="btn-result btn-result-refus" onclick="openRefus('${l.id}')">
+        <span style="font-size:24px">❌</span>Refus
+      </button>
+      <button class="btn-result btn-result-relance" onclick="openRelance('${l.id}')">
+        <span style="font-size:24px">🔁</span>Relance
+      </button>
+    </div>
+    ${l.montantSigne?`<div style="margin-top:20px;background:#dcfce7;border-radius:10px;padding:16px;text-align:center"><div style="font-size:20px;font-weight:900;color:#166534">${l.montantSigne.toLocaleString('fr-FR')}€</div><div style="font-size:12px;color:#166534;margin-top:4px">Signé le ${fmtDate(l.dateSignature)} · Paiement ${l.modePaiement}</div></div>`:''}
+    ${l.raisonRefus?`<div style="margin-top:20px;background:#fee2e2;border-radius:10px;padding:14px"><div style="font-size:13px;color:#991b1b;font-weight:600">❌ Refus : ${escHtml(l.raisonRefus)}</div></div>`:''}`;
+
+  // Reset tabs
+  document.querySelectorAll('#modal-lead .modal-tab').forEach((t,i)=>{
+    const panels=['tab-profil','tab-rdv','tab-precall','tab-resultat'];
+    t.classList.toggle('active',panels[i]===tabId);
+  });
+  document.querySelectorAll('#modal-lead .modal-tab-panel').forEach(p=>p.classList.toggle('active',p.id===tabId));
+
+  document.getElementById('modal-lead-footer').innerHTML=`<button class="btn-cancel" onclick="closeModal('modal-lead')">Fermer</button>`;
+  openModal('modal-lead');
+}
+
+async function saveRdvDate(id) {
+  const date=document.getElementById('rdv-date').value;
+  const heure=document.getElementById('rdv-heure').value;
+  if(!date){toast('Sélectionnez une date','error');return;}
+  try{
+    await db.collection('leads').doc(id).update({
+      dateRDV:firebase.firestore.Timestamp.fromDate(new Date(date+'T'+heure+':00')),
+      heureRDV:heure, statutCloser:'RDV planifié', closerAssigne:myFullName(), updatedAt:TS()
+    });
+    toast('RDV planifié ✅','success');
+    setTimeout(()=>openLead(id,'tab-rdv'),300);
+  }catch(e){toast('Erreur','error');console.error(e);}
+}
+
+async function savePreCall(id) {
+  const note=document.getElementById('precall-note')?.value||'';
+  try{await db.collection('leads').doc(id).update({notePreCall:note,updatedAt:TS()});toast('Note sauvegardée','success');}
+  catch(e){toast('Erreur','error');}
+}
+
+// ══════════════════════════════════════════════
+//  ACTIONS RÉSULTAT
+// ══════════════════════════════════════════════
+function openSign(id) {
+  S.pendingSigneId=id;
+  document.getElementById('sign-date').value=todayISO();
+  document.getElementById('sign-montant').value='';
+  document.getElementById('sign-note').value='';
+  openModal('modal-signe');
+}
+
+async function confirmSigne() {
+  const id=S.pendingSigneId;
+  if(!id)return;
+  const montant=parseFloat(document.getElementById('sign-montant').value)||0;
+  if(!montant){toast('Indiquez le montant','error');return;}
+  const mode=document.getElementById('sign-mode').value;
+  const dateStr=document.getElementById('sign-date').value;
+  const note=document.getElementById('sign-note').value.trim();
+  const l=S.leads.find(x=>x.id===id);
+
+  try{
+    await db.collection('leads').doc(id).update({
+      statutCloser:'Signé', statutSetter:'Qualifié',
+      montantSigne:montant, modePaiement:mode,
+      dateSignature:firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
+      closerAssigne:myFullName(), noteCloser:note,
+      converti:false, updatedAt:TS()
+    });
+
+    // Créer automatiquement le profil apprenant
+    const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const now=new Date();
+    const apprenant={
+      prenom:l.prenom||'', nom:l.nom||'',
+      email:l.email||'', telephone:l.telephone||'',
+      dateDebut:firebase.firestore.Timestamp.fromDate(now),
+      jourDansParcours:1,
+      cohorte:`Cohorte ${mois[now.getMonth()]} ${now.getFullYear()}`,
+      statut:'En cours',
+      modePaiement:mode, montantSigne:montant,
+      chargeAssigne:'', badges:[],
+      source_lead_id:id,
+      createdAt:TS(), updatedAt:TS()
+    };
+    await db.collection('apprenants').add(apprenant);
+    await db.collection('leads').doc(id).update({converti:true});
+
+    // Logger la conversion
+    await db.collection('conversions').add({
+      lead_id:id, prenom:l.prenom, nom:l.nom,
+      montant, modePaiement:mode, closerAssigne:myFullName(),
+      dateSignature:firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
+      createdAt:TS()
+    });
+
+    // Notifier l'admin
+    await db.collection('notifications').add({
+      type:'lead_signe',
+      message:`🎉 Nouveau signé : ${l.prenom} ${l.nom} — ${montant.toLocaleString('fr-FR')}€ (${mode})`,
+      destinataireRole:'admin',
+      lu:false, timestamp:TS(),
+      leadId:id, leadNom:`${l.prenom} ${l.nom}`,
+    });
+
+    closeModal('modal-signe');
+    closeModal('modal-lead');
+    toast(`🎉 ${l.prenom} ${l.nom} signé ! Profil apprenant créé automatiquement.`,'success');
+  }catch(e){toast('Erreur','error');console.error(e);}
+}
+
+function openRefus(id) {
+  S.pendingRefusId=id;
+  document.getElementById('refus-note').value='';
+  openModal('modal-refus');
+}
+async function confirmRefus() {
+  const id=S.pendingRefusId;if(!id)return;
+  const raison=document.getElementById('refus-raison').value;
+  const note=document.getElementById('refus-note').value.trim();
+  try{
+    await db.collection('leads').doc(id).update({
+      statutCloser:'Refus', raisonRefus:raison+(note?` — ${note}`:''),
+      closerAssigne:myFullName(), updatedAt:TS()
+    });
+    closeModal('modal-refus');closeModal('modal-lead');
+    toast('Refus enregistré','success');
+  }catch(e){toast('Erreur','error');}
+}
+
+function openRelance(id) {
+  S.pendingRelanceId=id;
+  document.getElementById('relance-date').value='';
+  document.getElementById('relance-note').value='';
+  openModal('modal-relance');
+}
+async function confirmRelance() {
+  const id=S.pendingRelanceId;if(!id)return;
+  const date=document.getElementById('relance-date').value;
+  const note=document.getElementById('relance-note').value.trim();
+  try{
+    await db.collection('leads').doc(id).update({
+      statutCloser:'Relance',
+      dateRelance:date?firebase.firestore.Timestamp.fromDate(new Date(date)):null,
+      noteCloser:note, closerAssigne:myFullName(), updatedAt:TS()
+    });
+    closeModal('modal-relance');closeModal('modal-lead');
+    toast('Relance planifiée','success');
+  }catch(e){toast('Erreur','error');}
+}
+
+// ══════════════════════════════════════════════
+//  MODAUX & TABS
+// ══════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
+function switchTab(el,panelId){
+  el.closest('.modal').querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  el.closest('.modal').querySelectorAll('.modal-tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+}
+</script>
+</body>
+</html>
