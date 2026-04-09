@@ -956,7 +956,7 @@ async function createInvitation(){
   btn.disabled=false;btn.innerHTML='Générer le lien';
 }
 
-function copyInviteLink(){
+function copyInviteLink(){ /* v2 */
   const input=document.getElementById('invite-link-input');
   navigator.clipboard.writeText(input.value).then(()=>showAlert('Lien copié ✓'));
 }
