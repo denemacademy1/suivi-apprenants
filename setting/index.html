@@ -287,6 +287,7 @@ table.lead-table{width:100%;border-collapse:collapse}
   .lead-table th:nth-child(3),.lead-table td:nth-child(3),
   .lead-table th:nth-child(5),.lead-table td:nth-child(5){display:none}
   .priority-grid{grid-template-columns:1fr}
+  #page-stats .funnel-wrap-row{grid-template-columns:1fr!important}
 }
 .mobile-menu-btn{width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:18px}
 </style>
@@ -316,7 +317,10 @@ table.lead-table{width:100%;border-collapse:collapse}
 
   <nav class="sb-nav">
     <div class="sb-section-label">Navigation</div>
-    <div class="sb-nav-item active" data-page="mes-leads" onclick="showPage('mes-leads')">
+    <div class="sb-nav-item active" data-page="stats" onclick="showPage('stats')">
+      <span class="sb-nav-icon">📈</span>Dashboard
+    </div>
+    <div class="sb-nav-item" data-page="mes-leads" onclick="showPage('mes-leads')">
       <span class="sb-nav-icon">📋</span>Mes leads
       <span class="sb-notif-badge" id="badge-mes-leads" style="display:none">0</span>
     </div>
@@ -324,18 +328,8 @@ table.lead-table{width:100%;border-collapse:collapse}
       <span class="sb-nav-icon">📊</span>Tous les leads
     </div>
     <div class="sb-section-label" style="margin-top:8px">Outils</div>
-    <div class="sb-nav-item" data-page="stats" onclick="showPage('stats')">
-      <span class="sb-nav-icon">📈</span>Mes stats
-    </div>
     <div class="sb-nav-item" data-page="script" onclick="showPage('script')">
       <span class="sb-nav-icon">📝</span>Script d'appel
-    </div>
-    <div class="sb-section-label" style="margin-top:8px">Plateforme</div>
-    <div class="sb-nav-item" onclick="window.location.href='../'" style="opacity:.7">
-      <span class="sb-nav-icon">🏠</span>Accueil
-    </div>
-    <div class="sb-nav-item" onclick="window.open('../pipeline/')" style="opacity:.7">
-      <span class="sb-nav-icon">📊</span>Pipeline admin
     </div>
   </nav>
 
@@ -367,7 +361,7 @@ table.lead-table{width:100%;border-collapse:collapse}
   <div class="content">
 
     <!-- PAGE: MES LEADS -->
-    <div id="page-mes-leads">
+    <div id="page-mes-leads" style="display:none">
       <div class="kpi-row" id="kpi-row"></div>
       <div class="section" id="priority-section" style="display:none">
         <div class="section-header">
@@ -469,15 +463,42 @@ table.lead-table{width:100%;border-collapse:collapse}
     </div>
 
     <!-- PAGE: STATS -->
-    <div id="page-stats" style="display:none">
+    <div id="page-stats">
       <div class="script-page-header">
-        <div class="script-page-title">📈 Mes statistiques</div>
-        <div class="script-page-sub">Performances de la période</div>
+        <div class="script-page-title">📈 Dashboard Setting</div>
+        <div class="script-page-sub" id="stats-period">Toutes les périodes</div>
       </div>
-      <div class="stats-grid" id="stats-grid"></div>
-      <div class="funnel-wrap">
-        <div class="funnel-title">Funnel de qualification</div>
-        <div id="funnel-steps"></div>
+
+      <!-- KPI row principale -->
+      <div class="kpi-row" id="stats-kpi-row"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <!-- Funnel -->
+        <div class="funnel-wrap" style="margin-bottom:0">
+          <div class="funnel-title">Funnel de qualification</div>
+          <div id="funnel-steps"></div>
+        </div>
+        <!-- Répartition par statut -->
+        <div class="funnel-wrap" style="margin-bottom:0">
+          <div class="funnel-title">Répartition par statut</div>
+          <div id="statut-breakdown"></div>
+        </div>
+      </div>
+
+      <!-- Leads à relancer aujourd'hui -->
+      <div class="section" id="relance-section">
+        <div class="section-header">
+          <div class="section-title">🔔 À relancer aujourd'hui <span class="section-count" id="relance-count">0</span></div>
+        </div>
+        <div id="relance-list" style="padding:12px 16px"></div>
+      </div>
+
+      <!-- Dernières activités -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">⏱️ Mes 5 derniers leads contactés</div>
+        </div>
+        <div id="recent-contacts" style="padding:0"></div>
       </div>
     </div>
 
@@ -749,7 +770,7 @@ const S = {
   user: null,
   userData: null,
   leads: [],
-  currentPage: 'mes-leads',
+  currentPage: 'stats',
   activeLead: null,      // lead ouvert dans la fiche
   pendingQualifyId: null,
   pendingDisqualifyId: null,
@@ -938,7 +959,7 @@ function initApp() {
 const PAGE_TITLES = {
   'mes-leads': 'Mes leads',
   'tous-leads': 'Tous les leads',
-  'stats': 'Mes statistiques',
+  'stats': 'Dashboard',
   'script': "Script d'appel",
 };
 
@@ -1080,6 +1101,14 @@ function filterLeads(leads, searchId, statutId, scoreId, sourceId) {
   });
 }
 
+function scoreCss(s){return s>=8?'score-high':s>=5?'score-mid':'score-low';}
+function scoreClass(s){return s>=8?'high':s>=5?'mid':'low';}
+function statutCss(st){
+  const m={'Nouveau':'statut-nouveau','Tenté J1':'statut-tente','Tenté J2':'statut-tente','Tenté J3':'statut-tente',
+           'Qualifié':'statut-qualifie','Non qualifié':'statut-nonqualifie','Relance planifiée':'statut-relance'};
+  return m[st]||'statut-nouveau';
+}
+
 function buildLeadRow(l, showSetter=false) {
   const score = l.scoreQualification||0;
   const statut = l.statutSetter||'Nouveau';
@@ -1142,16 +1171,35 @@ function renderStats() {
   const me = myFullName().toLowerCase();
   const myLeads = S.leads.filter(l=>(l.setterAssigne||'').toLowerCase()===me);
   const total = myLeads.length;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  const weekStart = todayStart - (now.getDay()||7)*86400000 + 86400000; // lundi
+
+  const leadsToday = myLeads.filter(l=>{
+    const t = l.dateCreation?.toDate?.()?.getTime?.() || 0;
+    return t >= todayStart;
+  }).length;
+  const leadsWeek = myLeads.filter(l=>{
+    const t = l.dateCreation?.toDate?.()?.getTime?.() || 0;
+    return t >= weekStart;
+  }).length;
+
   const contacted = myLeads.filter(l=>l.statutSetter&&l.statutSetter!=='Nouveau').length;
   const qualified = myLeads.filter(l=>l.statutSetter==='Qualifié').length;
   const nq = myLeads.filter(l=>l.statutSetter==='Non qualifié').length;
+  const relance = myLeads.filter(l=>l.statutSetter==='Relance planifiée').length;
   const tauxQualif = contacted?Math.round(qualified/contacted*100):0;
+  const tauxContac = total?Math.round(contacted/total*100):0;
 
-  document.getElementById('stats-grid').innerHTML = `
-    <div class="stat-big"><div class="stat-big-value">${total}</div><div class="stat-big-label">Leads assignés</div></div>
-    <div class="stat-big"><div class="stat-big-value">${qualified}</div><div class="stat-big-label">Leads qualifiés</div></div>
-    <div class="stat-big"><div class="stat-big-value" style="color:var(--success)">${tauxQualif}%</div><div class="stat-big-label">Taux de qualification</div></div>`;
+  // ── KPI row ──
+  document.getElementById('stats-kpi-row').innerHTML = `
+    <div class="kpi-card accent"><div class="kpi-label">Total leads assignés</div><div class="kpi-value">${total}</div><div class="kpi-sub">${leadsWeek} cette semaine · ${leadsToday} auj.</div></div>
+    <div class="kpi-card"><div class="kpi-label">Leads contactés</div><div class="kpi-value">${contacted}</div><div class="kpi-sub">Taux de contact : ${tauxContac}%</div></div>
+    <div class="kpi-card success"><div class="kpi-label">Leads qualifiés</div><div class="kpi-value">${qualified}</div><div class="kpi-sub">Taux de qualif. : ${tauxQualif}%</div></div>
+    <div class="kpi-card warning"><div class="kpi-label">En relance</div><div class="kpi-value">${relance}</div><div class="kpi-sub">À recontacter</div></div>`;
 
+  // ── Funnel ──
   const steps = [
     {label:'Leads assignés',val:total,color:'#6c63ff'},
     {label:'Leads contactés',val:contacted,color:'#3b82f6'},
@@ -1161,9 +1209,55 @@ function renderStats() {
   const max = total||1;
   document.getElementById('funnel-steps').innerHTML = steps.map(s=>`
     <div class="funnel-step">
-      <div class="funnel-step-label"><span>${s.label}</span><span>${s.val}</span></div>
+      <div class="funnel-step-label"><span>${s.label}</span><span style="font-weight:700">${s.val}</span></div>
       <div class="funnel-bar"><div class="funnel-fill" style="width:${Math.round(s.val/max*100)}%;background:${s.color}"></div></div>
     </div>`).join('');
+
+  // ── Répartition statuts ──
+  const statutMap = {};
+  myLeads.forEach(l=>{const st=l.statutSetter||'Nouveau';statutMap[st]=(statutMap[st]||0)+1;});
+  const statutColors = {'Nouveau':'#3b82f6','Tenté J1':'#f59e0b','Tenté J2':'#f59e0b','Tenté J3':'#f59e0b','Qualifié':'#10b981','Non qualifié':'#ef4444','Relance planifiée':'#8b5cf6'};
+  document.getElementById('statut-breakdown').innerHTML = Object.entries(statutMap).sort((a,b)=>b[1]-a[1]).map(([st,n])=>`
+    <div class="funnel-step">
+      <div class="funnel-step-label"><span>${st}</span><span style="font-weight:700">${n}</span></div>
+      <div class="funnel-bar"><div class="funnel-fill" style="width:${Math.round(n/max*100)}%;background:${statutColors[st]||'#94a3b8'}"></div></div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:13px;padding:8px 0">Aucune donnée</div>';
+
+  // ── À relancer ──
+  const relanceLeads = myLeads.filter(l=>l.statutSetter==='Relance planifiée').slice(0,5);
+  document.getElementById('relance-count').textContent = relance;
+  document.getElementById('relance-list').innerHTML = relanceLeads.length
+    ? relanceLeads.map(l=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-weight:700;font-size:13px">${escHtml(l.prenom||'')} ${escHtml(l.nom||'')}</div>
+            <div style="font-size:12px;color:var(--muted)">${escHtml(l.email||'—')}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="score-badge ${scoreCss(l.scoreQualification||0)}">${l.scoreQualification||'?'}</span>
+            ${l.telephone?`<a class="btn-icon btn-call" href="tel:${l.telephone.replace(/\s/g,'')}">📞</a>`:''}
+            <button class="btn-icon btn-fiche" onclick="openLead('${l.id}')">📄</button>
+          </div>
+        </div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Aucune relance planifiée 🎉</div>';
+
+  // ── Derniers contacts ──
+  const recentContacted = myLeads
+    .filter(l=>l.statutSetter&&l.statutSetter!=='Nouveau')
+    .sort((a,b)=>(b.dateCreation?.seconds||0)-(a.dateCreation?.seconds||0))
+    .slice(0,5);
+  const rcEl = document.getElementById('recent-contacts');
+  rcEl.innerHTML = recentContacted.length
+    ? `<table class="lead-table"><thead><tr><th>Lead</th><th>Statut</th><th>Score</th><th>Ajouté le</th><th></th></tr></thead><tbody>
+      ${recentContacted.map(l=>`<tr>
+        <td><div class="lead-name">${escHtml(l.prenom||'')} ${escHtml(l.nom||'')}</div><div class="lead-email">${escHtml(l.email||'')}</div></td>
+        <td><span class="statut-badge ${statutCss(l.statutSetter||'Nouveau')}">${l.statutSetter||'Nouveau'}</span></td>
+        <td><span class="score-badge ${scoreCss(l.scoreQualification||0)}">${l.scoreQualification||'?'}</span></td>
+        <td class="last-contact">${fmtDate(l.dateCreation)}</td>
+        <td><button class="btn-icon btn-fiche" onclick="openLead('${l.id}')">📄</button></td>
+      </tr>`).join('')}
+      </tbody></table>`
+    : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Aucun lead contacté pour l\'instant</div></div>';
 }
 
 // ══════════════════════════════════════════════
