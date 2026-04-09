@@ -542,6 +542,8 @@ tr:hover td{background:#FAFBFF}
         <select id="new-user-role">
           <option value="student">👤 Apprenant</option>
           <option value="csm">🎯 Chargé de suivi</option>
+          <option value="setter">🎯 Setter</option>
+          <option value="closer">🤝 Closer</option>
           <option value="admin">⚙️ Administrateur</option>
         </select>
       </div>
@@ -877,8 +879,8 @@ function renderQuizQuestions(){
 function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ─── Users ────────────────────────────────────────────────
-const ROLE_LABELS={student:'👤 Apprenant',csm:'🎯 Chargé suivi',admin:'⚙️ Admin'};
-const ROLE_COLORS={student:'badge-blue',csm:'badge-green',admin:'badge-purple'};
+const ROLE_LABELS={student:'👤 Apprenant',csm:'🎯 Chargé suivi',setter:'🎯 Setter',closer:'🤝 Closer',admin:'⚙️ Admin'};
+const ROLE_COLORS={student:'badge-blue',csm:'badge-green',setter:'badge-orange',closer:'badge-teal',admin:'badge-purple'};
 
 function renderUsers(){
   const el=document.getElementById('users-list');
@@ -896,12 +898,13 @@ function renderUsers(){
 }
 
 async function changeRole(uid,currentRole,name){
-  const roles=['student','csm','admin'];
-  const labels=['👤 Apprenant','🎯 Chargé suivi','⚙️ Admin'];
-  const next=roles[(roles.indexOf(currentRole)+1)%roles.length];
-  if(!confirm(`Changer le rôle de ${name} → ${labels[roles.indexOf(next)]} ?`))return;
-  await db.collection("users").doc(uid).update({role:next});
-  showAlert(`Rôle de ${name} mis à jour.`);
+  const roles=['student','csm','setter','closer','admin'];
+  const labels=['👤 Apprenant','🎯 Chargé suivi','🎯 Setter','🤝 Closer','⚙️ Admin'];
+  const newRole=prompt(`Rôle de ${name}\nChoix : student | csm | setter | closer | admin`,currentRole);
+  if(!newRole||!roles.includes(newRole))return;
+  if(!confirm(`Confirmer : ${name} → ${labels[roles.indexOf(newRole)]} ?`))return;
+  await db.collection("users").doc(uid).update({role:newRole});
+  showAlert(`Rôle de ${name} mis à jour → ${newRole}.`);
 }
 
 function openUserModal(){

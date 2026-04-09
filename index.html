@@ -274,13 +274,26 @@ auth.onAuthStateChanged(async user => {
     return;
   }
 
-  // Récupérer le rôle
+  // Récupérer le rôle — auto-création du doc à la première connexion
   let role = 'student';
   try {
-    const doc = await db.collection('users').doc(user.uid).get();
-    if (doc.exists) role = doc.data().role || 'student';
+    const docRef = db.collection('users').doc(user.uid);
+    const doc = await docRef.get();
+    if (doc.exists) {
+      role = doc.data().role || 'student';
+    } else {
+      // Première connexion : créer le doc avec rôle student par défaut
+      const nameParts = (user.displayName || '').split(' ');
+      await docRef.set({
+        prenom: nameParts[0] || '',
+        nom: nameParts.slice(1).join(' ') || '',
+        email: user.email || '',
+        role: 'student',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
   } catch(e) {
-    console.warn('Rôle non trouvé, défaut: student');
+    console.warn('Erreur doc utilisateur:', e);
   }
 
   // Admin → hub multi-espace
