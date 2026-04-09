@@ -271,7 +271,7 @@ table.lead-table{width:100%;border-collapse:collapse}
 <div class="sidebar" id="sidebar">
   <div class="sb-brand">
     <div class="sb-logo-row">
-      <div class="sb-logo">🤝</div>
+      <img src="../assets/logo.png" alt="Denem Academy" style="width:34px;height:34px;border-radius:10px;object-fit:cover;flex-shrink:0">
       <div>
         <div class="sb-title">Denem Academy</div>
         <span class="sb-badge">CLOSING</span>
@@ -303,6 +303,9 @@ table.lead-table{width:100%;border-collapse:collapse}
         <div class="sb-user-status">En ligne</div>
       </div>
     </div>
+    <button onclick="auth.signOut().then(()=>location.href='../')" style="margin-top:10px;width:100%;padding:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(239,68,68,.2)';this.style.color='#fca5a5'" onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.6)'">
+      🚪 Se déconnecter
+    </button>
   </div>
 </div>
 
