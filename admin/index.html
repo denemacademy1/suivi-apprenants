@@ -960,8 +960,6 @@ function copyInviteLink(){
   const input=document.getElementById('invite-link-input');
   navigator.clipboard.writeText(input.value).then(()=>showAlert('Lien copié ✓'));
 }
-  btn.disabled=false;btn.textContent='Créer le compte';
-}
 
 // ─── Apprenants ───────────────────────────────────────────
 function renderApprenants(){
