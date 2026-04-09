@@ -818,7 +818,8 @@ function startListeners(){
   });
   db.collection("rdvs").orderBy("date").onSnapshot(snap=>{
     S.rdvs=snap.docs.map(d=>({id:d.id,...d.data()}));
-    updateBadges();if(S.page==="planning"||S.page==="dashboard")renderCurrent();
+    updateBadges();renderCurrent();
+    if(S.student)renderPanelTab();
   });
   db.collection("contacts").orderBy("createdAt","desc").onSnapshot(snap=>{
     S.contacts=snap.docs.map(d=>({id:d.id,...d.data()}));

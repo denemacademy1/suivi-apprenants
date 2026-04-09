@@ -430,7 +430,8 @@ nav::-webkit-scrollbar{width:0}
 .rdv-suivi-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;z-index:1}
 .rdv-suivi-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);transition:all .3s;flex-shrink:0}
 .rdv-suivi-dot.done{background:#10B981;border-color:#10B981;color:#fff}
-.rdv-suivi-dot.next{background:#6366F1;border-color:#6366F1;color:#fff;animation:pulse 2s infinite}
+.rdv-suivi-dot.next{background:#6366F1;border-color:#6366F1;color:#fff;animation:rdvDotPulse 2s infinite}
+@keyframes rdvDotPulse{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.4)}50%{box-shadow:0 0 0 6px rgba(99,102,241,0)}}
 .rdv-suivi-step-label{font-size:9px;color:rgba(255,255,255,.3);text-align:center;font-weight:600;line-height:1.3;max-width:52px}
 .rdv-suivi-step-label.done{color:rgba(16,185,129,.8)}
 .rdv-suivi-step-label.next{color:rgba(99,102,241,.9)}
@@ -1065,6 +1066,7 @@ function loadData(){
         .filter(r=>r.apprenant_id===S.apprenant.id&&r.statut!=="Annulé")
         .sort((a,b)=>a.date.localeCompare(b.date));
       renderHomeRdv();
+      renderRdvSuivi();
     };
     try{
       db.collection("rdvs").where("apprenant_id","==",S.apprenant.id).onSnapshot(rdvHandler,_=>{
