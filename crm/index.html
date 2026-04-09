@@ -210,6 +210,29 @@ tbody tr:last-child td{border-bottom:none}
 .rdv-mini-status.cancelled{background:#F1F5F9;color:#64748B}
 .btn-add-rdv-day{width:100%;padding:6px;border:1.5px dashed var(--border);border-radius:8px;background:none;font-size:11px;color:var(--light);cursor:pointer;transition:.15s;font-family:inherit;margin-top:2px}
 .btn-add-rdv-day:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+/* View toggle */
+.plan-view-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px}
+.plan-view-btn{padding:5px 14px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);background:none;transition:.15s;font-family:inherit;white-space:nowrap}
+.plan-view-btn.active{background:var(--card);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+/* Month grid */
+.month-grid{flex:1;overflow-y:auto;padding:0}
+.month-header{display:grid;grid-template-columns:repeat(7,1fr);background:var(--card);border-bottom:2px solid var(--border);flex-shrink:0}
+.month-dow{padding:10px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.month-days{display:grid;grid-template-columns:repeat(7,1fr);flex:1}
+.month-cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 8px;min-height:90px;background:var(--bg);position:relative;cursor:pointer;transition:.15s}
+.month-cell:hover{background:#F0F4FF}
+.month-cell:nth-child(7n){border-right:none}
+.month-cell.other-month{opacity:.35;pointer-events:none}
+.month-cell.today{background:#FAFBFF}
+.month-cell.today .month-cell-num{color:#fff;background:var(--primary);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900}
+.month-cell.weekend{background:#F8FAFC}
+.month-cell-num{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.month-rdv-chip{display:block;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:.15s;border-left:2px solid transparent}
+.month-rdv-chip:hover{filter:brightness(.93)}
+.month-rdv-chip.done{background:#D1FAE5;color:#065F46;border-left-color:#10B981}
+.month-rdv-chip.planned{background:#EEF2FF;color:#4F46E5;border-left-color:var(--primary)}
+.month-rdv-chip.other{background:#F1F5F9;color:#64748B;border-left-color:#94A3B8}
+.month-more{font-size:10px;font-weight:600;color:var(--primary);padding:2px 4px}
 /* Sidebar: sans RDV */
 .planning-sidebar{width:280px;min-width:280px;border-left:1px solid var(--border);background:var(--card);display:flex;flex-direction:column;overflow:hidden}
 .ps-head{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -769,7 +792,7 @@ const S={
   apprenants:[],rdvs:[],contacts:[],modules:[],progressions:[],cohorts:[],csmUsers:[],
   page:"dashboard",student:null,panelTab:0,
   filterCharge:"all",filterStatut:"all",filterCohorte:"all",search:"",
-  editStudentId:null,editRdvId:null,editCohortId:null,_planWeekOffset:0,
+  editStudentId:null,editRdvId:null,editCohortId:null,_planWeekOffset:0,_planView:'week',_planMonthOffset:0,
   charts:{},charges:[],cohortes:[],
   _cohortColor:"#4F46E5",_cohortMembers:[],
 };
@@ -1098,90 +1121,124 @@ function getWeekDays(offset){
 function isoToDate(iso){const[y,m,d]=iso.split('-');return new Date(y,m-1,d);}
 function planToday(){return new Date().toISOString().split('T')[0];}
 
-function renderPlanning(){
-  const allRdvs=byCharge(S.rdvs);
-  const apprenants=byCharge(S.apprenants);
-  const days=getWeekDays(S._planWeekOffset);
-  const weekStart=days[0].iso;
-  const weekEnd=days[6].iso;
-  const todayIso=planToday();
+// ── Planning helpers ──
+function getMonthDays(offset){
+  const now=new Date();
+  const base=new Date(now.getFullYear(),now.getMonth()+offset,1);
+  const year=base.getFullYear(),month=base.getMonth();
+  const firstDay=new Date(year,month,1);
+  const lastDay=new Date(year,month+1,0);
+  // Start from Monday of the first week
+  const startDow=firstDay.getDay()||7; // 1=Mon…7=Sun
+  const cells=[];
+  for(let i=1-startDow;i<=lastDay.getDate()+(7-((lastDay.getDay()||7)))%7;i++){
+    const d=new Date(year,month,i);
+    cells.push({date:d,iso:d.toISOString().split('T')[0],inMonth:i>=1&&i<=lastDay.getDate(),isWeekend:d.getDay()===0||d.getDay()===6});
+  }
+  // Trim to exactly 5 or 6 weeks
+  while(cells.length>42)cells.pop();
+  return cells;
+}
 
-  // KPIs for this week
-  const weekRdvs=allRdvs.filter(r=>r.date>=weekStart&&r.date<=weekEnd);
-  const weekPlanned=weekRdvs.filter(r=>r.statut==="Planifié").length;
-  const weekDone=weekRdvs.filter(r=>r.statut==="Réalisé").length;
-
-  // Coverage: apprenants with at least 1 non-cancelled RDV this week
-  const coveredIds=new Set(weekRdvs.filter(r=>r.statut!=="Annulé").map(r=>r.apprenant_id));
+function buildSidebar(allRdvs,apprenants,coveredIds,periodLabel){
   const missingCount=apprenants.filter(a=>!coveredIds.has(a.id)).length;
   const coverPct=apprenants.length?Math.round((coveredIds.size/apprenants.length)*100):100;
-
-  // Week label
-  const fmt=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
-  const weekLabel=`${fmt(days[0].date)} — ${fmt(days[6].date)}`;
-
-  // Sidebar: group students without RDV this week by cohort
   const missing=apprenants.filter(a=>!coveredIds.has(a.id));
   const cohortMap={};
-  // Students assigned to a named cohort (from S.cohorts)
   S.cohorts.forEach(c=>{
     const members=missing.filter(a=>(c.membres||[]).includes(a.id));
     if(members.length)cohortMap[c.id]={nom:c.nom,couleur:c.couleur||'#4F46E5',members};
   });
-  // Students not in any cohort
   const inAnyCohort=new Set(S.cohorts.flatMap(c=>c.membres||[]));
   const orphans=missing.filter(a=>!inAnyCohort.has(a.id));
   if(orphans.length)cohortMap['__none']={nom:'Sans cohorte',couleur:'#94A3B8',members:orphans};
-
   const sidebarGroups=Object.values(cohortMap);
+  return{missingCount,coverPct,sidebarGroups,coveredIds,html:`
+  <div class="planning-sidebar">
+    <div class="ps-head">
+      <div class="ps-title">${missingCount>0?'⚠️':'✅'} ${missingCount>0?`${missingCount} sans RDV`:'Tous couverts !'}</div>
+      <div class="ps-sub">${periodLabel}</div>
+    </div>
+    <div class="ps-body">
+      ${missingCount===0?`<div class="ps-empty">🎉 Tous les apprenants ont un RDV planifié.</div>`:''}
+      ${sidebarGroups.map(g=>`
+        <div class="ps-cohort">
+          <div class="ps-cohort-label">
+            <div class="ps-cohort-dot" style="background:${g.couleur}"></div>${g.nom}
+            <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--danger)">${g.members.length}</span>
+          </div>
+          ${g.members.map(a=>{const isNew=!hasCompletedRdv(a.id);return`
+            <div class="ps-student-row" onclick="openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">
+              ${isNew?`<div class="ps-new-dot"></div>`:''}
+              <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
+              <div class="ps-name">${a.prenom} ${a.nom}${isNew?` <span class="ps-new-badge">NEW</span>`:''}</div>
+              <button class="ps-action missing" onclick="event.stopPropagation();openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">+ RDV</button>
+            </div>`;}).join('')}
+        </div>`).join('')}
+      ${apprenants.filter(a=>coveredIds.has(a.id)).length>0?`
+        <div class="ps-cohort" style="margin-top:8px">
+          <div class="ps-cohort-label">
+            <div class="ps-cohort-dot" style="background:var(--success)"></div>
+            Couverts <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--success)">${coveredIds.size}</span>
+          </div>
+          ${apprenants.filter(a=>coveredIds.has(a.id)).map(a=>{const isNew=!hasCompletedRdv(a.id);return`
+            <div class="ps-student-row ok">
+              ${isNew?`<div class="ps-new-dot"></div>`:''}
+              <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
+              <div class="ps-name">${a.prenom} ${a.nom}${isNew?` <span class="ps-new-badge">NEW</span>`:''}</div>
+              <span class="ps-action ok">✓</span>
+            </div>`;}).join('')}
+        </div>`:''}
+    </div>
+  </div>`};
+}
+
+function renderPlanning(){
+  if(S._planView==='month')renderPlanningMonth();
+  else renderPlanningWeek();
+}
+
+function renderPlanningWeek(){
+  const allRdvs=byCharge(S.rdvs);
+  const apprenants=byCharge(S.apprenants);
+  const days=getWeekDays(S._planWeekOffset);
+  const weekStart=days[0].iso,weekEnd=days[6].iso;
+  const todayIso=planToday();
+  const weekRdvs=allRdvs.filter(r=>r.date>=weekStart&&r.date<=weekEnd);
+  const weekPlanned=weekRdvs.filter(r=>r.statut==="Planifié").length;
+  const weekDone=weekRdvs.filter(r=>r.statut==="Réalisé").length;
+  const coveredIds=new Set(weekRdvs.filter(r=>r.statut!=="Annulé").map(r=>r.apprenant_id));
+  const missingCount=apprenants.filter(a=>!coveredIds.has(a.id)).length;
+  const coverPct=apprenants.length?Math.round((coveredIds.size/apprenants.length)*100):100;
+  const fmt=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  const weekLabel=`${fmt(days[0].date)} — ${fmt(days[6].date)}`;
+  const sidebar=buildSidebar(allRdvs,apprenants,coveredIds,'1 RDV/semaine requis');
 
   document.getElementById("page-planning").innerHTML=`
   <div class="planning-wrap">
-    <!-- Topbar -->
     <div class="planning-topbar">
       <div class="week-nav">
-        <button class="week-nav-btn" onclick="planNavWeek(-1)" title="Semaine précédente">‹</button>
+        <button class="week-nav-btn" onclick="planNavWeek(-1)">‹</button>
         <div class="week-label">📅 ${weekLabel}</div>
-        <button class="week-nav-btn" onclick="planNavWeek(1)" title="Semaine suivante">›</button>
+        <button class="week-nav-btn" onclick="planNavWeek(1)">›</button>
         ${S._planWeekOffset!==0?`<button class="btn-today" onclick="planNavWeek(0,true)">Aujourd'hui</button>`:''}
       </div>
+      <div class="plan-view-toggle">
+        <button class="plan-view-btn active" onclick="setPlanView('week')">Semaine</button>
+        <button class="plan-view-btn" onclick="setPlanView('month')">Mois</button>
+      </div>
       <div class="planning-kpis">
-        <div class="pl-kpi" style="background:var(--primary-light)">
-          <div class="pl-kpi-val" style="color:var(--primary)">${weekPlanned}</div>
-          <div style="font-size:11px;color:var(--primary);font-weight:600">Planifiés</div>
-        </div>
-        <div class="pl-kpi" style="background:var(--success-light)">
-          <div class="pl-kpi-val" style="color:var(--success)">${weekDone}</div>
-          <div style="font-size:11px;color:var(--success);font-weight:600">Réalisés</div>
-        </div>
-        <div class="pl-kpi" style="background:${missingCount>0?'var(--warning-light)':'var(--success-light)'}">
-          <div class="pl-kpi-val" style="color:${missingCount>0?'#92400E':'var(--success)'}">
-            ${coverPct}%
-          </div>
-          <div style="font-size:11px;color:${missingCount>0?'#92400E':'var(--success)'};font-weight:600">Couverture</div>
-        </div>
-        ${missingCount>0?`<div class="pl-kpi" style="background:var(--danger-light)">
-          <div class="pl-kpi-val" style="color:var(--danger)">${missingCount}</div>
-          <div style="font-size:11px;color:var(--danger);font-weight:600">Sans RDV</div>
-        </div>`:''}
+        <div class="pl-kpi" style="background:var(--primary-light)"><div class="pl-kpi-val" style="color:var(--primary)">${weekPlanned}</div><div style="font-size:11px;color:var(--primary);font-weight:600">Planifiés</div></div>
+        <div class="pl-kpi" style="background:var(--success-light)"><div class="pl-kpi-val" style="color:var(--success)">${weekDone}</div><div style="font-size:11px;color:var(--success);font-weight:600">Réalisés</div></div>
+        <div class="pl-kpi" style="background:${missingCount>0?'var(--warning-light)':'var(--success-light)'}"><div class="pl-kpi-val" style="color:${missingCount>0?'#92400E':'var(--success)'}">${coverPct}%</div><div style="font-size:11px;color:${missingCount>0?'#92400E':'var(--success)'};font-weight:600">Couverture</div></div>
+        ${missingCount>0?`<div class="pl-kpi" style="background:var(--danger-light)"><div class="pl-kpi-val" style="color:var(--danger)">${missingCount}</div><div style="font-size:11px;color:var(--danger);font-weight:600">Sans RDV</div></div>`:''}
         <button class="btn btn-primary btn-sm" onclick="openRdvModal()">+ RDV</button>
       </div>
     </div>
-
-    <!-- Body: grid + sidebar -->
     <div class="planning-body">
-      <!-- Week grid -->
       <div class="week-grid">
         <div class="week-header">
-          ${days.map(d=>{
-            const rdvCount=allRdvs.filter(r=>r.date===d.iso&&r.statut!=="Annulé").length;
-            const isTd=d.iso===todayIso;
-            return`<div class="wh-day${isTd?' today':''}${d.isWeekend?' weekend':''}">
-              <div class="wh-day-name">${d.date.toLocaleDateString('fr-FR',{weekday:'short'})}</div>
-              <div class="wh-day-num">${d.date.getDate()}</div>
-              <div class="wh-rdv-count">${rdvCount>0?rdvCount+' rdv':''}</div>
-            </div>`;
-          }).join('')}
+          ${days.map(d=>{const rdvCount=allRdvs.filter(r=>r.date===d.iso&&r.statut!=="Annulé").length;const isTd=d.iso===todayIso;return`<div class="wh-day${isTd?' today':''}${d.isWeekend?' weekend':''}"><div class="wh-day-name">${d.date.toLocaleDateString('fr-FR',{weekday:'short'})}</div><div class="wh-day-num">${d.date.getDate()}</div><div class="wh-rdv-count">${rdvCount>0?rdvCount+' rdv':''}</div></div>`;}).join('')}
         </div>
         <div class="week-cols">
           ${days.map(d=>{
@@ -1189,9 +1246,7 @@ function renderPlanning(){
             const isTd=d.iso===todayIso;
             return`<div class="day-col${isTd?' today':''}${d.isWeekend?' weekend':''}">
               ${dayRdvs.map(r=>{
-                const isDone=r.statut==="Réalisé";
-                const isCancelled=r.statut==="Annulé";
-                const hasMeet=!!r.meet_url;
+                const isDone=r.statut==="Réalisé",isCancelled=r.statut==="Annulé",hasMeet=!!r.meet_url;
                 const statusCls=isDone?'done':isCancelled?'cancelled':'';
                 const meetCls=hasMeet&&!isDone&&!isCancelled?'has-meet':'';
                 const rdvIsNew=r.apprenant_id&&!hasCompletedRdv(r.apprenant_id)&&!isDone;
@@ -1203,63 +1258,96 @@ function renderPlanning(){
                     ${hasMeet&&!isCancelled?`<span class="rdv-mini-badge rdv-mini-meet">📹 Meet</span>`:''}
                     <span class="rdv-mini-badge rdv-mini-status ${statusCls}">${r.statut}</span>
                   </div>
-                </div>`;
-              }).join('')}
+                </div>`;}).join('')}
               ${!d.isWeekend?`<button class="btn-add-rdv-day" onclick="openRdvForDate('${d.iso}')">＋</button>`:''}
-            </div>`;
-          }).join('')}
+            </div>`;}).join('')}
         </div>
       </div>
+      ${sidebar.html}
+    </div>
+  </div>`;
+}
 
-      <!-- Sidebar: coverage -->
-      <div class="planning-sidebar">
-        <div class="ps-head">
-          <div class="ps-title">
-            ${missingCount>0?'⚠️':'✅'}
-            ${missingCount>0?`${missingCount} sans RDV cette semaine`:'Tous couverts !'}
-          </div>
-          <div class="ps-sub">1 RDV/semaine requis par apprenant</div>
+function renderPlanningMonth(){
+  const allRdvs=byCharge(S.rdvs);
+  const apprenants=byCharge(S.apprenants);
+  const todayIso=planToday();
+  const cells=getMonthDays(S._planMonthOffset);
+  const monthStart=cells.find(c=>c.inMonth).iso;
+  const monthEnd=[...cells].reverse().find(c=>c.inMonth).iso;
+  const monthDate=new Date(monthStart);
+  const monthLabel=monthDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const DAYS_FR=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+  // KPIs for the month
+  const monthRdvs=allRdvs.filter(r=>r.date>=monthStart&&r.date<=monthEnd);
+  const monthPlanned=monthRdvs.filter(r=>r.statut==="Planifié").length;
+  const monthDone=monthRdvs.filter(r=>r.statut==="Réalisé").length;
+  const coveredIds=new Set(monthRdvs.filter(r=>r.statut!=="Annulé").map(r=>r.apprenant_id));
+  const missingCount=apprenants.filter(a=>!coveredIds.has(a.id)).length;
+  const coverPct=apprenants.length?Math.round((coveredIds.size/apprenants.length)*100):100;
+  const sidebar=buildSidebar(allRdvs,apprenants,coveredIds,'ce mois-ci');
+
+  document.getElementById("page-planning").innerHTML=`
+  <div class="planning-wrap">
+    <div class="planning-topbar">
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="planNavMonth(-1)">‹</button>
+        <div class="week-label" style="min-width:160px;text-align:center">📅 ${monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1)}</div>
+        <button class="week-nav-btn" onclick="planNavMonth(1)">›</button>
+        ${S._planMonthOffset!==0?`<button class="btn-today" onclick="planNavMonth(0,true)">Ce mois</button>`:''}
+      </div>
+      <div class="plan-view-toggle">
+        <button class="plan-view-btn" onclick="setPlanView('week')">Semaine</button>
+        <button class="plan-view-btn active" onclick="setPlanView('month')">Mois</button>
+      </div>
+      <div class="planning-kpis">
+        <div class="pl-kpi" style="background:var(--primary-light)"><div class="pl-kpi-val" style="color:var(--primary)">${monthPlanned}</div><div style="font-size:11px;color:var(--primary);font-weight:600">Planifiés</div></div>
+        <div class="pl-kpi" style="background:var(--success-light)"><div class="pl-kpi-val" style="color:var(--success)">${monthDone}</div><div style="font-size:11px;color:var(--success);font-weight:600">Réalisés</div></div>
+        <div class="pl-kpi" style="background:${missingCount>0?'var(--warning-light)':'var(--success-light)'}"><div class="pl-kpi-val" style="color:${missingCount>0?'#92400E':'var(--success)'}">${coverPct}%</div><div style="font-size:11px;color:${missingCount>0?'#92400E':'var(--success)'};font-weight:600">Couverture</div></div>
+        ${missingCount>0?`<div class="pl-kpi" style="background:var(--danger-light)"><div class="pl-kpi-val" style="color:var(--danger)">${missingCount}</div><div style="font-size:11px;color:var(--danger);font-weight:600">Sans RDV</div></div>`:''}
+        <button class="btn btn-primary btn-sm" onclick="openRdvModal()">+ RDV</button>
+      </div>
+    </div>
+    <div class="planning-body">
+      <div class="week-grid" style="overflow-y:auto">
+        <div class="month-header">
+          ${DAYS_FR.map(d=>`<div class="month-dow">${d}</div>`).join('')}
         </div>
-        <div class="ps-body">
-          ${missingCount===0?`<div class="ps-empty">🎉 Tous les apprenants ont un RDV planifié cette semaine.</div>`:''}
-          ${sidebarGroups.map(g=>`
-            <div class="ps-cohort">
-              <div class="ps-cohort-label">
-                <div class="ps-cohort-dot" style="background:${g.couleur}"></div>
-                ${g.nom}
-                <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--danger)">${g.members.length}</span>
-              </div>
-              ${g.members.map(a=>{const isNew=!hasCompletedRdv(a.id);return`
-                <div class="ps-student-row" onclick="openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">
-                  ${isNew?`<div class="ps-new-dot"></div>`:''}
-                  <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
-                  <div class="ps-name">${a.prenom} ${a.nom}${isNew?` <span class="ps-new-badge">NEW</span>`:''}</div>
-                  <button class="ps-action missing" onclick="event.stopPropagation();openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">+ RDV</button>
-                </div>`;}).join('')}
-            </div>`).join('')}
-          ${apprenants.filter(a=>coveredIds.has(a.id)).length>0?`
-            <div class="ps-cohort" style="margin-top:8px">
-              <div class="ps-cohort-label">
-                <div class="ps-cohort-dot" style="background:var(--success)"></div>
-                Couverts cette semaine
-                <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--success)">${coveredIds.size}</span>
-              </div>
-              ${apprenants.filter(a=>coveredIds.has(a.id)).map(a=>{const isNew=!hasCompletedRdv(a.id);return`
-                <div class="ps-student-row ok">
-                  ${isNew?`<div class="ps-new-dot"></div>`:''}
-                  <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
-                  <div class="ps-name">${a.prenom} ${a.nom}${isNew?` <span class="ps-new-badge">NEW</span>`:''}</div>
-                  <span class="ps-action ok">✓</span>
-                </div>`;}).join('')}
-            </div>`:''}
+        <div class="month-days">
+          ${cells.map(d=>{
+            const dayRdvs=allRdvs.filter(r=>r.date===d.iso&&r.statut!=="Annulé").sort((a,b)=>(a.heure||'').localeCompare(b.heure||''));
+            const isToday=d.iso===todayIso;
+            const MAX_VISIBLE=3;
+            const chips=dayRdvs.slice(0,MAX_VISIBLE).map(r=>{
+              const isDone=r.statut==="Réalisé";
+              const cls=isDone?'done':'planned';
+              const rdvIsNew=r.apprenant_id&&!hasCompletedRdv(r.apprenant_id)&&!isDone;
+              return`<div class="month-rdv-chip ${cls}" onclick="event.stopPropagation();showRdvPop(event,'${r.id}')" title="${r.apprenant_nom||''} — ${r.type||''}">
+                ${r.heure?r.heure+' ':''}<b>${(r.apprenant_nom||'').split(' ')[0]||'—'}</b>${rdvIsNew?' <span style="color:#EF4444;font-size:9px">●</span>':''}
+              </div>`;}).join('');
+            const more=dayRdvs.length>MAX_VISIBLE?`<div class="month-more">+${dayRdvs.length-MAX_VISIBLE} autre${dayRdvs.length-MAX_VISIBLE>1?'s':''}</div>`:'';
+            return`<div class="month-cell${d.inMonth?'':' other-month'}${isToday?' today':''}${d.isWeekend?' weekend':''}" onclick="openRdvForDate('${d.iso}')">
+              <div class="month-cell-num">${d.date.getDate()}${dayRdvs.length>0?`<span style="font-size:9px;font-weight:700;color:var(--primary);background:var(--primary-light);padding:1px 5px;border-radius:8px;margin-left:2px">${dayRdvs.length}</span>`:''}</div>
+              ${chips}${more}
+            </div>`;}).join('')}
         </div>
       </div>
+      ${sidebar.html}
     </div>
   </div>`;
 }
 
 function planNavWeek(delta,reset=false){
   S._planWeekOffset=reset?0:S._planWeekOffset+delta;
+  renderPlanning();
+}
+function planNavMonth(delta,reset=false){
+  S._planMonthOffset=reset?0:S._planMonthOffset+delta;
+  renderPlanning();
+}
+function setPlanView(view){
+  S._planView=view;
   renderPlanning();
 }
 
