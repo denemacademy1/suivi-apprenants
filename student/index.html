@@ -420,6 +420,15 @@ nav::-webkit-scrollbar{width:0}
 .rdv-meet-btn:hover{background:#059669;transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.4)}
 .rdv-meet-btn.disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.35);pointer-events:none}
 .rdv-no-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 24px;margin-bottom:28px;display:flex;align-items:center;gap:14px;color:var(--muted)}
+.rdv-done-card{background:linear-gradient(135deg,#052e16,#064e3b);border:1px solid rgba(16,185,129,.2);border-radius:14px;padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.rdv-done-check{width:36px;height:36px;border-radius:10px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.rdv-done-label{font-size:9px;font-weight:700;color:rgba(52,211,153,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
+.rdv-done-title{font-size:13px;font-weight:700;color:#fff}
+.rdv-done-date{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}
+.rdv-done-badge{margin-left:auto;font-size:10px;font-weight:700;color:#10B981;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+.rdv-next-label{font-size:10px;font-weight:700;color:rgba(52,211,153,.8);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rdv-next-label span{display:inline-block;width:6px;height:6px;border-radius:50%;background:#10B981;animation:rdvPulse 2s infinite}
+@keyframes rdvPulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ─── CHAT ─── */
 .chat-layout{display:flex;height:calc(100vh - 56px);overflow:hidden}
@@ -1023,11 +1032,11 @@ function loadData(){
     // Todos stored in apprenants doc
     S.todos=S.apprenant.todos||[];
     renderTodos();
-    // RDVs — listen to upcoming rendez-vous for this student
-    db.collection("rdvs").onSnapshot(snap=>{
+    // RDVs — all non-cancelled RDVs for this student (including Réalisé for history)
+    db.collection("rdvs").where("apprenant_id","==",S.apprenant.id).onSnapshot(snap=>{
       S.rdvs=snap.docs
         .map(d=>({id:d.id,...d.data()}))
-        .filter(r=>r.apprenant_id===S.apprenant.id&&r.statut!=="Annulé"&&r.statut!=="Réalisé")
+        .filter(r=>r.statut!=="Annulé")
         .sort((a,b)=>a.date.localeCompare(b.date));
       renderHomeRdv();
     },_=>{});
@@ -2173,43 +2182,81 @@ function renderHomeRdv(){
   const el=document.getElementById("home-rdv-section");
   if(!el)return;
   const today=new Date().toISOString().split('T')[0];
-  // Next upcoming RDV (today or future, not cancelled/done)
-  const next=S.rdvs.find(r=>r.date>=today);
-  if(!next){el.innerHTML='';return;}
 
-  const rdvDate=new Date(next.date+'T'+(next.heure||'00:00'));
-  const day=rdvDate.getDate();
-  const mon=rdvDate.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
-  const fullDate=rdvDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-  const isToday=next.date===today;
-  const isTomorrow=next.date===new Date(Date.now()+86400000).toISOString().split('T')[0];
-  const whenLabel=isToday?'Aujourd\'hui':isTomorrow?'Demain':fullDate;
-  const coachName=next.charge_suivi||'votre coach';
-  let meetUrl=next.meet_url||'';
-  if(meetUrl&&!/^https?:\/\//i.test(meetUrl))meetUrl='https://'+meetUrl;
-  const hasMeet=!!meetUrl;
+  // Split: réalisés (history) vs à venir
+  const done=S.rdvs.filter(r=>r.statut==="Réalisé").sort((a,b)=>b.date.localeCompare(a.date));
+  const upcoming=S.rdvs.filter(r=>r.statut!=="Réalisé"&&r.date>=today).sort((a,b)=>a.date.localeCompare(b.date));
+  const lastDone=done[0]||null;
+  const next=upcoming[0]||null;
 
-  el.innerHTML=`<div class="rdv-home-card" style="margin-bottom:28px">
-    <div class="rdv-cal">
-      <div class="rdv-cal-day">${day}</div>
-      <div class="rdv-cal-mon">${mon}</div>
-    </div>
-    <div class="rdv-info">
-      <div class="rdv-label">${isToday?'🔔 RDV aujourd\'hui':'📅 Prochain rendez-vous'}</div>
-      <div class="rdv-type-title">${next.type||'Rendez-vous'}</div>
-      <div class="rdv-details">
-        <span class="rdv-detail-chip">📅 ${whenLabel}</span>
-        ${next.heure?`<span class="rdv-detail-chip">🕐 ${next.heure}</span>`:''}
-        <span class="rdv-detail-chip">👤 ${escHtml(coachName)}</span>
+  let html='';
+
+  // ── Dernier RDV réalisé ──
+  if(lastDone){
+    const dDate=new Date(lastDone.date+'T00:00');
+    const dLabel=dDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    html+=`<div class="rdv-done-card">
+      <div class="rdv-done-check">✅</div>
+      <div style="flex:1;min-width:0">
+        <div class="rdv-done-label">Dernier RDV réalisé</div>
+        <div class="rdv-done-title">${escHtml(lastDone.type||'Rendez-vous')}</div>
+        <div class="rdv-done-date">📅 ${dLabel}${lastDone.heure?` · 🕐 ${lastDone.heure}`:''}${lastDone.charge_suivi?` · 👤 ${escHtml(lastDone.charge_suivi)}`:''}
+        </div>
       </div>
-    </div>
-    ${hasMeet
-      ?`<a href="${escHtml(meetUrl)}" target="_blank" rel="noopener noreferrer" class="rdv-meet-btn">
-          <span style="font-size:18px">📹</span> Rejoindre maintenant
-        </a>`
-      :`<div class="rdv-meet-btn disabled">📹 Lien à venir</div>`
-    }
-  </div>`;
+      <div class="rdv-done-badge">✓ Réalisé</div>
+    </div>`;
+  }
+
+  // ── Prochain RDV ──
+  if(next){
+    const rdvDate=new Date(next.date+'T'+(next.heure||'00:00'));
+    const day=rdvDate.getDate();
+    const mon=rdvDate.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
+    const fullDate=rdvDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const isToday=next.date===today;
+    const isTomorrow=next.date===new Date(Date.now()+86400000).toISOString().split('T')[0];
+    const whenLabel=isToday?'Aujourd\'hui':isTomorrow?'Demain':fullDate;
+    const coachName=next.charge_suivi||'votre coach';
+    let meetUrl=next.meet_url||'';
+    if(meetUrl&&!/^https?:\/\//i.test(meetUrl))meetUrl='https://'+meetUrl;
+    const hasMeet=!!meetUrl;
+    html+=`<div class="rdv-home-card">
+      <div class="rdv-cal">
+        <div class="rdv-cal-day">${day}</div>
+        <div class="rdv-cal-mon">${mon}</div>
+      </div>
+      <div class="rdv-info">
+        <div class="rdv-label"><span></span>${isToday?'🔔 RDV aujourd\'hui':'📅 Prochain rendez-vous'}</div>
+        <div class="rdv-type-title">${escHtml(next.type||'Rendez-vous')}</div>
+        <div class="rdv-details">
+          <span class="rdv-detail-chip">📅 ${whenLabel}</span>
+          ${next.heure?`<span class="rdv-detail-chip">🕐 ${next.heure}</span>`:''}
+          <span class="rdv-detail-chip">👤 ${escHtml(coachName)}</span>
+        </div>
+      </div>
+      ${hasMeet
+        ?`<a href="${escHtml(meetUrl)}" target="_blank" rel="noopener noreferrer" class="rdv-meet-btn">
+            <span style="font-size:18px">📹</span> Rejoindre
+          </a>`
+        :`<div class="rdv-meet-btn disabled">📹 Lien à venir</div>`
+      }
+    </div>`;
+  } else if(!lastDone){
+    // Aucun RDV passé ni à venir
+    html=`<div class="rdv-no-card">
+      <span style="font-size:24px">📅</span>
+      <div><div style="font-weight:600;font-size:13px">Aucun rendez-vous planifié</div>
+      <div style="font-size:12px;margin-top:2px">Votre chargé de suivi planifiera prochainement votre premier RDV.</div></div>
+    </div>`;
+  } else if(!next){
+    // A eu des RDVs mais aucun à venir
+    html+=`<div class="rdv-no-card" style="margin-top:10px">
+      <span style="font-size:20px">🕐</span>
+      <div style="font-size:13px">Prochain RDV à confirmer par votre coach.</div>
+    </div>`;
+  }
+
+  el.innerHTML=`<div style="margin-bottom:28px">${html}</div>`;
 }
 
 // ── HELPERS ──
