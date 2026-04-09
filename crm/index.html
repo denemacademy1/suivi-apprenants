@@ -1907,7 +1907,7 @@ function closeStudentModal(){document.getElementById("mo-student").classList.rem
 async function saveStudent(){
   const prenom=document.getElementById("f-prenom").value.trim();
   const nom=document.getElementById("f-nom").value.trim();
-  const email=document.getElementById("f-email").value.trim();
+  const email=document.getElementById("f-email").value.trim().toLowerCase();
   if(!prenom||!nom||!email){toast("Prénom, nom et email sont requis","error");return;}
   const chargeSelect=document.getElementById("f-charge");
   const csm_id=chargeSelect.value||null;

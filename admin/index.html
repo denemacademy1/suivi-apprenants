@@ -264,6 +264,7 @@ tr:hover td{background:#FAFBFF}
     <div class="nav-item" id="nav-conv" onclick="showPage('conv')"><span class="icon">💬</span>Conversations<span class="nav-unread" id="nav-conv-badge" style="display:none">0</span></div>
     <div class="nav-section">Système</div>
     <div class="nav-item" onclick="showPage('stats')"><span class="icon">📊</span>Statistiques</div>
+    <div class="nav-item" onclick="normalizeAllEmails()"><span class="icon">🔧</span>Normaliser emails</div>
     <div class="nav-section">Commercial</div>
     <div class="nav-item" onclick="window.open('../pipeline/')"><span class="icon">📈</span>Pipeline commercial</div>
     <div class="nav-section">Plateforme</div>
@@ -1028,6 +1029,26 @@ function renderStatsPage(){
 }
 
 // ─── Alerts ───────────────────────────────────────────────
+async function normalizeAllEmails(){
+  if(!confirm('Normaliser tous les emails des apprenants en minuscules ? Cette opération est sûre et recommandée.'))return;
+  try{
+    const snap=await db.collection('apprenants').get();
+    const batch=db.batch();
+    let count=0;
+    snap.docs.forEach(d=>{
+      const email=d.data().email||'';
+      const normalized=email.trim().toLowerCase();
+      if(normalized!==email){
+        batch.update(d.ref,{email:normalized});
+        count++;
+      }
+    });
+    if(count===0){showAlert('Tous les emails sont déjà normalisés ✓');return;}
+    await batch.commit();
+    showAlert(`✅ ${count} email(s) normalisé(s) en minuscules.`);
+  }catch(e){showAlertErr('Erreur : '+e.message);}
+}
+
 function showAlert(msg){
   const el=document.getElementById('alert-ok');
   document.getElementById('alert-msg').textContent=msg;
