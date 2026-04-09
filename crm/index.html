@@ -2442,14 +2442,15 @@ function openCSMCohort(cohortId){
   const count=(cohort?.membres||[]).length;
   document.getElementById("csm-chat-sub").textContent=`Groupe · ${count} apprenant${count>1?'s':''}`;
   document.getElementById("csm-conv-messages").innerHTML=`<div style="text-align:center;padding:24px;color:var(--light);font-size:13px">Chargement…</div>`;
-  const setupMsg=(ref)=>{
-    _csmCohortMsgUnsub=ref.onSnapshot(snap=>{
-      const msgs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
-      renderCSMCohortMessages(msgs,cohortId);
-    });
+  const cohortMsgRef=db.collection("cohorts").doc(cohortId).collection("messages");
+  const handleCohortSnap=(snap)=>{
+    const msgs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+    renderCSMCohortMessages(msgs,cohortId);
   };
-  try{setupMsg(db.collection("cohorts").doc(cohortId).collection("messages").orderBy("timestamp","asc"));}
-  catch(_){setupMsg(db.collection("cohorts").doc(cohortId).collection("messages"));}
+  _csmCohortMsgUnsub=cohortMsgRef.orderBy("timestamp","asc").onSnapshot(handleCohortSnap,_err=>{
+    if(_csmCohortMsgUnsub){_csmCohortMsgUnsub();_csmCohortMsgUnsub=null;}
+    _csmCohortMsgUnsub=cohortMsgRef.onSnapshot(handleCohortSnap,()=>{});
+  });
   document.getElementById("csm-conv-input")?.focus();
 }
 
@@ -2607,18 +2608,19 @@ function openCSMConv(appId){
   // Messages listener
   if(_csmMsgUnsub){_csmMsgUnsub();_csmMsgUnsub=null;}
   document.getElementById("csm-conv-messages").innerHTML=`<div style="text-align:center;padding:24px;color:var(--light);font-size:13px">Chargement…</div>`;
-  const setupMsg=(ref)=>{
-    _csmMsgUnsub=ref.onSnapshot(snap=>{
-      const msgs=snap.docs.map(d=>({id:d.id,...d.data()}))
-        .sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
-      renderCSMMessages(msgs,appId);
-      msgs.filter(m=>m.role==='student'&&!m.lu).forEach(m=>{
-        db.collection("conversations").doc(appId).collection("messages").doc(m.id).update({lu:true}).catch(()=>{});
-      });
+  const convMsgRef=db.collection("conversations").doc(appId).collection("messages");
+  const handleConvSnap=(snap)=>{
+    const msgs=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+    renderCSMMessages(msgs,appId);
+    msgs.filter(m=>m.role==='student'&&!m.lu).forEach(m=>{
+      convMsgRef.doc(m.id).update({lu:true}).catch(()=>{});
     });
   };
-  try{setupMsg(db.collection("conversations").doc(appId).collection("messages").orderBy("timestamp","asc"));}
-  catch(_){setupMsg(db.collection("conversations").doc(appId).collection("messages"));}
+  _csmMsgUnsub=convMsgRef.orderBy("timestamp","asc").onSnapshot(handleConvSnap,_err=>{
+    if(_csmMsgUnsub){_csmMsgUnsub();_csmMsgUnsub=null;}
+    _csmMsgUnsub=convMsgRef.onSnapshot(handleConvSnap,()=>{});
+  });
   document.getElementById("csm-conv-input")?.focus();
 }
 
