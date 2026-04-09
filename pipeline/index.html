@@ -890,6 +890,9 @@ function openLeadModal(id){
       <div class="info-field"><div class="info-label">Date création</div><div class="info-value">${fmtDate(l.dateCreation)}</div></div>
       <div class="info-field"><div class="info-label">Statut setter</div><div class="info-value">${statutSetterBadge(l.statutSetter||'Nouveau')}</div></div>
       <div class="info-field"><div class="info-label">Statut closer</div><div class="info-value">${l.statutCloser?statutCloserBadge(l.statutCloser):'—'}</div></div>
+      <div class="info-field"><div class="info-label">Setter assigné</div><div class="info-value">${escHtml(l.setterAssigne||'—')}</div></div>
+      <div class="info-field"><div class="info-label">Closer assigné</div><div class="info-value">${escHtml(l.closerAssigne||'—')}</div></div>
+      ${l.dateRDV?`<div class="info-field" style="grid-column:1/-1"><div class="info-label">RDV planifié</div><div class="info-value" style="color:#0f9e75;font-weight:700">📅 ${l.dateRDV}${l.heureRDV?' à '+l.heureRDV:''}</div></div>`:''}
     </div>
 
     <div style="font-size:13px;font-weight:700;margin-bottom:12px">📋 Réponses questionnaire</div>
