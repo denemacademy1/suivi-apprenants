@@ -9,413 +9,125 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --primary:#6366f1;--primary-dark:#4f46e5;
-  --teal:#0f9e75;--violet:#8b5cf6;
-  --bg:#07060F;--surface:#0F0E1F;--surface2:#161528;
-  --border:rgba(255,255,255,.07);
-  --text:#F1F0FF;--muted:rgba(255,255,255,.55);
-}
-html,body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
-
-/* ─── BG GRADIENT ─── */
-.bg-glow{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
-.glow-1{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.15) 0%,transparent 70%);top:-200px;left:-100px}
-.glow-2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.1) 0%,transparent 70%);bottom:-100px;right:-100px}
-.glow-3{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(15,158,117,.08) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%)}
-
-/* ─── LOADING ─── */
-#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
-.ld-logo{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 0 40px rgba(99,102,241,.4)}
-.ld-bar{width:180px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
-.ld-fill{height:100%;width:40%;background:linear-gradient(90deg,#6366f1,#8b5cf6);animation:ldA 1.2s ease-in-out infinite}
-@keyframes ldA{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
-.ld-text{font-size:13px;color:var(--muted)}
-
-/* ─── PAGE LOGIN ─── */
-#page-login{display:none;position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:40px;max-width:420px;width:100%;text-align:center;box-shadow:0 0 0 1px rgba(255,255,255,.04),0 32px 64px rgba(0,0,0,.4)}
-.login-logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px;box-shadow:0 0 30px rgba(99,102,241,.35)}
-.login-title{font-size:22px;font-weight:800;background:linear-gradient(135deg,#6366F1,#8B5CF6,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
-.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.6}
-.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 20px;background:#fff;color:#1a1a2e;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.btn-google:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
-.btn-google svg{width:20px;height:20px;flex-shrink:0}
-.login-footer{margin-top:24px;font-size:12px;color:var(--muted);line-height:1.6}
-.login-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.2);color:#fca5a5;border-radius:10px;padding:12px 16px;font-size:13px;margin-top:16px;display:none}
-.login-input{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:.2s;margin-bottom:10px}
-.login-input:focus{border-color:rgba(99,102,241,.5);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
-.login-input::placeholder{color:var(--muted)}
-.btn-email{width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
-.btn-email:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.4)}
-.login-switch{font-size:12px;color:var(--muted);margin-top:14px;text-align:center}
-.login-switch span{color:#818CF8;cursor:pointer;font-weight:600}
-.login-switch span:hover{text-decoration:underline}
-
-/* ─── PAGE HUB ─── */
-#page-hub{display:none;position:relative;z-index:1;min-height:100vh;padding:40px 24px}
-.hub-wrap{max-width:960px;margin:0 auto}
-.hub-header{text-align:center;margin-bottom:48px}
-.hub-logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;box-shadow:0 0 24px rgba(99,102,241,.3)}
-.hub-title{font-size:26px;font-weight:900;background:linear-gradient(135deg,#6366F1,#8B5CF6,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
-.hub-sub{font-size:14px;color:var(--muted)}
-.hub-user-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px}
-.hub-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff}
-.hub-user-name{font-size:13px;color:var(--muted)}
-.btn-logout{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;transition:.15s}
-.btn-logout:hover{background:rgba(255,255,255,.1);color:var(--text)}
-
-/* ─── SPACE CARDS ─── */
-.spaces-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
-.spaces-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
-.space-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;text-decoration:none;display:block}
-.space-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s}
-.space-card:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.3);border-color:rgba(255,255,255,.12)}
-.space-card:hover::before{opacity:1}
-.space-card.violet::before{background:radial-gradient(circle at 30% 30%,rgba(99,102,241,.08),transparent 60%)}
-.space-card.teal::before{background:radial-gradient(circle at 30% 30%,rgba(15,158,117,.08),transparent 60%)}
-.space-card.orange::before{background:radial-gradient(circle at 30% 30%,rgba(245,158,11,.08),transparent 60%)}
-.space-card.red::before{background:radial-gradient(circle at 30% 30%,rgba(239,68,68,.08),transparent 60%)}
-.space-card.purple::before{background:radial-gradient(circle at 30% 30%,rgba(139,92,246,.08),transparent 60%)}
-.space-card.dark::before{background:radial-gradient(circle at 30% 30%,rgba(99,102,241,.06),transparent 60%)}
-.sc-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px;position:relative;z-index:1}
-.sc-icon.violet{background:rgba(99,102,241,.15)}
-.sc-icon.teal{background:rgba(15,158,117,.15)}
-.sc-icon.orange{background:rgba(245,158,11,.15)}
-.sc-icon.red{background:rgba(239,68,68,.15)}
-.sc-icon.purple{background:rgba(139,92,246,.15)}
-.sc-icon.dark{background:rgba(255,255,255,.06)}
-.sc-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;position:relative;z-index:1}
-.sc-label.violet{color:#818CF8}
-.sc-label.teal{color:#34D399}
-.sc-label.orange{color:#FCD34D}
-.sc-label.red{color:#FCA5A5}
-.sc-label.purple{color:#C4B5FD}
-.sc-label.dark{color:var(--muted)}
-.sc-title{font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px;position:relative;z-index:1}
-.sc-desc{font-size:12px;color:var(--muted);line-height:1.5;position:relative;z-index:1}
-.sc-arrow{position:absolute;bottom:20px;right:20px;font-size:18px;color:rgba(255,255,255,.15);transition:.2s;z-index:1}
-.space-card:hover .sc-arrow{color:rgba(255,255,255,.4);transform:translateX(3px)}
-.sc-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:8px;position:relative;z-index:1}
-.sc-badge.violet{background:rgba(99,102,241,.2);color:#818CF8}
-.sc-badge.teal{background:rgba(15,158,117,.2);color:#34D399}
-.sc-badge.orange{background:rgba(245,158,11,.2);color:#FCD34D}
-.sc-badge.red{background:rgba(239,68,68,.2);color:#FCA5A5}
-.sc-badge.purple{background:rgba(139,92,246,.2);color:#C4B5FD}
-.sc-badge.dark{background:rgba(255,255,255,.06);color:var(--muted)}
-
-/* ─── REDIRECT PAGE ─── */
-#page-redirect{display:none;position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center}
-.redirect-icon{font-size:48px;margin-bottom:8px}
-.redirect-title{font-size:18px;font-weight:700;color:var(--text)}
-.redirect-sub{font-size:13px;color:var(--muted)}
-.redirect-bar{width:200px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-top:8px}
-.redirect-fill{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:2px;animation:rdFill 1.5s ease-in-out forwards}
-@keyframes rdFill{from{width:0%}to{width:100%}}
-
-/* ─── RESPONSIVE ─── */
-@media(max-width:768px){
-  .spaces-grid{grid-template-columns:1fr}
-  .hub-header{margin-bottom:32px}
-  #page-hub{padding:24px 16px}
-}
-@media(min-width:769px) and (max-width:1024px){
-  .spaces-grid{grid-template-columns:repeat(2,1fr)}
-}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1E1B4B 0%,#4F46E5 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,0.3)}
+.logo{text-align:center;margin-bottom:32px}
+.logo-icon{width:80px;height:80px;border-radius:16px;margin:0 auto 12px;overflow:hidden}
+.logo-title{font-size:22px;font-weight:800;color:#1E293B}
+.logo-sub{font-size:13px;color:#64748B;margin-top:4px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
+.form-group input{width:100%;padding:10px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;color:#1E293B;outline:none;transition:border .2s;font-family:inherit}
+.form-group input:focus{border-color:#4F46E5;box-shadow:0 0 0 3px #EEF2FF}
+.btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-primary{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.4)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.error{background:#FEE2E2;color:#991B1B;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;display:none}
+.error.show{display:block}
+.footer-note{text-align:center;font-size:12px;color:#94A3B8;margin-top:20px}
+.footer-note a{color:#4F46E5;text-decoration:none;font-weight:500}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#1E1B4B,#4F46E5);display:flex;align-items:center;justify-content:center;z-index:100}
+.loading-overlay.hidden{display:none}
+.loading-spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
 </style>
 </head>
 <body>
 
-<div class="bg-glow">
-  <div class="glow-1"></div>
-  <div class="glow-2"></div>
-  <div class="glow-3"></div>
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
 </div>
 
-<!-- LOADING -->
-<div id="loading">
-  <div class="ld-logo">🎓</div>
-  <div class="ld-text">Vérification de la session…</div>
-  <div class="ld-bar"><div class="ld-fill"></div></div>
-</div>
-
-<!-- PAGE: CONNEXION -->
-<div id="page-login">
-  <div class="login-card">
-    <div class="login-logo">🎓</div>
-    <div class="login-title">Denem Academy</div>
-    <div class="login-sub">Connectez-vous pour accéder à votre espace.</div>
-
-    <input class="login-input" type="email" id="signin-email" placeholder="Email" autocomplete="email">
-    <input class="login-input" type="password" id="signin-pwd" placeholder="Mot de passe" autocomplete="current-password">
-    <button class="btn-email" onclick="signInEmail()">Se connecter</button>
-    <div class="login-switch">Mot de passe oublié ? <span onclick="resetPassword()">Réinitialiser</span></div>
-    <div class="login-error" id="login-error"></div>
-    <div class="login-footer">
-      Pas encore de compte ? <a href="register/" style="color:#818CF8;font-weight:600;text-decoration:none">Créer mon compte →</a><br><br>
-      Accès réservé aux membres inscrits.
-    </div>
+<div class="card" id="card" style="display:none">
+  <div class="logo">
+    <div class="logo-icon"><img src="assets/logo.png" alt="Denem Academy" style="width:80px;height:80px;object-fit:cover;border-radius:16px"></div>
+    <div class="logo-title">Denem Academy</div>
+    <div class="logo-sub">Connectez-vous à votre espace</div>
   </div>
-</div>
 
-<!-- PAGE: HUB ADMIN -->
-<div id="page-hub">
-  <div class="hub-wrap">
-    <div class="hub-header">
-      <div class="hub-logo">🎓</div>
-      <div class="hub-title">Denem Academy</div>
-      <div class="hub-sub">Tableau de bord central — choisissez votre espace</div>
-      <div class="hub-user-row">
-        <div class="hub-avatar" id="hub-avatar">A</div>
-        <div class="hub-user-name" id="hub-name">Admin</div>
-        <button class="btn-logout" onclick="auth.signOut()">Déconnexion</button>
-      </div>
+  <div id="section-login">
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="votre@email.fr" autocomplete="email">
     </div>
-
-    <!-- Espaces LMS -->
-    <div class="spaces-title">Espaces pédagogiques</div>
-    <div class="spaces-grid" id="grid-lms"></div>
-
-    <!-- Espaces commercial -->
-    <div class="spaces-title">Pipeline commercial</div>
-    <div class="spaces-grid" id="grid-sales"></div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="login-pwd" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Se connecter</button>
+    <div class="error" id="login-error"></div>
   </div>
-</div>
 
-<!-- PAGE: REDIRECTION AUTOMATIQUE -->
-<div id="page-redirect">
-  <div class="redirect-icon" id="rd-icon">🎓</div>
-  <div class="redirect-title" id="rd-title">Redirection…</div>
-  <div class="redirect-sub" id="rd-sub">Vous êtes redirigé vers votre espace</div>
-  <div class="redirect-bar"><div class="redirect-fill"></div></div>
+  <div class="footer-note" style="margin-top:14px">
+    Pas encore de compte ? <a href="register/">Créer mon compte</a>
+  </div>
+  <div class="footer-note">
+    Problème de connexion ? <a href="mailto:contact@denemacademy.fr">Contactez-nous</a>
+  </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-//  CONFIGURATION FIREBASE — même config que tous les espaces
-// ══════════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",
-  authDomain: "denem-academy-5de41.firebaseapp.com",
-  projectId: "denem-academy-5de41",
-  storageBucket: "denem-academy-5de41.firebasestorage.app",
-  messagingSenderId: "570632584566",
-  appId: "1:570632584566:web:ea9b964787b40805a7ce57",
-  measurementId: "G-44GC1P93LK"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+const FB={apiKey:"AIzaSyBdNN-iiK5KoBqkX4FX1PJ5CmlWUma8NaU",authDomain:"denem-academy-5de41.firebaseapp.com",projectId:"denem-academy-5de41",storageBucket:"denem-academy-5de41.firebasestorage.app",messagingSenderId:"570632584566",appId:"1:570632584566:web:ea9b964787b40805a7ce57"};
+firebase.initializeApp(FB);
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-// ══════════════════════════════════════════════
-//  ROUTING PAR RÔLE
-// ══════════════════════════════════════════════
-const ROLE_CONFIG = {
-  student: {
-    icon: '🎓', label: 'Apprenant',
-    color: 'violet', redirect: 'student/',
-    redirectTitle: 'Espace Apprenant',
-    redirectSub: 'Accès à vos modules de formation'
-  },
-  csm: {
-    icon: '🏆', label: 'Coach / CSM',
-    color: 'teal', redirect: 'crm/',
-    redirectTitle: 'Espace CSM',
-    redirectSub: 'Tableau de bord de suivi pédagogique'
-  },
-  setter: {
-    icon: '🎯', label: 'Setter',
-    color: 'orange', redirect: 'setting/',
-    redirectTitle: 'Espace Setting',
-    redirectSub: 'Qualification et suivi des leads'
-  },
-  closer: {
-    icon: '🤝', label: 'Closer',
-    color: 'red', redirect: 'closing/',
-    redirectTitle: 'Espace Closing',
-    redirectSub: 'Pipeline et gestion des RDVs'
-  },
-};
+function redirect(role){
+  const map={
+    student:  'student/',
+    csm:      'crm/',
+    admin:    'admin/',
+    setter:   'setting/',
+    closer:   'closing/'
+  };
+  location.href = map[role] || 'student/';
+}
 
-// Définition des cartes pour l'admin hub
-const LMS_SPACES = [
-  {
-    icon:'🎓', color:'violet', label:'LMS',
-    title:'Espace Apprenant', desc:'Modules de formation, quiz, progression et messagerie pour les élèves.',
-    badge:'Apprenants', url:'student/'
-  },
-  {
-    icon:'🏆', color:'teal', label:'CSM / Coach',
-    title:'Suivi Pédagogique', desc:'CRM pédagogique, suivi des RDVs, alertes milestones et messagerie coach.',
-    badge:'Coaches', url:'crm/'
-  },
-  {
-    icon:'⚙️', color:'dark', label:'Admin',
-    title:'Administration LMS', desc:'Gestion des modules, cohortes, apprenants et paramètres de la plateforme.',
-    badge:'Admins', url:'admin/'
-  },
-];
-const SALES_SPACES = [
-  {
-    icon:'🎯', color:'orange', label:'Setting',
-    title:'Espace Setter', desc:'Qualification des leads, scripts d\'appel, gestion des statuts et tentatives.',
-    badge:'Setters', url:'setting/'
-  },
-  {
-    icon:'🤝', color:'purple', label:'Closing',
-    title:'Espace Closer', desc:'Pipeline Kanban, gestion des RDVs, scripts closing et suivi des signatures.',
-    badge:'Closers', url:'closing/'
-  },
-  {
-    icon:'📊', color:'red', label:'Pipeline Admin',
-    title:'Pipeline Commercial', desc:'Vue globale du funnel, stats setters/closers, conversions et projections CA.',
-    badge:'Admins', url:'pipeline/'
-  },
-];
-
-// ══════════════════════════════════════════════
-//  AUTH
-// ══════════════════════════════════════════════
-auth.onAuthStateChanged(async user => {
-  hide('loading');
-
-  if (!user) {
-    show('page-login');
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    try{
+      const doc=await db.collection("users").doc(user.uid).get();
+      redirect(doc.exists ? doc.data().role : 'student');
+    }catch(e){ redirect('student'); }
     return;
   }
-
-  // Récupérer le rôle — vérification invitation obligatoire à la première connexion
-  let role = 'student';
-  try {
-    const docRef = db.collection('users').doc(user.uid);
-    const doc = await docRef.get();
-    if (doc.exists) {
-      // Compte existant → on récupère juste le rôle
-      role = doc.data().role || 'student';
-    } else {
-      // Première connexion → vérifier l'invitation par email
-      const inviteRef = db.collection('invitations').doc(user.email);
-      const invite = await inviteRef.get();
-      if (!invite.exists) {
-        // Aucune invitation → accès refusé
-        await auth.signOut();
-        show('page-login');
-        showError("Votre email n'est pas autorisé. Contactez votre coach pour recevoir un lien d'invitation.");
-        return;
-      }
-      // Invitation trouvée → créer le compte + supprimer l'invitation
-      const inviteData = invite.data();
-      role = inviteData.role || 'student';
-      const nameParts = (user.displayName || '').split(' ');
-      await docRef.set({
-        prenom: inviteData.prenom || nameParts[0] || '',
-        nom: inviteData.nom || nameParts.slice(1).join(' ') || '',
-        email: user.email || '',
-        role,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await inviteRef.delete();
-    }
-  } catch(e) {
-    console.warn('Erreur doc utilisateur:', e);
-  }
-
-  // Admin → hub multi-espace
-  if (role === 'admin') {
-    renderHub(user);
-    show('page-hub');
-    return;
-  }
-
-  // Autres rôles → redirection directe
-  const cfg = ROLE_CONFIG[role];
-  if (cfg) {
-    showRedirect(cfg, role);
-    setTimeout(() => { window.location.href = cfg.redirect; }, 1800);
-  } else {
-    // Rôle inconnu → login avec message
-    show('page-login');
-    showError(`Rôle non reconnu : "${role}". Contactez l'administrateur.`);
-    await auth.signOut();
-  }
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("card").style.display="";
 });
 
-// ══════════════════════════════════════════════
-//  CONNEXION
-// ══════════════════════════════════════════════
-async function signInEmail() {
-  const email = document.getElementById('signin-email').value.trim();
-  const pwd   = document.getElementById('signin-pwd').value;
-  if(!email||!pwd){ showError('Remplissez email et mot de passe.'); return; }
-  try {
-    await auth.signInWithEmailAndPassword(email, pwd);
-  } catch(e) {
-    const msgs = {
-      'auth/user-not-found': 'Aucun compte avec cet email.',
-      'auth/wrong-password': 'Mot de passe incorrect.',
-      'auth/invalid-email':  'Email invalide.',
-      'auth/invalid-credential': 'Email ou mot de passe incorrect.'
-    };
-    showError(msgs[e.code] || e.message);
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pwd=document.getElementById('login-pwd').value;
+  const btn=document.getElementById('btn-login');
+  const err=document.getElementById('login-error');
+  if(!email||!pwd){showError(err,'Veuillez remplir tous les champs');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Connexion…';
+  try{
+    const cred=await auth.signInWithEmailAndPassword(email,pwd);
+    const doc=await db.collection("users").doc(cred.user.uid).get();
+    redirect(doc.exists ? doc.data().role : 'student');
+  }catch(e){
+    showError(err,getFrError(e.code));
+    btn.disabled=false;btn.textContent='Se connecter';
   }
 }
 
-async function resetPassword() {
-  const email = document.getElementById('signin-email').value.trim();
-  if(!email){ showError('Entrez votre email d\'abord.'); return; }
-  try {
-    await auth.sendPasswordResetEmail(email);
-    showError('Email de réinitialisation envoyé ✓');
-    document.getElementById('login-error').style.background = 'rgba(16,185,129,.12)';
-    document.getElementById('login-error').style.color = '#6ee7b7';
-  } catch(e) {
-    showError('Email introuvable.');
-  }
+function showError(el,msg){el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),4000);}
+function getFrError(code){
+  const m={
+    'auth/user-not-found':'Aucun compte avec cet email.',
+    'auth/wrong-password':'Mot de passe incorrect.',
+    'auth/invalid-credential':'Email ou mot de passe incorrect.',
+    'auth/invalid-email':'Email invalide.',
+    'auth/too-many-requests':'Trop de tentatives. Réessayez dans quelques minutes.',
+    'auth/user-disabled':'Ce compte a été désactivé.'
+  };
+  return m[code]||'Une erreur est survenue. Réessayez.';
 }
 
-// ══════════════════════════════════════════════
-//  HUB ADMIN
-// ══════════════════════════════════════════════
-function renderHub(user) {
-  const initials = (user.displayName||'AD').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('hub-avatar').textContent = initials;
-  document.getElementById('hub-name').textContent = user.displayName || user.email;
-
-  document.getElementById('grid-lms').innerHTML   = LMS_SPACES.map(buildSpaceCard).join('');
-  document.getElementById('grid-sales').innerHTML = SALES_SPACES.map(buildSpaceCard).join('');
-}
-
-function buildSpaceCard(s) {
-  return `<a href="${s.url}" class="space-card ${s.color}">
-    <div class="sc-icon ${s.color}">${s.icon}</div>
-    <div class="sc-label ${s.color}">${s.label}</div>
-    <div class="sc-title">${s.title}</div>
-    <div class="sc-desc">${s.desc}</div>
-    <span class="sc-badge ${s.color}">${s.badge}</span>
-    <div class="sc-arrow">→</div>
-  </a>`;
-}
-
-// ══════════════════════════════════════════════
-//  REDIRECTION
-// ══════════════════════════════════════════════
-function showRedirect(cfg, role) {
-  document.getElementById('rd-icon').textContent  = cfg.icon;
-  document.getElementById('rd-title').textContent  = `Bienvenue sur ${cfg.redirectTitle}`;
-  document.getElementById('rd-sub').textContent    = cfg.redirectSub;
-  show('page-redirect');
-}
-
-// ══════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════
-function show(id) { document.getElementById(id).style.display = 'flex'; }
-function hide(id) { document.getElementById(id).style.display = 'none'; }
-function showError(msg) {
-  const el = document.getElementById('login-error');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 </script>
 </body>
 </html>
