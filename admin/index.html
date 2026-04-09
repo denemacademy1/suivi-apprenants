@@ -408,10 +408,14 @@ tr:hover td{background:#FAFBFF}
       <div class="stat-card"><div class="val" id="gs-users">—</div><div class="lbl">Utilisateurs</div></div>
       <div class="stat-card"><div class="val" id="gs-apprenants">—</div><div class="lbl">Apprenants</div></div>
       <div class="stat-card"><div class="val" id="gs-modules">—</div><div class="lbl">Modules</div></div>
-      <div class="stat-card"><div class="val" id="gs-progressions">—</div><div class="lbl">Progressions</div></div>
+      <div class="stat-card"><div class="val" id="gs-progressions">—</div><div class="lbl">Progressions enregistrées</div></div>
     </div>
     <div class="panel">
-      <div class="panel-header"><div class="panel-title">Progression par module</div></div>
+      <div class="panel-header"><div class="panel-title">🎯 Progression en temps réel par apprenant</div></div>
+      <div id="apprenant-progress-table"><div class="empty"><div class="e-icon">👤</div><div class="e-text">Chargement…</div></div></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-header"><div class="panel-title">📊 Progression par module</div></div>
       <div id="module-progress-table"><div class="empty"><div class="e-icon">📊</div><div class="e-text">Chargement…</div></div></div>
     </div>
   </div>
@@ -652,6 +656,7 @@ function initListeners(){
   db.collection("apprenants").orderBy("prenom").onSnapshot(snap=>{
     apprenants=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderApprenants();
+    renderStatsPage();
   });
   db.collection("progressions").onSnapshot(snap=>{
     progressions=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1008,11 +1013,62 @@ function renderStatsPage(){
   document.getElementById('gs-modules').textContent=modules.length;
   document.getElementById('gs-progressions').textContent=progressions.length;
 
+  const totalMods=modules.length;
+
+  // ── Tableau par apprenant ──
+  const apEl=document.getElementById('apprenant-progress-table');
+  if(!apprenants.length){
+    apEl.innerHTML='<div class="empty"><div class="e-icon">👤</div><div class="e-text">Aucun apprenant</div></div>';
+  } else {
+    const rows=apprenants.map(a=>{
+      const myProgs=progressions.filter(p=>p.apprenant_id===a.id);
+      const done=myProgs.filter(p=>p.statut==='completed'||p.statut==='termine').length;
+      const pct=totalMods?Math.round((done/totalMods)*100):0;
+      const scores=myProgs.filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
+      const avg=scores.length?Math.round(scores.reduce((x,y)=>x+y,0)/scores.length):null;
+      const lastTs=myProgs.reduce((max,p)=>{
+        const s=p.completed_at?.seconds||p.updatedAt?.seconds||0;
+        return s>max?s:max;
+      },0);
+      const lastStr=lastTs?new Date(lastTs*1000).toLocaleDateString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+      const barColor=pct>=80?'#10B981':pct>=40?'#F59E0B':'#6366F1';
+      const name=`${a.prenom||''} ${a.nom||''}`.trim()||a.email||a.id;
+      return{name,done,pct,avg,lastStr,barColor,email:a.email||''};
+    }).sort((a,b)=>b.pct-a.pct||a.name.localeCompare(b.name,'fr'));
+
+    apEl.innerHTML=`<table><thead><tr>
+      <th>Apprenant</th>
+      <th>Modules terminés</th>
+      <th style="min-width:160px">Progression</th>
+      <th>Score moyen</th>
+      <th>Dernière activité</th>
+    </tr></thead><tbody>
+    ${rows.map(r=>`<tr>
+      <td>
+        <div style="font-weight:600">${r.name}</div>
+        <div style="font-size:11px;color:#94A3B8">${r.email}</div>
+      </td>
+      <td style="text-align:center;font-weight:700">${r.done} / ${totalMods}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:#E2E8F0;border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${r.pct}%;background:${r.barColor};border-radius:3px;transition:width .4s"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:${r.barColor};min-width:32px">${r.pct}%</span>
+        </div>
+      </td>
+      <td style="text-align:center;font-weight:600">${r.avg!=null?r.avg+'%':'—'}</td>
+      <td style="font-size:12px;color:#64748B">${r.lastStr}</td>
+    </tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  // ── Tableau par module ──
   const el=document.getElementById('module-progress-table');
   if(!modules.length){el.innerHTML='<div class="empty"><div class="e-icon">📊</div><div class="e-text">Aucun module</div></div>';return;}
   el.innerHTML=`<table><thead><tr><th>Module</th><th>Phase</th><th>Apprenants ayant complété</th><th>Score moyen</th><th>Taux réussite</th></tr></thead><tbody>
   ${modules.map(m=>{
-    const progs=progressions.filter(p=>p.id&&p.id.endsWith('_'+m.id));
+    const progs=progressions.filter(p=>p.module_id===m.id);
     const completed=progs.filter(p=>p.statut==='completed'||p.statut==='termine');
     const scores=completed.filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
     const avgScore=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
