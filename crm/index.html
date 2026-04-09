@@ -396,6 +396,21 @@ tbody tr:last-child td{border-bottom:none}
 .btn-conv-mic:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
 .btn-conv-mic.recording{background:#FEE2E2!important;border-color:#EF4444!important;color:#EF4444!important;animation:micPulse .8s ease-in-out infinite}
 @keyframes micPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.msg-delete-btn{background:none;border:none;cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;color:var(--danger);opacity:0;transition:opacity .15s;line-height:1;flex-shrink:0}
+.adm-msg-row:hover .msg-delete-btn{opacity:.45}
+.msg-delete-btn:hover{opacity:1!important;background:var(--danger-light)}
+.vp-bar{padding:9px 16px;background:var(--primary-light);border-top:1px solid var(--border);display:none;align-items:center;gap:8px;flex-shrink:0}
+.vp-bar.active{display:flex}
+.vp-icon{font-size:15px;flex-shrink:0}
+.vp-play{width:28px;height:28px;border-radius:50%;background:var(--primary);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.vp-play:hover{background:#4338CA}
+.vp-wave{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;min-width:40px}
+.vp-wave-fill{height:100%;width:0%;background:var(--primary);border-radius:2px;transition:width .1s linear}
+.vp-dur{font-size:11px;font-weight:700;color:var(--text);min-width:26px}
+.vp-send{padding:6px 12px;background:var(--success);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.vp-send:hover{background:#059669}
+.vp-cancel{padding:6px 10px;background:transparent;border:1px solid var(--danger);border-radius:8px;color:var(--danger);font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+.vp-cancel:hover{background:var(--danger-light)}
 .audio-msg{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;min-width:160px;max-width:100%}
 .adm-msg-row.mine .audio-msg{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff}
 .adm-msg-row.theirs .audio-msg{background:var(--bg);border:1px solid var(--border);color:var(--text)}
@@ -624,6 +639,14 @@ tbody tr:last-child td{border-bottom:none}
                 </div>
               </div>
               <div class="conv-messages" id="csm-conv-messages"></div>
+              <div class="vp-bar" id="csm-vp-bar">
+                <span class="vp-icon">🎙️</span>
+                <button class="vp-play" id="csm-vp-play" onclick="csmVpTogglePlay()">▶</button>
+                <div class="vp-wave"><div class="vp-wave-fill" id="csm-vp-fill"></div></div>
+                <span class="vp-dur" id="csm-vp-dur">0:00</span>
+                <button class="vp-send" onclick="csmVpSend()">✓ Envoyer</button>
+                <button class="vp-cancel" onclick="csmVpCancel()">✕ Annuler</button>
+              </div>
               <div class="conv-input-area">
                 <div class="conv-input-wrap">
                   <textarea class="conv-input" id="csm-conv-input" placeholder="Votre message…" rows="1" onkeydown="csmConvKeydown(event)" oninput="csmConvResize(this)"></textarea>
@@ -2273,6 +2296,7 @@ function renderCSMCohortMessages(msgs,cohortId){
           <div class="adm-msg-header">
             <span class="adm-msg-sender">${csmEsc(name)}${isCoach&&!isMe?' · Coach':''}</span>
             <span class="adm-msg-time">${time}</span>
+            ${isMe?`<button class="msg-delete-btn" onclick="csmDeleteMsg('${m.id}','cohorts','${cohortId}')" title="Supprimer">🗑</button>`:''}
           </div>
           <div class="msg-bubble-row">
             ${m.type==='audio'&&m.audioUrl?csmBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>`}
@@ -2434,6 +2458,7 @@ function renderCSMMessages(msgs,appId){
         <div class="adm-msg-header">
           <span class="adm-msg-sender">${csmEsc(name)}</span>
           <span class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':''}</span>
+          ${isMe?`<button class="msg-delete-btn" onclick="csmDeleteMsg('${m.id}','conversations','${appId}')" title="Supprimer">🗑</button>`:''}
         </div>
         <div class="msg-bubble-row">
           ${m.type==='audio'&&m.audioUrl?csmBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>`}
@@ -2544,6 +2569,7 @@ function csmEsc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 //  VOICE MESSAGES
 // ══════════════════════════════════════
 let _csmRecorder=null,_csmRecChunks=[],_csmRecTimer=null,_csmRecSecs=0;
+let _csmVpBlob=null,_csmVpDuration=0,_csmVpAudio=null;
 function fmtVocDur(s){return Math.floor(s/60)+':'+(String(Math.round(s%60)).padStart(2,'0'));}
 
 async function csmToggleMic(){
@@ -2557,23 +2583,15 @@ async function csmToggleMic(){
   _csmRecChunks=[];
   _csmRecorder=new MediaRecorder(stream);
   _csmRecorder.ondataavailable=e=>{if(e.data.size>0)_csmRecChunks.push(e.data);};
-  _csmRecorder.onstop=async()=>{
+  _csmRecorder.onstop=()=>{
     stream.getTracks().forEach(t=>t.stop());
     clearInterval(_csmRecTimer);
     const btn=document.getElementById('csm-mic-btn');
     if(btn){btn.textContent='🎤';btn.classList.remove('recording');btn.title='Message vocal';}
-    const duration=_csmRecSecs;
     if(_csmRecChunks.length===0)return;
-    const blob=new Blob(_csmRecChunks,{type:_csmRecorder.mimeType||'audio/webm'});
-    const col=_msgTab==='cohort'?'cohorts':'conversations';
-    const pid=_msgTab==='cohort'?_csmCurrentCohortId:_csmCurrentConvId;
-    if(!pid)return;
-    try{
-      const ref=storage.ref(`voice/${col}/${pid}/${Date.now()}.webm`);
-      await ref.put(blob,{contentType:'audio/webm'});
-      const url=await ref.getDownloadURL();
-      await csmSendAudioMsg(url,duration);
-    }catch(e){console.error('Upload vocal',e);alert('Erreur envoi vocal : '+e.message);}
+    _csmVpBlob=new Blob(_csmRecChunks,{type:_csmRecorder.mimeType||'audio/webm'});
+    _csmVpDuration=_csmRecSecs;
+    csmShowVoicePreview();
   };
   _csmRecorder.start();
   _csmRecSecs=0;
@@ -2584,6 +2602,63 @@ async function csmToggleMic(){
     const btn=document.getElementById('csm-mic-btn');
     if(btn)btn.title=`Enregistrement ${fmtVocDur(_csmRecSecs)} — cliquer pour envoyer`;
   },1000);
+}
+
+function csmShowVoicePreview(){
+  if(_csmVpAudio){_csmVpAudio.pause();_csmVpAudio=null;}
+  const bar=document.getElementById('csm-vp-bar');
+  const durEl=document.getElementById('csm-vp-dur');
+  const fill=document.getElementById('csm-vp-fill');
+  const playBtn=document.getElementById('csm-vp-play');
+  if(durEl)durEl.textContent=fmtVocDur(_csmVpDuration);
+  if(fill)fill.style.width='0%';
+  if(playBtn)playBtn.textContent='▶';
+  if(bar)bar.classList.add('active');
+  _csmVpAudio=new Audio(URL.createObjectURL(_csmVpBlob));
+  _csmVpAudio.ontimeupdate=()=>{
+    const pct=_csmVpAudio.duration?_csmVpAudio.currentTime/_csmVpAudio.duration*100:0;
+    if(fill)fill.style.width=pct+'%';
+    if(durEl)durEl.textContent=fmtVocDur(Math.floor(_csmVpAudio.currentTime));
+  };
+  _csmVpAudio.onended=()=>{if(playBtn)playBtn.textContent='▶';};
+}
+function csmVpTogglePlay(){
+  if(!_csmVpAudio)return;
+  const btn=document.getElementById('csm-vp-play');
+  if(_csmVpAudio.paused){_csmVpAudio.play();if(btn)btn.textContent='⏸';}
+  else{_csmVpAudio.pause();if(btn)btn.textContent='▶';}
+}
+async function csmVpSend(){
+  if(!_csmVpBlob)return;
+  if(_csmVpAudio){_csmVpAudio.pause();}
+  const bar=document.getElementById('csm-vp-bar');
+  const btn=document.querySelector('#csm-vp-bar .vp-send');
+  if(btn)btn.textContent='Envoi…';
+  const col=_msgTab==='cohort'?'cohorts':'conversations';
+  const pid=_msgTab==='cohort'?_csmCurrentCohortId:_csmCurrentConvId;
+  if(!pid){if(bar)bar.classList.remove('active');return;}
+  try{
+    const ref=storage.ref(`voice/${col}/${pid}/${Date.now()}.webm`);
+    await ref.put(_csmVpBlob,{contentType:'audio/webm'});
+    const url=await ref.getDownloadURL();
+    await csmSendAudioMsg(url,_csmVpDuration);
+    csmVpCancel();
+  }catch(e){console.error('Upload vocal',e);alert('Erreur : '+e.message);if(btn)btn.textContent='✓ Envoyer';}
+}
+function csmVpCancel(){
+  if(_csmVpAudio){_csmVpAudio.pause();_csmVpAudio=null;}
+  _csmVpBlob=null;_csmVpDuration=0;
+  const bar=document.getElementById('csm-vp-bar');
+  if(bar)bar.classList.remove('active');
+  const btn=document.querySelector('#csm-vp-bar .vp-send');
+  if(btn)btn.textContent='✓ Envoyer';
+}
+
+async function csmDeleteMsg(msgId,coll,parentId){
+  if(!confirm('Supprimer ce message pour tout le monde ?'))return;
+  try{
+    await db.collection(coll).doc(parentId).collection("messages").doc(msgId).delete();
+  }catch(e){console.error('Delete msg',e);}
 }
 
 async function csmSendAudioMsg(url,duration){

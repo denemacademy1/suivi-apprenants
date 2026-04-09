@@ -205,6 +205,21 @@ tr:hover td{background:#FAFBFF}
 .btn-conv-mic:hover{background:#EEF2FF;border-color:#4F46E5;color:#4F46E5}
 .btn-conv-mic.recording{background:#FEE2E2!important;border-color:#EF4444!important;color:#EF4444!important;animation:micPulseAdm .8s ease-in-out infinite}
 @keyframes micPulseAdm{0%,100%{opacity:1}50%{opacity:.4}}
+.msg-delete-btn{background:none;border:none;cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;color:#EF4444;opacity:0;transition:opacity .15s;line-height:1;flex-shrink:0}
+.adm-msg-row:hover .msg-delete-btn{opacity:.45}
+.msg-delete-btn:hover{opacity:1!important;background:#FEE2E2}
+.vp-bar{padding:9px 18px;background:#EEF2FF;border-top:1px solid #E2E8F0;display:none;align-items:center;gap:8px;flex-shrink:0}
+.vp-bar.active{display:flex}
+.vp-icon{font-size:15px;flex-shrink:0}
+.vp-play{width:28px;height:28px;border-radius:50%;background:#4F46E5;border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.vp-play:hover{background:#4338CA}
+.vp-wave{flex:1;height:4px;background:#E2E8F0;border-radius:2px;overflow:hidden;min-width:40px}
+.vp-wave-fill{height:100%;width:0%;background:#4F46E5;border-radius:2px;transition:width .1s linear}
+.vp-dur{font-size:11px;font-weight:700;color:#1E293B;min-width:26px}
+.vp-send{padding:6px 12px;background:#10B981;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.vp-send:hover{background:#059669}
+.vp-cancel{padding:6px 10px;background:transparent;border:1px solid #EF4444;border-radius:8px;color:#EF4444;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+.vp-cancel:hover{background:#FEE2E2}
 .audio-msg{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;min-width:160px;max-width:100%}
 .adm-msg-row.mine .audio-msg{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff}
 .adm-msg-row.theirs .audio-msg{background:#F8FAFC;border:1px solid #E2E8F0;color:#1E293B}
@@ -359,6 +374,14 @@ tr:hover td{background:#FAFBFF}
             </div>
           </div>
           <div class="conv-messages" id="conv-messages"></div>
+          <div class="vp-bar" id="adm-vp-bar">
+            <span class="vp-icon">🎙️</span>
+            <button class="vp-play" id="adm-vp-play" onclick="admVpTogglePlay()">▶</button>
+            <div class="vp-wave"><div class="vp-wave-fill" id="adm-vp-fill"></div></div>
+            <span class="vp-dur" id="adm-vp-dur">0:00</span>
+            <button class="vp-send" onclick="admVpSend()">✓ Envoyer</button>
+            <button class="vp-cancel" onclick="admVpCancel()">✕ Annuler</button>
+          </div>
           <div class="conv-input-area">
             <div class="conv-input-wrap">
               <textarea class="conv-input" id="conv-input" placeholder="Votre réponse…" rows="1" onkeydown="convKeydown(event)" oninput="convAutoResize(this)"></textarea>
@@ -1086,6 +1109,7 @@ function renderAdminCohortMessages(msgs,cohortId){
           <div style="display:flex;align-items:center;gap:6px;padding:0 4px;${isMe?'flex-direction:row-reverse':''}">
             <span style="font-size:11px;font-weight:600;color:#475569">${escHtml(name)}${isStaff&&!isMe?' · Staff':''}</span>
             <span style="font-size:10px;color:#94A3B8">${time}</span>
+            ${isMe?`<button class="msg-delete-btn" style="opacity:0" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0" onclick="admDeleteMsg('${m.id}','cohorts','${cohortId}')" title="Supprimer">🗑</button>`:''}
           </div>
           <div class="adm-msg-row ${isMe?'mine':'theirs'}" style="background:none;border:none;padding:0;box-shadow:none;max-width:100%">${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div style="padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;${isMe?'background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px':'background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)'}">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}</div>
         </div>
@@ -1219,7 +1243,7 @@ function renderConvMessages(msgs,appId){
     html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
       <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
       <div class="adm-msg-body">
-        <div class="adm-msg-sender">${escHtml(name)}</div>
+        <div class="adm-msg-sender">${escHtml(name)}${isMe?`<button class="msg-delete-btn" onclick="admDeleteMsg('${m.id}','conversations','${appId}')" title="Supprimer">🗑</button>`:''}</div>
         ${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="adm-msg-bubble">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}
         <div class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':isMe?' · Envoyé':''}</div>
       </div>
@@ -1275,6 +1299,7 @@ function truncate(str,n){return str.length>n?str.slice(0,n)+'…':str;}
 //  VOICE MESSAGES
 // ══════════════════════════════════════
 let _admRecorder=null,_admRecChunks=[],_admRecTimer=null,_admRecSecs=0;
+let _admVpBlob=null,_admVpDuration=0,_admVpAudio=null;
 function fmtVocDur(s){return Math.floor(s/60)+':'+(String(Math.round(s%60)).padStart(2,'0'));}
 
 async function admToggleMic(){
@@ -1288,23 +1313,15 @@ async function admToggleMic(){
   _admRecChunks=[];
   _admRecorder=new MediaRecorder(stream);
   _admRecorder.ondataavailable=e=>{if(e.data.size>0)_admRecChunks.push(e.data);};
-  _admRecorder.onstop=async()=>{
+  _admRecorder.onstop=()=>{
     stream.getTracks().forEach(t=>t.stop());
     clearInterval(_admRecTimer);
     const btn=document.getElementById('adm-mic-btn');
     if(btn){btn.textContent='🎤';btn.classList.remove('recording');btn.title='Message vocal';}
-    const duration=_admRecSecs;
     if(_admRecChunks.length===0)return;
-    const blob=new Blob(_admRecChunks,{type:_admRecorder.mimeType||'audio/webm'});
-    const col=_adminMsgTab==='cohort'?'cohorts':'conversations';
-    const pid=_adminMsgTab==='cohort'?_adminCurrentCohortId:currentConvId;
-    if(!pid)return;
-    try{
-      const ref=storage.ref(`voice/${col}/${pid}/${Date.now()}.webm`);
-      await ref.put(blob,{contentType:'audio/webm'});
-      const url=await ref.getDownloadURL();
-      await admSendAudioMsg(url,duration);
-    }catch(e){console.error('Upload vocal',e);alert('Erreur envoi vocal : '+e.message);}
+    _admVpBlob=new Blob(_admRecChunks,{type:_admRecorder.mimeType||'audio/webm'});
+    _admVpDuration=_admRecSecs;
+    admShowVoicePreview();
   };
   _admRecorder.start();
   _admRecSecs=0;
@@ -1315,6 +1332,61 @@ async function admToggleMic(){
     const btn=document.getElementById('adm-mic-btn');
     if(btn)btn.title=`Enregistrement ${fmtVocDur(_admRecSecs)} — cliquer pour envoyer`;
   },1000);
+}
+
+function admShowVoicePreview(){
+  if(_admVpAudio){_admVpAudio.pause();_admVpAudio=null;}
+  const bar=document.getElementById('adm-vp-bar');
+  const durEl=document.getElementById('adm-vp-dur');
+  const fill=document.getElementById('adm-vp-fill');
+  const playBtn=document.getElementById('adm-vp-play');
+  if(durEl)durEl.textContent=fmtVocDur(_admVpDuration);
+  if(fill)fill.style.width='0%';
+  if(playBtn)playBtn.textContent='▶';
+  if(bar)bar.classList.add('active');
+  _admVpAudio=new Audio(URL.createObjectURL(_admVpBlob));
+  _admVpAudio.ontimeupdate=()=>{
+    const pct=_admVpAudio.duration?_admVpAudio.currentTime/_admVpAudio.duration*100:0;
+    if(fill)fill.style.width=pct+'%';
+    if(durEl)durEl.textContent=fmtVocDur(Math.floor(_admVpAudio.currentTime));
+  };
+  _admVpAudio.onended=()=>{if(playBtn)playBtn.textContent='▶';};
+}
+function admVpTogglePlay(){
+  if(!_admVpAudio)return;
+  const btn=document.getElementById('adm-vp-play');
+  if(_admVpAudio.paused){_admVpAudio.play();if(btn)btn.textContent='⏸';}
+  else{_admVpAudio.pause();if(btn)btn.textContent='▶';}
+}
+async function admVpSend(){
+  if(!_admVpBlob)return;
+  if(_admVpAudio){_admVpAudio.pause();}
+  const btn=document.querySelector('#adm-vp-bar .vp-send');
+  if(btn)btn.textContent='Envoi…';
+  const col=_adminMsgTab==='cohort'?'cohorts':'conversations';
+  const pid=_adminMsgTab==='cohort'?_adminCurrentCohortId:currentConvId;
+  if(!pid){admVpCancel();return;}
+  try{
+    const ref=storage.ref(`voice/${col}/${pid}/${Date.now()}.webm`);
+    await ref.put(_admVpBlob,{contentType:'audio/webm'});
+    const url=await ref.getDownloadURL();
+    await admSendAudioMsg(url,_admVpDuration);
+    admVpCancel();
+  }catch(e){console.error('Upload vocal',e);alert('Erreur : '+e.message);if(btn)btn.textContent='✓ Envoyer';}
+}
+function admVpCancel(){
+  if(_admVpAudio){_admVpAudio.pause();_admVpAudio=null;}
+  _admVpBlob=null;_admVpDuration=0;
+  const bar=document.getElementById('adm-vp-bar');
+  if(bar)bar.classList.remove('active');
+  const btn=document.querySelector('#adm-vp-bar .vp-send');
+  if(btn)btn.textContent='✓ Envoyer';
+}
+
+async function admDeleteMsg(msgId,coll,parentId){
+  if(!confirm('Supprimer ce message pour tout le monde ?'))return;
+  try{await db.collection(coll).doc(parentId).collection("messages").doc(msgId).delete();}
+  catch(e){console.error('Delete msg',e);}
 }
 
 async function admSendAudioMsg(url,duration){

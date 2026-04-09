@@ -542,6 +542,21 @@ nav::-webkit-scrollbar{width:0}
 .btn-mic:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.3);color:#818CF8}
 .btn-mic.recording{background:rgba(239,68,68,.12)!important;border-color:#EF4444!important;color:#EF4444!important;animation:micPulse .8s ease-in-out infinite}
 @keyframes micPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.msg-delete-btn{background:none;border:none;cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;color:#EF4444;opacity:0;transition:opacity .15s;line-height:1;flex-shrink:0}
+.msg-row:hover .msg-delete-btn{opacity:.45}
+.msg-delete-btn:hover{opacity:1!important;background:rgba(239,68,68,.1)}
+.vp-bar{padding:9px 16px;background:rgba(99,102,241,.08);border-top:1px solid rgba(99,102,241,.15);display:none;align-items:center;gap:8px;flex-shrink:0}
+.vp-bar.active{display:flex}
+.vp-icon{font-size:15px;flex-shrink:0}
+.vp-play{width:28px;height:28px;border-radius:50%;background:#6366F1;border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.vp-play:hover{background:#4F46E5}
+.vp-wave{flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;min-width:40px}
+.vp-wave-fill{height:100%;width:0%;background:#818CF8;border-radius:2px;transition:width .1s linear}
+.vp-dur{font-size:11px;font-weight:700;color:var(--text);min-width:26px}
+.vp-send{padding:6px 12px;background:#10B981;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.vp-send:hover{background:#059669}
+.vp-cancel{padding:6px 10px;background:transparent;border:1px solid #EF4444;border-radius:8px;color:#EF4444;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+.vp-cancel:hover{background:rgba(239,68,68,.08)}
 .audio-msg{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;min-width:160px;max-width:100%}
 .msg-row.mine .audio-msg{background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff}
 .msg-row.theirs .audio-msg{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
@@ -840,6 +855,14 @@ nav::-webkit-scrollbar{width:0}
                 <div class="chat-empty-icon">💬</div>
                 <div class="chat-empty-title">Chargement…</div>
               </div>
+            </div>
+            <div class="vp-bar" id="stu-vp-bar">
+              <span class="vp-icon">🎙️</span>
+              <button class="vp-play" id="stu-vp-play" onclick="stuVpTogglePlay()">▶</button>
+              <div class="vp-wave"><div class="vp-wave-fill" id="stu-vp-fill"></div></div>
+              <span class="vp-dur" id="stu-vp-dur">0:00</span>
+              <button class="vp-send" onclick="stuVpSend()">✓ Envoyer</button>
+              <button class="vp-cancel" onclick="stuVpCancel()">✕ Annuler</button>
             </div>
             <div class="chat-input-area" id="chat-input-area">
               <button class="btn-victory-chat" id="btn-victory-chat" onclick="openVictoryModal()" style="display:none">🏆 Victoire</button>
@@ -1974,6 +1997,7 @@ function renderPrivateMessages(msgs){
         <div class="msg-header">
           <span class="msg-sender">${name}</span>
           <span class="msg-time">${time}</span>
+          ${isMe?`<button class="msg-delete-btn" onclick="stuDeleteMsg('${m.id}','conversations','${S.apprenant.id}')" title="Supprimer">🗑</button>`:''}
         </div>
         <div class="msg-bubble-row">
           ${m.type==='audio'&&m.audioUrl?stuBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="msg-bubble">${escHtml(m.text||'')}</div>`}
@@ -2042,6 +2066,7 @@ function renderCohortMessages(msgs){
           <div class="msg-header">
             <span class="msg-sender">${name}${isCSM?' · Coach':''}</span>
             <span class="msg-time">${time}</span>
+            ${isMe?`<button class="msg-delete-btn" onclick="stuDeleteMsg('${m.id}','cohorts','${S.cohort.id}')" title="Supprimer">🗑</button>`:''}
           </div>
           <div class="msg-bubble-row">
             ${m.type==='audio'&&m.audioUrl?stuBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="msg-bubble">${escHtml(m.text||'')}</div>`}
@@ -2236,6 +2261,7 @@ function escHtml(str){
 //  VOICE MESSAGES
 // ══════════════════════════════════════
 let _stuRecorder=null,_stuRecChunks=[],_stuRecTimer=null,_stuRecSecs=0;
+let _stuVpBlob=null,_stuVpDuration=0,_stuVpAudio=null;
 function fmtVocDur(s){return Math.floor(s/60)+':'+(String(Math.round(s%60)).padStart(2,'0'));}
 
 async function stuToggleMic(){
@@ -2249,23 +2275,15 @@ async function stuToggleMic(){
   _stuRecChunks=[];
   _stuRecorder=new MediaRecorder(stream);
   _stuRecorder.ondataavailable=e=>{if(e.data.size>0)_stuRecChunks.push(e.data);};
-  _stuRecorder.onstop=async()=>{
+  _stuRecorder.onstop=()=>{
     stream.getTracks().forEach(t=>t.stop());
     clearInterval(_stuRecTimer);
     const btn=document.getElementById('stu-mic-btn');
     if(btn){btn.textContent='🎤';btn.classList.remove('recording');btn.title='Message vocal';}
-    const duration=_stuRecSecs;
     if(_stuRecChunks.length===0)return;
-    const blob=new Blob(_stuRecChunks,{type:_stuRecorder.mimeType||'audio/webm'});
-    const col=S.chatTab==='cohort'&&S.cohort?'cohorts':'conversations';
-    const pid=S.chatTab==='cohort'&&S.cohort?S.cohort.id:(S.apprenant?.id||null);
-    if(!pid)return;
-    try{
-      const ref=storage.ref(`voice/${col}/${pid}/${Date.now()}.webm`);
-      await ref.put(blob,{contentType:'audio/webm'});
-      const url=await ref.getDownloadURL();
-      await stuSendAudioMsg(url,duration);
-    }catch(e){console.error('Upload vocal',e);alert('Erreur envoi vocal : '+e.message);}
+    _stuVpBlob=new Blob(_stuRecChunks,{type:_stuRecorder.mimeType||'audio/webm'});
+    _stuVpDuration=_stuRecSecs;
+    stuShowVoicePreview();
   };
   _stuRecorder.start();
   _stuRecSecs=0;
@@ -2276,6 +2294,61 @@ async function stuToggleMic(){
     const btn=document.getElementById('stu-mic-btn');
     if(btn)btn.title=`Enregistrement ${fmtVocDur(_stuRecSecs)} — cliquer pour envoyer`;
   },1000);
+}
+
+function stuShowVoicePreview(){
+  if(_stuVpAudio){_stuVpAudio.pause();_stuVpAudio=null;}
+  const bar=document.getElementById('stu-vp-bar');
+  const durEl=document.getElementById('stu-vp-dur');
+  const fill=document.getElementById('stu-vp-fill');
+  const playBtn=document.getElementById('stu-vp-play');
+  if(durEl)durEl.textContent=fmtVocDur(_stuVpDuration);
+  if(fill)fill.style.width='0%';
+  if(playBtn)playBtn.textContent='▶';
+  if(bar)bar.classList.add('active');
+  _stuVpAudio=new Audio(URL.createObjectURL(_stuVpBlob));
+  _stuVpAudio.ontimeupdate=()=>{
+    const pct=_stuVpAudio.duration?_stuVpAudio.currentTime/_stuVpAudio.duration*100:0;
+    if(fill)fill.style.width=pct+'%';
+    if(durEl)durEl.textContent=fmtVocDur(Math.floor(_stuVpAudio.currentTime));
+  };
+  _stuVpAudio.onended=()=>{if(playBtn)playBtn.textContent='▶';};
+}
+function stuVpTogglePlay(){
+  if(!_stuVpAudio)return;
+  const btn=document.getElementById('stu-vp-play');
+  if(_stuVpAudio.paused){_stuVpAudio.play();if(btn)btn.textContent='⏸';}
+  else{_stuVpAudio.pause();if(btn)btn.textContent='▶';}
+}
+async function stuVpSend(){
+  if(!_stuVpBlob)return;
+  if(_stuVpAudio){_stuVpAudio.pause();}
+  const btn=document.querySelector('#stu-vp-bar .vp-send');
+  if(btn)btn.textContent='Envoi…';
+  const col=S.chatTab==='cohort'&&S.cohort?'cohorts':'conversations';
+  const pid=S.chatTab==='cohort'&&S.cohort?S.cohort.id:(S.apprenant?.id||null);
+  if(!pid){stuVpCancel();return;}
+  try{
+    const ref=storage.ref(`voice/${col}/${pid}/${Date.now()}.webm`);
+    await ref.put(_stuVpBlob,{contentType:'audio/webm'});
+    const url=await ref.getDownloadURL();
+    await stuSendAudioMsg(url,_stuVpDuration);
+    stuVpCancel();
+  }catch(e){console.error('Upload vocal',e);alert('Erreur : '+e.message);if(btn)btn.textContent='✓ Envoyer';}
+}
+function stuVpCancel(){
+  if(_stuVpAudio){_stuVpAudio.pause();_stuVpAudio=null;}
+  _stuVpBlob=null;_stuVpDuration=0;
+  const bar=document.getElementById('stu-vp-bar');
+  if(bar)bar.classList.remove('active');
+  const btn=document.querySelector('#stu-vp-bar .vp-send');
+  if(btn)btn.textContent='✓ Envoyer';
+}
+
+async function stuDeleteMsg(msgId,coll,parentId){
+  if(!confirm('Supprimer ce message pour tout le monde ?'))return;
+  try{await db.collection(coll).doc(parentId).collection("messages").doc(msgId).delete();}
+  catch(e){console.error('Delete msg',e);}
 }
 
 async function stuSendAudioMsg(url,duration){
