@@ -654,16 +654,7 @@ function calcScore(q={}) {
 //  AUTH
 // ══════════════════════════════════════════════
 auth.onAuthStateChanged(async user => {
-  if (!user) {
-    document.getElementById('loading').innerHTML = `
-      <div class="ld-logo">🔒</div>
-      <div style="text-align:center;padding:0 20px">
-        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Accès restreint</div>
-        <div style="font-size:13px;color:#64748b;margin-bottom:20px">Espace réservé aux closers</div>
-        <button onclick="signIn()" style="background:#0f9e75;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Se connecter avec Google</button>
-      </div>`;
-    return;
-  }
+  if (!user) { location.href = '../'; return; }
   const userDoc = await db.collection('users').doc(user.uid).get();
   if (!userDoc.exists) {
     document.getElementById('loading').innerHTML = `<div style="text-align:center;padding:20px"><div style="font-size:40px">🚫</div><div>Compte non configuré.</div></div>`;
@@ -681,10 +672,6 @@ auth.onAuthStateChanged(async user => {
   initApp();
 });
 
-async function signIn() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  await auth.signInWithPopup(provider);
-}
 
 // ══════════════════════════════════════════════
 //  INITIALISATION
