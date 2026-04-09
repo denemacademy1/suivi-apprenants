@@ -669,16 +669,34 @@ table.lead-table{width:100%;border-collapse:collapse}
 
 <!-- MODAL: QUALIFIER -->
 <div class="modal-backdrop" id="modal-qualifier">
-  <div class="confirm-modal">
-    <div class="confirm-title">✅ Qualifier ce lead</div>
-    <div class="confirm-text">Ce lead sera marqué comme <strong>Qualifié</strong> et transféré automatiquement vers l'espace Closing. Le closer recevra une notification.</div>
-    <div style="margin-bottom:16px">
-      <label class="form-label" style="margin-bottom:6px;display:block">Note pour le closer (optionnel)</label>
-      <textarea class="form-textarea" id="qualify-note" placeholder="Résumé de l'échange, points importants…" style="width:100%"></textarea>
+  <div class="confirm-modal" style="max-width:480px">
+    <div class="confirm-title">✅ Qualifier & fixer le RDV</div>
+    <div class="confirm-text">Le lead sera transféré au closer avec le RDV déjà planifié.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+      <div>
+        <label class="form-label" style="margin-bottom:6px;display:block">Closer assigné *</label>
+        <select class="form-select" id="qualify-closer" style="width:100%">
+          <option value="">Chargement…</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="form-label" style="margin-bottom:6px;display:block">Date du RDV *</label>
+          <input type="date" class="form-input" id="qualify-date" style="width:100%">
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:6px;display:block">Heure *</label>
+          <input type="time" class="form-input" id="qualify-heure" style="width:100%">
+        </div>
+      </div>
+      <div>
+        <label class="form-label" style="margin-bottom:6px;display:block">Note pour le closer (optionnel)</label>
+        <textarea class="form-textarea" id="qualify-note" placeholder="Résumé de l'échange, points clés…" style="width:100%;min-height:60px"></textarea>
+      </div>
     </div>
     <div class="confirm-btns">
       <button class="btn-cancel" onclick="closeModal('modal-qualifier')">Annuler</button>
-      <button class="btn-confirm-ok" onclick="confirmQualify()">✅ Qualifier & envoyer au closer</button>
+      <button class="btn-confirm-ok" onclick="confirmQualify()">✅ Confirmer & transférer</button>
     </div>
   </div>
 </div>
@@ -1429,31 +1447,55 @@ async function saveNote(id) {
   } catch(e) { toast('Erreur','error'); }
 }
 
-function openQualify(id) {
+async function openQualify(id) {
   S.pendingQualifyId = id;
   document.getElementById('qualify-note').value = '';
+  document.getElementById('qualify-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('qualify-heure').value = '';
+  // Charger la liste des closers
+  const sel = document.getElementById('qualify-closer');
+  sel.innerHTML = '<option value="">Sélectionner un closer…</option>';
+  try {
+    const snap = await db.collection('users').where('role','in',['closer','admin']).get();
+    snap.forEach(d => {
+      const u = d.data();
+      const name = `${u.prenom||''} ${u.nom||''}`.trim();
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  } catch(e) { sel.innerHTML = '<option value="">Saisir manuellement ci-dessous</option>'; }
   openModal('modal-qualifier');
 }
 
 async function confirmQualify() {
   const id = S.pendingQualifyId;
   if (!id) return;
+  const closer = document.getElementById('qualify-closer').value.trim();
+  const date = document.getElementById('qualify-date').value;
+  const heure = document.getElementById('qualify-heure').value;
   const note = document.getElementById('qualify-note').value.trim();
+  if (!closer) { toast('Veuillez sélectionner un closer','error'); return; }
+  if (!date || !heure) { toast('Veuillez choisir une date et une heure pour le RDV','error'); return; }
+  const l = S.leads.find(x=>x.id===id);
   try {
     await db.collection('leads').doc(id).update({
       statutSetter: 'Qualifié',
-      statutCloser: 'En attente RDV',
+      statutCloser: 'RDV planifié',
+      closerAssigne: closer,
+      dateRDV: date,
+      heureRDV: heure,
       setterAssigne: myFullName(),
       dateLastContactSetter: TS(),
-      noteSetter: note || (S.leads.find(l=>l.id===id)?.noteSetter||''),
+      noteSetter: note || (l?.noteSetter||''),
       updatedAt: TS()
     });
-    // Notification pour les closers
-    const l = S.leads.find(x=>x.id===id);
     await db.collection('notifications').add({
       type: 'lead_qualifie',
-      message: `Nouveau lead qualifié : ${l?.prenom} ${l?.nom} — Score ${l?.scoreQualification}/10 — RDV à planifier`,
+      message: `RDV planifié : ${l?.prenom} ${l?.nom} — ${date} à ${heure} — Score ${l?.scoreQualification}/10`,
       destinataireRole: 'closer',
+      destinataire: closer,
       lu: false,
       timestamp: TS(),
       leadId: id,
@@ -1461,7 +1503,7 @@ async function confirmQualify() {
     });
     closeModal('modal-qualifier');
     closeModal('modal-lead');
-    toast(`✅ ${l?.prenom} ${l?.nom} qualifié et envoyé au closer`,'success');
+    toast(`✅ ${l?.prenom} ${l?.nom} → ${closer} — RDV le ${date} à ${heure}`,'success');
   } catch(e) { toast('Erreur lors de la qualification','error'); console.error(e); }
 }
 

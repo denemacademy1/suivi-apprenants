@@ -293,13 +293,6 @@ table.lead-table{width:100%;border-collapse:collapse}
     <div class="sb-nav-item" data-page="script" onclick="showPage('script')">
       <span class="sb-nav-icon">📝</span>Script closing
     </div>
-    <div class="sb-section-label" style="margin-top:8px">Plateforme</div>
-    <div class="sb-nav-item" onclick="window.location.href='../'" style="opacity:.7">
-      <span class="sb-nav-icon">🏠</span>Accueil
-    </div>
-    <div class="sb-nav-item" onclick="window.open('../pipeline/')" style="opacity:.7">
-      <span class="sb-nav-icon">📊</span>Pipeline admin
-    </div>
   </nav>
   <div class="sb-bottom">
     <div class="sb-user">
@@ -605,11 +598,11 @@ const S = {
 };
 
 const KANBAN_COLS = [
-  {id:'En attente RDV', label:'En attente RDV', color:'#3b82f6'},
   {id:'RDV planifié',   label:'RDV planifié',   color:'#f59e0b'},
   {id:'RDV passé',      label:'RDV passé',       color:'#8b5cf6'},
   {id:'Signé',          label:'Signé',           color:'#10b981'},
   {id:'Relance',        label:'Relance',         color:'#64748b'},
+  {id:'Refus',          label:'Refus',           color:'#ef4444'},
 ];
 
 // ══════════════════════════════════════════════
@@ -724,9 +717,10 @@ function initApp() {
 
 function updateNotifBadge() {
   const me = myFullName().toLowerCase();
-  const waiting = S.leads.filter(l=>l.statutCloser==='En attente RDV'&&(!l.closerAssigne||l.closerAssigne.toLowerCase()===me)).length;
+  const today = todayISO();
+  const rdvsToday = S.leads.filter(l=>l.closerAssigne&&l.closerAssigne.toLowerCase()===me&&l.dateRDV&&fmtDateISO(l.dateRDV)===today).length;
   const badge = document.getElementById('badge-rdvs');
-  if (waiting > 0) { badge.style.display='inline'; badge.textContent=waiting; }
+  if (rdvsToday > 0) { badge.style.display='inline'; badge.textContent=rdvsToday; }
   else badge.style.display='none';
 }
 
@@ -794,7 +788,7 @@ function fmtDateISO(ts) {
 function renderToday() {
   const today = todayISO();
   const todayLeads = S.leads
-    .filter(l=>l.dateRDV&&fmtDateISO(l.dateRDV)===today&&['RDV planifié','En attente RDV'].includes(l.statutCloser||'En attente RDV'))
+    .filter(l=>l.dateRDV&&fmtDateISO(l.dateRDV)===today&&l.statutCloser==='RDV planifié'&&isMyLead(l))
     .sort((a,b)=>(a.heureRDV||'').localeCompare(b.heureRDV||''));
 
   document.getElementById('today-count').textContent=todayLeads.length;
@@ -838,7 +832,7 @@ function renderRdvTable() {
   }
   tbody.innerHTML=my.map(l=>{
     const sc=l.scoreQualification||0;
-    const st=l.statutCloser||'En attente RDV';
+    const st=l.statutCloser||'RDV planifié';
     return`<tr>
       <td><div class="lead-name">${escHtml(l.prenom)} ${escHtml(l.nom)}</div><div class="lead-email">${escHtml(l.email||'')}</div></td>
       <td><span class="score-badge ${scoreClass(sc)}">${sc}</span></td>
@@ -864,12 +858,8 @@ let _dragId = null;
 function myLeadsForKanban(col) {
   const me = myFullName().toLowerCase();
   return S.leads.filter(l => {
-    const statut = l.statutCloser || 'En attente RDV';
+    const statut = l.statutCloser || 'RDV planifié';
     if (statut !== col) return false;
-    if (col === 'En attente RDV') {
-      // pool dispo (non assigné) + mes leads déjà en attente
-      return !l.closerAssigne || l.closerAssigne.toLowerCase() === me;
-    }
     return (l.closerAssigne||'').toLowerCase() === me;
   });
 }
@@ -971,7 +961,7 @@ function openLead(id, tabId='tab-profil') {
   document.getElementById('modal-lead-sub').textContent=l.email||'';
   document.getElementById('modal-lead-badges').innerHTML=`
     <span class="score-badge ${scoreClass(sc)}">${sc}/10</span>
-    <span class="statut-badge ${statutCloserCss(l.statutCloser||'En attente RDV')}">${l.statutCloser||'En attente RDV'}</span>`;
+    <span class="statut-badge ${statutCloserCss(l.statutCloser||'RDV planifié')}">${l.statutCloser||'RDV planifié'}</span>`;
 
   // TAB PROFIL
   document.getElementById('tab-profil').innerHTML=`
