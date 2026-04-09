@@ -420,6 +420,20 @@ nav::-webkit-scrollbar{width:0}
 .rdv-meet-btn:hover{background:#059669;transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.4)}
 .rdv-meet-btn.disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.35);pointer-events:none}
 .rdv-no-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 24px;margin-bottom:28px;display:flex;align-items:center;gap:14px;color:var(--muted)}
+/* RDV SUIVI SECTION */
+.rdv-suivi-wrap{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px 22px;margin-bottom:28px}
+.rdv-suivi-title{font-size:12px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.rdv-suivi-prog{height:6px;background:rgba(255,255,255,.08);border-radius:3px;margin-bottom:16px;overflow:hidden}
+.rdv-suivi-prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#6366F1,#8B5CF6);transition:width .5s}
+.rdv-suivi-steps{display:flex;gap:0;position:relative}
+.rdv-suivi-steps::before{content:'';position:absolute;top:14px;left:14px;right:14px;height:2px;background:rgba(255,255,255,.08);z-index:0}
+.rdv-suivi-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;z-index:1}
+.rdv-suivi-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);transition:all .3s;flex-shrink:0}
+.rdv-suivi-dot.done{background:#10B981;border-color:#10B981;color:#fff}
+.rdv-suivi-dot.next{background:#6366F1;border-color:#6366F1;color:#fff;animation:pulse 2s infinite}
+.rdv-suivi-step-label{font-size:9px;color:rgba(255,255,255,.3);text-align:center;font-weight:600;line-height:1.3;max-width:52px}
+.rdv-suivi-step-label.done{color:rgba(16,185,129,.8)}
+.rdv-suivi-step-label.next{color:rgba(99,102,241,.9)}
 .rdv-done-card{background:linear-gradient(135deg,#052e16,#064e3b);border:1px solid rgba(16,185,129,.2);border-radius:14px;padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
 .rdv-done-check{width:36px;height:36px;border-radius:10px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .rdv-done-label{font-size:9px;font-weight:700;color:rgba(52,211,153,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
@@ -684,6 +698,9 @@ nav::-webkit-scrollbar{width:0}
             </div>
           </div>
 
+          <!-- RDVs de suivi -->
+          <div id="home-rdv-suivi-section"></div>
+
           <!-- Quick notes + todos -->
           <div class="home-quick-row" id="home-quick-row">
             <div class="quick-card" onclick="showPage('notes')" id="home-last-note">
@@ -889,9 +906,18 @@ const BADGES_DEF={
 
 // XP par action
 const XP_MODULE=100;
-const XP_QUIZ_PERFECT=50;   // ≥90%
-const XP_QUIZ_GREAT=25;     // ≥80%
+const XP_QUIZ_PERFECT=50;
+const XP_QUIZ_GREAT=25;
 const XP_DAILY=10;
+const RDV_SUIVI=[
+  {num:1,jour:1, nom:"Kick off",                   icon:"🚀"},
+  {num:2,jour:15,nom:"Suivi J15",                  icon:"📞"},
+  {num:3,jour:30,nom:"Suivi J30",                  icon:"📞"},
+  {num:4,jour:45,nom:"Suivi J45",                  icon:"📞"},
+  {num:5,jour:60,nom:"Suivi J60",                  icon:"📞"},
+  {num:6,jour:75,nom:"Suivi J75",                  icon:"📞"},
+  {num:7,jour:90,nom:"Certification",              icon:"🎓"},
+];
 
 // ── AUTH ──
 auth.onAuthStateChanged(async user=>{
@@ -1059,6 +1085,7 @@ function renderAll(){
   updateStreakChip();
   renderHomeQuick();
   renderHomeRdv();
+  renderRdvSuivi();
 }
 
 // ── PROGRESS ──
@@ -2262,6 +2289,38 @@ function renderHomeRdv(){
   }
 
   el.innerHTML=`<div style="margin-bottom:28px">${html}</div>`;
+}
+
+// ── RDV SUIVI TIMELINE ──
+function renderRdvSuivi(){
+  const el=document.getElementById("home-rdv-suivi-section");
+  if(!el)return;
+  // Réalisés triés par date
+  const done=S.rdvs.filter(r=>r.statut==="Réalisé").sort((a,b)=>a.date.localeCompare(b.date));
+  const doneCount=done.length;
+  const pct=Math.round(doneCount/7*100);
+  // nextIdx = first milestone not yet done
+  const nextIdx=doneCount<7?doneCount:-1;
+  const steps=RDV_SUIVI.map((m,i)=>{
+    const rdv=done[i]||null;
+    const isDone=!!rdv;
+    const isNext=i===nextIdx;
+    const dotCls=isDone?'done':isNext?'next':'';
+    const lblCls=isDone?'done':isNext?'next':'';
+    return`<div class="rdv-suivi-step">
+      <div class="rdv-suivi-dot ${dotCls}">${isDone?'✓':m.icon}</div>
+      <div class="rdv-suivi-step-label ${lblCls}">J${m.jour}<br>${m.nom}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="rdv-suivi-wrap">
+    <div class="rdv-suivi-title">
+      <span>🗓 Entretiens de suivi</span>
+      <span style="font-size:13px;font-weight:700;color:${doneCount===7?'#10B981':'rgba(255,255,255,.7)'}">${doneCount}/7</span>
+    </div>
+    <div class="rdv-suivi-prog"><div class="rdv-suivi-prog-fill" style="width:${pct}%"></div></div>
+    <div class="rdv-suivi-steps">${steps}</div>
+    ${done.length>0?`<div style="margin-top:14px;font-size:11px;color:rgba(255,255,255,.35)">Dernier : ${done[done.length-1].type||'Entretien'} — ${done[done.length-1].date}</div>`:''}
+  </div>`;
 }
 
 // ── HELPERS ──

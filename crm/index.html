@@ -440,6 +440,21 @@ tbody tr:last-child td{border-bottom:none}
 .c-date{font-size:11px;color:var(--muted);margin-bottom:4px}
 .c-note{font-size:12px;background:#fff;padding:6px 10px;border-radius:6px;border-left:3px solid var(--primary);line-height:1.5}
 
+/* RDV SUIVI TIMELINE */
+.rdvs-header{background:var(--primary-light);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.rdvs-progress-bar{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.rdvs-progress-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .4s}
+.rdvs-count{font-size:22px;font-weight:800;color:var(--primary);white-space:nowrap}
+.rdv-step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.rdv-step:last-child{border-bottom:none}
+.rdv-step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid var(--border);background:#fff}
+.rdv-step-dot.done{border-color:var(--success);background:var(--success);color:#fff}
+.rdv-step-dot.next{border-color:var(--primary);background:var(--primary-light);animation:pulse 2s infinite}
+.rdv-step-dot.future{border-color:var(--border);background:var(--bg);color:var(--light)}
+.rdv-step-nom{font-size:13px;font-weight:600;color:var(--text)}
+.rdv-step-jour{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.rdv-step-date{font-size:11px;color:var(--success);font-weight:500;margin-top:2px}
+.rdv-step-upcoming{font-size:11px;color:var(--muted);margin-top:2px}
 /* STAT BOXES */
 .stat-boxes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .stat-box{background:var(--bg);border-radius:8px;padding:10px;text-align:center}
@@ -600,7 +615,7 @@ tbody tr:last-child td{border-bottom:none}
     <button class="panel-tab active" onclick="switchTab(0)">Profil</button>
     <button class="panel-tab" onclick="switchTab(1)">Parcours</button>
     <button class="panel-tab" onclick="switchTab(2)">Modules</button>
-    <button class="panel-tab" onclick="switchTab(3)">Contacts</button>
+    <button class="panel-tab" onclick="switchTab(3)">RDVs</button>
     <button class="panel-tab" onclick="switchTab(4)">Notes</button>
   </div>
   <div class="panel-body" id="panel-body"></div>
@@ -724,6 +739,15 @@ const CT=[
   {id:3,nom:"Point mi-parcours",jour:45,icon:"🎯",c:"#10B981"},
   {id:4,nom:"Check-in J60",jour:60,icon:"📞",c:"#F59E0B"},
   {id:5,nom:"Point bilan final",jour:85,icon:"🏁",c:"#EF4444"},
+];
+const RDV_SUIVI=[
+  {num:1,jour:1, nom:"Kick off de lancement",      icon:"🚀",c:"#8B5CF6"},
+  {num:2,jour:15,nom:"Suivi J15",                  icon:"📞",c:"#3B82F6"},
+  {num:3,jour:30,nom:"Suivi J30",                  icon:"📞",c:"#3B82F6"},
+  {num:4,jour:45,nom:"Suivi J45",                  icon:"📞",c:"#10B981"},
+  {num:5,jour:60,nom:"Suivi J60",                  icon:"📞",c:"#F59E0B"},
+  {num:6,jour:75,nom:"Suivi J75",                  icon:"📞",c:"#EA580C"},
+  {num:7,jour:90,nom:"Passage de la certification",icon:"🎓",c:"#EF4444"},
 ];
 const STATUTS=["En cours","À risque","En retard","Terminé","Abandonné"];
 const AVC=["#4F46E5","#7C3AED","#DB2777","#EA580C","#16A34A","#0891B2","#CA8A04","#9333EA","#DC2626","#059669"];
@@ -850,6 +874,9 @@ const totalModules=()=>S.modules.length||MODULES.length;
 const moduleProgress=(a)=>{const t=totalModules();return t?Math.round((modulesOk(a)/t)*100):avp(calcJour(a));};
 const scoreTotal=(a)=>stuProgs(a.id).reduce((t,p)=>t+(p.score_quiz||0),0);
 const stuContacts=(id)=>S.contacts.filter(c=>c.apprenant_id===id);
+const stuRdvsDone=(appId)=>S.rdvs.filter(r=>r.apprenant_id===appId&&r.statut==="Réalisé").sort((a,b)=>a.date.localeCompare(b.date));
+const rdvSuiviMilestones=(a)=>{const done=stuRdvsDone(a.id);return RDV_SUIVI.map((m,i)=>({...m,rdv:done[i]||null,isDone:!!done[i]}));};
+const rdvSuiviCount=(appId)=>stuRdvsDone(appId).length;
 function byCharge(arr){if(S.filterCharge==="all")return arr;return arr.filter(a=>a.csm_id===S.filterCharge||a.charge===S.filterCharge||a.charge_suivi===S.filterCharge);}
 
 function computeAlerts(){
@@ -1023,19 +1050,21 @@ function renderApprenants(){
     <div class="card" style="padding:0">
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>Apprenant</th><th>Cohorte</th><th>Jour</th><th>Phase</th><th>Avancement</th><th>Contacts</th><th>Dernier contact</th><th>Chargé</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th>Apprenant</th><th>Cohorte</th><th>Jour</th><th>Phase</th><th>Avancement</th><th>RDVs</th><th>Dernier RDV</th><th>Chargé</th><th>Statut</th><th></th></tr></thead>
           <tbody>
           ${data.length?data.map(a=>{
-            const jj=calcJour(a),ph=phaseOf(jj),p=moduleProgress(a),sc=stuContacts(a.id),last=sc[0];
-            const dots=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const cls=done?"cdot-ok":jj>=ct.jour+5?"cdot-late":"cdot-no";return`<div class="cdot ${cls}" title="${ct.nom}"></div>`;}).join("");
+            const jj=calcJour(a),ph=phaseOf(jj),p=moduleProgress(a);
+            const rdvDone=rdvSuiviCount(a.id);
+            const rdvDots=RDV_SUIVI.map((m,i)=>{const ok=i<rdvDone;return`<div class="cdot ${ok?'cdot-ok':jj>=m.jour+5?'cdot-late':'cdot-no'}" title="${m.nom} — J${m.jour}"></div>`;}).join("");
+            const lastRdv=stuRdvsDone(a.id).slice(-1)[0];
             return`<tr onclick="openStudentPanel('${a.id}')">
               <td><div class="stu-cell"><div class="avatar" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div><div><div class="stu-name">${a.prenom} ${a.nom}</div><div class="stu-email">${a.email||""}</div></div></div></td>
               <td>${(()=>{const c=S.cohorts.find(x=>x.id===(a.cohort_id||null));return c?`<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:${c.couleur||'#4F46E5'};flex-shrink:0;display:inline-block"></span>${c.nom}</span>`:`<span style="font-size:12px;color:var(--muted)">${a.cohorte||"—"}</span>`;})()}</td>
               <td><span class="day-badge">J${jj}</span></td>
               <td style="font-size:13px">${ph.icon} ${ph.nom}</td>
               <td><div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${pColor(p)}"></div></div><span class="prog-pct">${p}%</span></div></td>
-              <td><div class="cdots">${dots}</div></td>
-              <td style="font-size:12px;color:var(--muted)">${last?last.date:"—"}</td>
+              <td><div style="display:flex;flex-direction:column;gap:3px"><div class="cdots">${rdvDots}</div><span style="font-size:10px;color:var(--muted);font-weight:600">${rdvDone}/7</span></div></td>
+              <td style="font-size:12px;color:var(--muted)">${lastRdv?lastRdv.date:"—"}</td>
               <td style="font-size:13px">${a.charge||"—"}</td>
               <td>${sBadge(a.statut)}</td>
               <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">
@@ -1399,11 +1428,12 @@ function renderPanelTab(){
   [renderPanelProfil,renderPanelParcours,renderPanelModules,renderPanelContacts,renderPanelNotes][S.panelTab](a,sc);
 }
 function renderPanelProfil(a){
+  const rdvDone=rdvSuiviCount(a.id);
   document.getElementById("panel-body").innerHTML=`
     <div class="stat-boxes">
       <div class="stat-box"><div class="stat-val" style="color:var(--primary)">J${calcJour(a)}/90</div><div class="stat-lbl">Jour parcours</div></div>
       <div class="stat-box"><div class="stat-val" style="color:var(--success)">${moduleProgress(a)}%</div><div class="stat-lbl">Modules complétés</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--warning)">${modulesOk(a)}/${totalModules()}</div><div class="stat-lbl">Modules OK</div></div>
+      <div class="stat-box" onclick="switchTab(3)" style="cursor:pointer" title="Voir le suivi RDVs"><div class="stat-val" style="color:var(--info)">${rdvDone}/7</div><div class="stat-lbl">RDVs réalisés</div></div>
     </div>
     ${[["📧 Email",a.email],["📱 Téléphone",a.telephone],["🎓 Cohorte",a.cohorte],["📅 Début",a.date_debut],["👤 Chargé",a.charge],["🏆 Score",scoreTotal(a)+" pts"],["🎯 Objectif",a.objectif]].map(([l,v])=>v?`<div class="field-row"><span class="field-lbl">${l}</span><span class="field-val">${v}</span></div>`:"").join("")}`;
 }
@@ -1469,20 +1499,39 @@ function saveModScores(id){
   const scores=MODULES.map((_,i)=>{const v=document.getElementById(`ms-${i}`)?.value;return(v===undefined||v==="")?null:Math.min(parseInt(v)||0,MODULES[i].pts);});
   db.collection("apprenants").doc(id).update({modules_scores:scores,updatedAt:TS()}).then(()=>toast("Scores enregistrés ✅","success")).catch(e=>toast("Erreur: "+e.message,"error"));
 }
-function renderPanelContacts(a,sc){
-  const enriched=CT.map(ct=>{const done=sc.find(c=>c.type_id===ct.id);const status=done?"done":calcJour(a)>=ct.jour+5?"overdue":"planned";return{...ct,status,date:done?.date||null,note:done?.note||null};});
+function renderPanelContacts(a){
+  const milestones=rdvSuiviMilestones(a);
+  const done=milestones.filter(m=>m.isDone).length;
+  const pct=Math.round(done/7*100);
+  const jj=calcJour(a);
+  // Determine the "next" slot = first not done
+  const nextIdx=milestones.findIndex(m=>!m.isDone);
   document.getElementById("panel-body").innerHTML=`
-    <div style="margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="openContactModal('${a.id}','${a.prenom} ${a.nom}')">+ Ajouter un contact</button></div>
-    <div>${enriched.map(c=>`<div class="contact-item ${c.status==="overdue"?"overdue":c.status==="planned"?"planned":""}">
-      <div class="contact-ico" style="background:${c.c}22">${c.icon}</div>
+    <div class="rdvs-header">
       <div style="flex:1">
-        <div class="c-title" style="${c.status==="overdue"?"color:var(--danger)":""}">${c.status==="overdue"?"⚠️ ":""}${c.nom}</div>
-        <div class="c-date">${c.status==="done"?"✅ Réalisé le "+c.date:c.status==="overdue"?"Non réalisé — prévu J"+c.jour:"🕐 Prévu autour de J"+c.jour}</div>
-        ${c.note?`<div class="c-note">${c.note}</div>`:""}
-      </div></div>`).join("")}</div>
-    ${sc.length?`<div style="margin-top:16px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Historique</div>
-      ${sc.map(c=>`<div style="display:flex;gap:8px;padding:8px;background:var(--bg);border-radius:7px;margin-bottom:5px;font-size:12px"><span style="color:var(--primary);font-weight:600">${c.date}</span><span style="color:var(--muted)">·</span><span style="font-weight:500">${c.type}</span>${c.note?`<span style="color:var(--muted)">— ${c.note}</span>`:""}</div>`).join("")}
-    </div>`:""}`;
+        <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:6px">${done} / 7 RDVs de suivi réalisés</div>
+        <div class="rdvs-progress-bar"><div class="rdvs-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="rdvs-count">${pct}%</div>
+    </div>
+    <div>
+    ${milestones.map((m,i)=>{
+      const isNext=i===nextIdx;
+      const dotCls=m.isDone?'done':isNext?'next':'future';
+      const dateLabel=m.rdv?`✅ Réalisé le ${m.rdv.date}${m.rdv.heure?' · '+m.rdv.heure:''}`:
+        (jj>=m.jour&&!m.isDone)?`⚠️ Attendu J${m.jour} — non encore planifié`:`Prévu J${m.jour}`;
+      return`<div class="rdv-step">
+        <div class="rdv-step-dot ${dotCls}" style="${m.isDone?'':`color:${m.c};border-color:${m.c}44`}">${m.isDone?'✓':m.icon}</div>
+        <div style="flex:1">
+          <div class="rdv-step-jour">J${m.jour}</div>
+          <div class="rdv-step-nom">${m.nom}</div>
+          <div class="${m.isDone?'rdv-step-date':'rdv-step-upcoming'}">${dateLabel}</div>
+          ${m.rdv?.notes?`<div class="c-note" style="margin-top:4px">${m.rdv.notes}</div>`:''}
+        </div>
+        ${m.isDone?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--success-light);color:#065F46;white-space:nowrap;align-self:center">Réalisé</span>`:''}
+      </div>`;
+    }).join('')}
+    </div>`;
 }
 function renderPanelNotes(a){
   document.getElementById("panel-body").innerHTML=`
