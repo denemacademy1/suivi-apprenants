@@ -274,27 +274,37 @@ auth.onAuthStateChanged(async user => {
     return;
   }
 
-  // Récupérer le rôle — auto-création avec le rôle du lien d'invitation
-  const VALID_ROLES = ['student','csm','setter','closer','admin'];
-  const urlRole = new URLSearchParams(window.location.search).get('role');
+  // Récupérer le rôle — vérification invitation obligatoire à la première connexion
   let role = 'student';
   try {
     const docRef = db.collection('users').doc(user.uid);
     const doc = await docRef.get();
     if (doc.exists) {
+      // Compte existant → on récupère juste le rôle
       role = doc.data().role || 'student';
     } else {
-      // Première connexion : utiliser le rôle du lien, sinon student par défaut
-      const assignedRole = (urlRole && VALID_ROLES.includes(urlRole)) ? urlRole : 'student';
+      // Première connexion → vérifier l'invitation par email
+      const inviteRef = db.collection('invitations').doc(user.email);
+      const invite = await inviteRef.get();
+      if (!invite.exists) {
+        // Aucune invitation → accès refusé
+        await auth.signOut();
+        show('page-login');
+        showError("Votre email n'est pas autorisé. Contactez votre coach pour recevoir un lien d'invitation.");
+        return;
+      }
+      // Invitation trouvée → créer le compte + supprimer l'invitation
+      const inviteData = invite.data();
+      role = inviteData.role || 'student';
       const nameParts = (user.displayName || '').split(' ');
       await docRef.set({
-        prenom: nameParts[0] || '',
-        nom: nameParts.slice(1).join(' ') || '',
+        prenom: inviteData.prenom || nameParts[0] || '',
+        nom: inviteData.nom || nameParts.slice(1).join(' ') || '',
         email: user.email || '',
-        role: assignedRole,
+        role,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      role = assignedRole;
+      await inviteRef.delete();
     }
   } catch(e) {
     console.warn('Erreur doc utilisateur:', e);

@@ -532,45 +532,53 @@ tr:hover td{background:#FAFBFF}
 <div class="modal-backdrop" id="user-modal">
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
-      <div class="modal-title">Nouveau compte utilisateur</div>
+      <div class="modal-title">Inviter un utilisateur</div>
       <button class="modal-close" onclick="closeUserModal()">×</button>
     </div>
     <div class="modal-body">
-      <div style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:20px">
-        ⚠️ Le compte sera créé immédiatement dans Firebase Auth. Le mot de passe doit être communiqué à l'utilisateur.
-      </div>
-      <div class="form-group" style="margin-bottom:12px">
-        <label>Rôle</label>
-        <select id="new-user-role">
-          <option value="student">👤 Apprenant</option>
-          <option value="csm">🎯 Chargé de suivi</option>
-          <option value="setter">🎯 Setter</option>
-          <option value="closer">🤝 Closer</option>
-          <option value="admin">⚙️ Administrateur</option>
-        </select>
-      </div>
-      <div class="form-row cols-2">
-        <div class="form-group">
-          <label>Prénom *</label>
-          <input type="text" id="new-user-prenom" placeholder="Camille">
+      <div id="user-modal-form">
+        <div style="background:#EEF2FF;color:#3730A3;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:20px;line-height:1.6">
+          📧 Renseignez l'email et le rôle. Un lien d'invitation sera généré — envoyez-le à la personne. Elle crée son compte en cliquant dessus.
         </div>
-        <div class="form-group">
-          <label>Nom *</label>
-          <input type="text" id="new-user-nom" placeholder="Dupont">
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Rôle</label>
+          <select id="new-user-role">
+            <option value="student">👤 Apprenant</option>
+            <option value="csm">🎯 Chargé de suivi</option>
+            <option value="setter">🎯 Setter</option>
+            <option value="closer">🤝 Closer</option>
+            <option value="admin">⚙️ Administrateur</option>
+          </select>
+        </div>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" id="new-user-prenom" placeholder="Camille">
+          </div>
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" id="new-user-nom" placeholder="Dupont">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:20px">
+          <label>Email Google *</label>
+          <input type="email" id="new-user-email" placeholder="camille.dupont@gmail.com">
+        </div>
+        <div class="alert alert-error" id="user-modal-err">❌ <span id="user-modal-err-msg"></span></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn btn-secondary" onclick="closeUserModal()">Annuler</button>
+          <button class="btn btn-primary" id="btn-save-user" onclick="createInvitation()">Générer le lien</button>
         </div>
       </div>
-      <div class="form-group" style="margin-bottom:12px">
-        <label>Email *</label>
-        <input type="email" id="new-user-email" placeholder="camille.dupont@email.fr">
-      </div>
-      <div class="form-group" style="margin-bottom:20px">
-        <label>Mot de passe temporaire *</label>
-        <input type="text" id="new-user-pwd" placeholder="Min. 6 caractères">
-      </div>
-      <div class="alert alert-error" id="user-modal-err">❌ <span id="user-modal-err-msg"></span></div>
-      <div style="display:flex;justify-content:flex-end;gap:10px">
-        <button class="btn btn-secondary" onclick="closeUserModal()">Annuler</button>
-        <button class="btn btn-primary" id="btn-save-user" onclick="createUser()">Créer le compte</button>
+      <div id="user-modal-success" style="display:none;text-align:center">
+        <div style="font-size:36px;margin-bottom:12px">✅</div>
+        <div style="font-size:15px;font-weight:700;color:#1E293B;margin-bottom:6px">Invitation créée !</div>
+        <div style="font-size:13px;color:#64748B;margin-bottom:16px">Copiez ce lien et envoyez-le à la personne :</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="invite-link-input" readonly style="flex:1;padding:9px 12px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;color:#475569;background:#F8FAFC;outline:none">
+          <button class="btn btn-primary btn-sm" onclick="copyInviteLink()">Copier</button>
+        </div>
+        <button class="btn btn-secondary" onclick="closeUserModal()" style="margin-top:14px;width:100%">Fermer</button>
       </div>
     </div>
   </div>
@@ -913,42 +921,45 @@ function openUserModal(){
   document.getElementById('new-user-prenom').value='';
   document.getElementById('new-user-nom').value='';
   document.getElementById('new-user-email').value='';
-  document.getElementById('new-user-pwd').value='';
   document.getElementById('new-user-role').value='student';
   document.getElementById('user-modal-err').classList.remove('show');
+  document.getElementById('user-modal-form').style.display='';
+  document.getElementById('user-modal-success').style.display='none';
   document.getElementById('user-modal').classList.add('open');
 }
 function closeUserModal(){document.getElementById('user-modal').classList.remove('open');}
 
-async function createUser(){
+async function createInvitation(){
   const prenom=document.getElementById('new-user-prenom').value.trim();
   const nom=document.getElementById('new-user-nom').value.trim();
   const email=document.getElementById('new-user-email').value.trim();
-  const pwd=document.getElementById('new-user-pwd').value;
   const role=document.getElementById('new-user-role').value;
   const errEl=document.getElementById('user-modal-err');
   const errMsg=document.getElementById('user-modal-err-msg');
   const btn=document.getElementById('btn-save-user');
-  if(!prenom||!nom||!email||!pwd){errMsg.textContent='Remplissez tous les champs';errEl.classList.add('show');return;}
-  if(pwd.length<6){errMsg.textContent='Mot de passe minimum 6 caractères';errEl.classList.add('show');return;}
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Création…';
-
-  // Use a secondary auth instance to avoid logging out current admin
+  if(!email){errMsg.textContent='L\'email est obligatoire';errEl.classList.add('show');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Génération…';
   try{
-    const secondApp=firebase.apps.find(a=>a.name==='secondary')||firebase.initializeApp(FB,'secondary');
-    const secondAuth=secondApp.auth();
-    const cred=await secondAuth.createUserWithEmailAndPassword(email,pwd);
-    await db.collection("users").doc(cred.user.uid).set({
+    await db.collection('invitations').doc(email).set({
       prenom,nom,email,role,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      createdBy:auth.currentUser?.uid||''
     });
-    await secondAuth.signOut();
-    closeUserModal();
-    showAlert(`Compte créé pour ${prenom} ${nom} (${email}).`);
+    const link=`https://denem.academy/?role=${role}`;
+    document.getElementById('invite-link-input').value=link;
+    document.getElementById('user-modal-form').style.display='none';
+    document.getElementById('user-modal-success').style.display='block';
+    showAlert(`Invitation créée pour ${email}.`);
   }catch(e){
-    const msgs={'auth/email-already-in-use':'Cet email est déjà utilisé.','auth/weak-password':'Mot de passe trop faible.'};
-    errMsg.textContent=msgs[e.code]||e.message;errEl.classList.add('show');
+    errMsg.textContent=e.message;errEl.classList.add('show');
   }
+  btn.disabled=false;btn.innerHTML='Générer le lien';
+}
+
+function copyInviteLink(){
+  const input=document.getElementById('invite-link-input');
+  navigator.clipboard.writeText(input.value).then(()=>showAlert('Lien copié ✓'));
+}
   btn.disabled=false;btn.textContent='Créer le compte';
 }
 
