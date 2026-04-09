@@ -231,6 +231,10 @@ tbody tr:last-child td{border-bottom:none}
 .ps-action.missing:hover{background:#FDE68A}
 .ps-action.ok{background:var(--success-light);color:#065F46;pointer-events:none}
 .ps-empty{padding:20px 8px;text-align:center;font-size:12px;color:var(--light)}
+.ps-new-dot{width:7px;height:7px;border-radius:50%;background:#EF4444;flex-shrink:0;animation:newPulse 1.8s ease-in-out infinite}
+.ps-new-badge{font-size:9px;font-weight:800;color:#EF4444;background:#FEE2E2;border-radius:4px;padding:1px 5px;letter-spacing:.4px;flex-shrink:0}
+.rdv-new-badge{display:inline-block;font-size:9px;font-weight:800;color:#EF4444;background:#FEE2E2;border-radius:4px;padding:1px 5px;letter-spacing:.4px;vertical-align:middle;margin-left:4px}
+@keyframes newPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
 /* RDV detail popover */
 .rdv-detail-pop{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:500;animation:fadeUp .15s ease}
 .rdv-pop-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
@@ -840,6 +844,7 @@ const today=()=>new Date().toISOString().split("T")[0];
 const isUpcoming=(d,n=7)=>{if(!d)return false;const dt=new Date(d),t=new Date();t.setHours(0,0,0,0);const l=new Date(t);l.setDate(l.getDate()+n);return dt>=t&&dt<=l;};
 const isPast=(d)=>{if(!d)return false;return new Date(d)<new Date(today());};
 const stuProgs=(appId)=>S.progressions.filter(p=>p.apprenant_id===appId&&(p.statut==="completed"||p.statut==="termine"));
+const hasCompletedRdv=(appId)=>S.rdvs.some(r=>r.apprenant_id===appId&&r.statut==="Réalisé");
 const modulesOk=(a)=>stuProgs(a.id).length;
 const totalModules=()=>S.modules.length||MODULES.length;
 const moduleProgress=(a)=>{const t=totalModules();return t?Math.round((modulesOk(a)/t)*100):avp(calcJour(a));};
@@ -1159,9 +1164,10 @@ function renderPlanning(){
                 const hasMeet=!!r.meet_url;
                 const statusCls=isDone?'done':isCancelled?'cancelled':'';
                 const meetCls=hasMeet&&!isDone&&!isCancelled?'has-meet':'';
+                const rdvIsNew=r.apprenant_id&&!hasCompletedRdv(r.apprenant_id)&&!isDone;
                 return`<div class="rdv-mini ${statusCls} ${meetCls}" onclick="showRdvPop(event,'${r.id}')">
                   ${r.heure?`<div class="rdv-mini-time">${r.heure}</div>`:''}
-                  <div class="rdv-mini-name">${r.apprenant_nom||'—'}</div>
+                  <div class="rdv-mini-name">${r.apprenant_nom||'—'}${rdvIsNew?`<span class="rdv-new-badge">NEW</span>`:''}</div>
                   <div class="rdv-mini-type">${r.type||''}</div>
                   <div class="rdv-mini-badges">
                     ${hasMeet&&!isCancelled?`<span class="rdv-mini-badge rdv-mini-meet">📹 Meet</span>`:''}
@@ -1193,12 +1199,13 @@ function renderPlanning(){
                 ${g.nom}
                 <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--danger)">${g.members.length}</span>
               </div>
-              ${g.members.map(a=>`
+              ${g.members.map(a=>{const isNew=!hasCompletedRdv(a.id);return`
                 <div class="ps-student-row" onclick="openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">
+                  ${isNew?`<div class="ps-new-dot"></div>`:''}
                   <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
-                  <div class="ps-name">${a.prenom} ${a.nom}</div>
+                  <div class="ps-name">${a.prenom} ${a.nom}${isNew?` <span class="ps-new-badge">NEW</span>`:''}</div>
                   <button class="ps-action missing" onclick="event.stopPropagation();openRdvForStudent('${a.id}','${a.prenom} ${a.nom}')">+ RDV</button>
-                </div>`).join('')}
+                </div>`;}).join('')}
             </div>`).join('')}
           ${apprenants.filter(a=>coveredIds.has(a.id)).length>0?`
             <div class="ps-cohort" style="margin-top:8px">
@@ -1207,12 +1214,13 @@ function renderPlanning(){
                 Couverts cette semaine
                 <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--success)">${coveredIds.size}</span>
               </div>
-              ${apprenants.filter(a=>coveredIds.has(a.id)).map(a=>`
+              ${apprenants.filter(a=>coveredIds.has(a.id)).map(a=>{const isNew=!hasCompletedRdv(a.id);return`
                 <div class="ps-student-row ok">
+                  ${isNew?`<div class="ps-new-dot"></div>`:''}
                   <div class="ps-ava" style="background:${a.couleur||AVC[0]}">${ini(a.prenom,a.nom)}</div>
-                  <div class="ps-name">${a.prenom} ${a.nom}</div>
+                  <div class="ps-name">${a.prenom} ${a.nom}${isNew?` <span class="ps-new-badge">NEW</span>`:''}</div>
                   <span class="ps-action ok">✓</span>
-                </div>`).join('')}
+                </div>`;}).join('')}
             </div>`:''}
         </div>
       </div>
