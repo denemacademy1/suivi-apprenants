@@ -723,7 +723,8 @@ function initApp() {
 }
 
 function updateNotifBadge() {
-  const waiting = S.leads.filter(l=>l.statutCloser==='En attente RDV').length;
+  const me = myFullName().toLowerCase();
+  const waiting = S.leads.filter(l=>l.statutCloser==='En attente RDV'&&(!l.closerAssigne||l.closerAssigne.toLowerCase()===me)).length;
   const badge = document.getElementById('badge-rdvs');
   if (waiting > 0) { badge.style.display='inline'; badge.textContent=waiting; }
   else badge.style.display='none';
@@ -758,14 +759,14 @@ function renderKPIs() {
   const today = todayISO();
   const monthStart = today.slice(0,7)+'-01';
 
-  const rdvsToday = S.leads.filter(l=>l.dateRDV&&fmtDateISO(l.dateRDV)===today).length;
-  const rdvsWeek = S.leads.filter(l=>{
+  const myLeads = S.leads.filter(l=>isMyLead(l));
+  const rdvsToday = myLeads.filter(l=>l.dateRDV&&fmtDateISO(l.dateRDV)===today).length;
+  const rdvsWeek = myLeads.filter(l=>{
     if(!l.dateRDV) return false;
     const d=fmtDateISO(l.dateRDV);
     const weekEnd=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
     return d>=today&&d<=weekEnd;
   }).length;
-  const myLeads = S.leads.filter(l=>isMyLead(l));
   const signed = myLeads.filter(l=>l.statutCloser==='Signé');
   const rdvPasse = myLeads.filter(l=>['RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||'')).length;
   const tauxClosing = rdvPasse?Math.round(signed.length/rdvPasse*100):0;
@@ -860,10 +861,23 @@ function renderRdvTable() {
 // ══════════════════════════════════════════════
 let _dragId = null;
 
+function myLeadsForKanban(col) {
+  const me = myFullName().toLowerCase();
+  return S.leads.filter(l => {
+    const statut = l.statutCloser || 'En attente RDV';
+    if (statut !== col) return false;
+    if (col === 'En attente RDV') {
+      // pool dispo (non assigné) + mes leads déjà en attente
+      return !l.closerAssigne || l.closerAssigne.toLowerCase() === me;
+    }
+    return (l.closerAssigne||'').toLowerCase() === me;
+  });
+}
+
 function renderKanban() {
   const wrap = document.getElementById('kanban-wrap');
   wrap.innerHTML = KANBAN_COLS.map(col=>{
-    const cards = S.leads.filter(l=>(l.statutCloser||'En attente RDV')===col.id);
+    const cards = myLeadsForKanban(col.id);
     return`<div class="kanban-col" id="kc-${col.id.replace(/ /g,'-')}"
             ondragover="event.preventDefault();this.querySelector('.kanban-drop-zone').classList.add('drag-over')"
             ondragleave="this.querySelector('.kanban-drop-zone').classList.remove('drag-over')"
@@ -904,8 +918,12 @@ async function dropCard(event, newStatut) {
   document.querySelectorAll('.kanban-drop-zone').forEach(z=>z.classList.remove('drag-over'));
   if (!_dragId) return;
   const id=_dragId; _dragId=null;
+  const l = S.leads.find(x=>x.id===id);
+  const update = {statutCloser:newStatut, updatedAt:TS()};
+  // Auto-assigner au closer qui bouge le lead
+  if (!l?.closerAssigne) update.closerAssigne = myFullName();
   try {
-    await db.collection('leads').doc(id).update({statutCloser:newStatut, updatedAt:TS()});
+    await db.collection('leads').doc(id).update(update);
     toast(`Statut → ${newStatut}`,'success');
   } catch(e){toast('Erreur','error');}
 }

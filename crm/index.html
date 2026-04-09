@@ -896,10 +896,9 @@ auth.onAuthStateChanged(async user=>{
   }
   const doc=await db.collection("users").doc(user.uid).get();
   const role=doc.exists?doc.data().role:"student";
-  if(role==='student'){
-    const base=location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';
-    location.href=base+'/student/';return;
-  }
+  const roleMap={student:'../student/',setter:'../setting/',closer:'../closing/'};
+  if(roleMap[role]){location.href=roleMap[role];return;}
+  if(!['csm','admin'].includes(role)){location.href='../';return;}
   // Set sidebar user info
   if(doc.exists){
     const d=doc.data();
