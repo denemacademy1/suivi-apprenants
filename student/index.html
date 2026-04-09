@@ -965,64 +965,76 @@ const RDV_SUIVI=[
 
 // ── AUTH ──
 auth.onAuthStateChanged(async user=>{
-  if(!user){location.href=BASE+'/login/';return;}
-  const doc=await db.collection("users").doc(user.uid).get();
-  if(!doc.exists){location.href=BASE+'/login/';return;}
-  const ud=doc.data();
-  if(ud.role!=='student'){location.href=ud.role==='admin'?BASE+'/admin/':BASE+'/';return;}
-  S.user=user;S.userData=ud;
-  const prenom=ud.prenom||user.email.split('@')[0];
-  document.getElementById("hero-name").textContent=prenom;
-  document.getElementById("suc-name").textContent=`${ud.prenom||''} ${ud.nom||''}`.trim()||user.email;
-  document.getElementById("suc-avatar").textContent=prenom.charAt(0).toUpperCase();
-  document.getElementById("daily-quote").textContent=`"${QUOTES[new Date().getDay()%QUOTES.length]}"`;
-  // Apprenant — 3 méthodes pour garantir la correspondance
+  if(!user){location.href=BASE+'/';return;}
   try{
+    // Lecture du doc users — peut échouer si règles Firestore trop restrictives
+    let ud=null;
+    try{
+      const doc=await db.collection("users").doc(user.uid).get();
+      if(doc.exists)ud=doc.data();
+    }catch(_){}
+
+    if(ud&&ud.role&&ud.role!=='student'){
+      const roleMap={admin:BASE+'/admin/',csm:BASE+'/crm/',setter:BASE+'/setting/',closer:BASE+'/closing/'};
+      location.href=roleMap[ud.role]||BASE+'/';
+      return;
+    }
+
+    S.user=user;
+    S.userData=ud||{};
+    const prenom=(ud?.prenom)||user.email.split('@')[0];
+    document.getElementById("hero-name").textContent=prenom;
+    document.getElementById("suc-name").textContent=`${ud?.prenom||''} ${ud?.nom||''}`.trim()||user.email;
+    document.getElementById("suc-avatar").textContent=prenom.charAt(0).toUpperCase();
+    document.getElementById("daily-quote").textContent=`"${QUOTES[new Date().getDay()%QUOTES.length]}"`;
+
+    // Apprenant — 3 méthodes pour garantir la correspondance
     let appDoc=null;
-    // 1. Par uid (le plus fiable si l'élève a utilisé /register/)
     try{
       const s1=await db.collection("apprenants").where("uid","==",user.uid).limit(1).get();
       if(!s1.empty)appDoc=s1.docs[0];
     }catch(_){}
-    // 2. Par email exact
     if(!appDoc){
       try{
-        const s2=await db.collection("apprenants").where("email","==",user.email).limit(1).get();
+        const s2=await db.collection("apprenants").where("email","==",user.email.toLowerCase()).limit(1).get();
         if(!s2.empty)appDoc=s2.docs[0];
       }catch(_){}
     }
-    // 3. Scan complet insensible à la casse (fallback si CSP bloque where())
     if(!appDoc){
-      const all=await db.collection("apprenants").get();
-      const emailLow=user.email.toLowerCase();
-      const found=all.docs.find(d=>(d.data().email||'').toLowerCase().trim()===emailLow);
-      if(found)appDoc=found;
+      try{
+        const all=await db.collection("apprenants").get();
+        const emailLow=user.email.toLowerCase().trim();
+        const found=all.docs.find(d=>(d.data().email||'').toLowerCase().trim()===emailLow);
+        if(found)appDoc=found;
+      }catch(_){}
     }
     if(appDoc)S.apprenant={id:appDoc.id,...appDoc.data()};
-  }catch(e){console.warn('apprenant lookup:',e);}
-  if(S.apprenant){
-    const start=S.apprenant.date_debut?new Date(S.apprenant.date_debut):null;
-    if(start){
-      const days=Math.floor((Date.now()-start)/86400000)+1;
-      document.getElementById("stat-days").textContent=`J${Math.min(days,90)}`;
-      document.getElementById("stat-days-sub").textContent=`depuis le ${start.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}`;
+
+    if(S.apprenant){
+      const start=S.apprenant.date_debut?new Date(S.apprenant.date_debut):null;
+      if(start){
+        const days=Math.floor((Date.now()-start)/86400000)+1;
+        document.getElementById("stat-days").textContent=`J${Math.min(days,90)}`;
+        document.getElementById("stat-days-sub").textContent=`depuis le ${start.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}`;
+      }
+      S.xp=S.apprenant.xp||0;
+      S.badges=Array.isArray(S.apprenant.badges)?S.apprenant.badges:[];
+      S.streak=S.apprenant.streak||0;
+      await handleDailyLogin();
+    } else {
+      const w=document.createElement("div");
+      w.style.cssText="position:fixed;top:16px;right:16px;background:#2D1B00;border:1px solid rgba(245,158,11,.2);color:#FCD34D;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:320px";
+      w.innerHTML="⚠️ Votre dossier n'est pas encore lié. Contactez votre chargé de suivi.";
+      document.body.appendChild(w);
+      setTimeout(()=>w.remove(),6000);
     }
-    // Restore saved XP + badges + streak from Firestore
-    S.xp=S.apprenant.xp||0;
-    S.badges=Array.isArray(S.apprenant.badges)?S.apprenant.badges:[];
-    S.streak=S.apprenant.streak||0;
-    // Handle daily login streak + XP
-    await handleDailyLogin();
-  } else {
-    const w=document.createElement("div");
-    w.style.cssText="position:fixed;top:16px;right:16px;background:#2D1B00;border:1px solid rgba(245,158,11,.2);color:#FCD34D;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:320px";
-    w.innerHTML="⚠️ Votre dossier n'est pas encore lié. Contactez votre chargé de suivi.";
-    document.body.appendChild(w);
-    setTimeout(()=>w.remove(),6000);
+  }catch(e){
+    console.warn('Auth init error:',e);
+  }finally{
+    document.getElementById("loading-screen").style.display="none";
+    document.getElementById("main-app").style.display="flex";
+    loadData();
   }
-  document.getElementById("loading-screen").style.display="none";
-  document.getElementById("main-app").style.display="flex";
-  loadData();
 });
 
 // ── DAILY LOGIN STREAK ──
