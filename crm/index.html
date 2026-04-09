@@ -1001,7 +1001,8 @@ function computeAlerts(){
       if(nextIdx<RDV_SUIVI.length){
         const m=RDV_SUIVI[nextIdx];
         const daysTo=m.jour-jourActuel;
-        const hasPlanned=S.rdvs.some(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
+        const milDate2=rdvMilestoneDate(a,m);
+        const hasPlanned=S.rdvs.some(r=>r.apprenant_id===a.id&&r.statut==="Planifié"&&(r.type===m.nom||Math.abs(new Date(r.date)-new Date(milDate2))/86400000<=10));
         if(daysTo<0&&Math.abs(daysTo)>5&&!hasPlanned){
           // En retard sur le RDV
           al.push({type:"danger",icon:"🔴",title:`RDV manqué — ${a.prenom} ${a.nom}`,
@@ -1524,25 +1525,32 @@ function renderAlertes(){
   const warnings=alerts.filter(a=>a.type==="warning").length;
   const infos=alerts.filter(a=>a.type==="info").length;
 
+  // Trouve un RDV planifié correspondant à un milestone donné
+  function plannedForMs(appId,m){
+    const milDate=rdvMilestoneDate(S.apprenants.find(a=>a.id===appId)||{},m);
+    return S.rdvs.find(r=>
+      r.apprenant_id===appId&&r.statut==="Planifié"&&
+      (r.type===m.nom||Math.abs(new Date(r.date)-new Date(milDate))/86400000<=10)
+    )||null;
+  }
+
   // ── build milestone cell HTML ──
   function msCell(a,i){
     const rdvsDone=stuRdvsDone(a.id);
     const m=RDV_SUIVI[i];
     const jourActuel=calcJour(a);
     const daysTo=m.jour-jourActuel;
-    const hasPlanned=S.rdvs.some(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
-    const plannedRdv=S.rdvs.find(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
     if(i<rdvsDone.length){
       const rd=rdvsDone[i];
       return`<div class="ms-cell"><div class="ms-dot ms-done" title="Réalisé le ${rd.date}">✓</div><div class="ms-lbl done">${rd.date.slice(5)}</div></div>`;
     }
     if(i>rdvsDone.length){
-      // milestone futur non encore accessible
       return`<div class="ms-cell"><div class="ms-dot ms-future" title="J${m.jour}">·</div><div class="ms-lbl future">J${m.jour}</div></div>`;
     }
-    // i === rdvsDone.length → c'est le prochain milestone
-    if(hasPlanned&&plannedRdv){
-      return`<div class="ms-cell"><div class="ms-dot ms-planned" title="Planifié le ${plannedRdv.date}">📅</div><div class="ms-lbl planned">${plannedRdv.date.slice(5)}</div></div>`;
+    // i === rdvsDone.length → prochain milestone à réaliser
+    const pr=plannedForMs(a.id,m);
+    if(pr){
+      return`<div class="ms-cell"><div class="ms-dot ms-planned" title="Planifié le ${pr.date}">📅</div><div class="ms-lbl planned">${pr.date.slice(5)}</div></div>`;
     }
     if(daysTo<-5){
       return`<div class="ms-cell"><div class="ms-dot ms-late" title="En retard de ${Math.abs(daysTo)}j">!</div><div class="ms-lbl late">J${m.jour}</div></div>`;
@@ -1560,11 +1568,10 @@ function renderAlertes(){
     const m=RDV_SUIVI[nextIdx];
     const jourActuel=calcJour(a);
     const daysTo=m.jour-jourActuel;
-    const hasPlanned=S.rdvs.some(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
+    const pr=plannedForMs(a.id,m);
     const milDate=rdvMilestoneDate(a,m);
-    if(hasPlanned){
-      const pr=S.rdvs.find(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
-      return`<span style="color:var(--info);font-size:11px;font-weight:600">📅 Planifié ${pr?.date||''}</span>`;
+    if(pr){
+      return`<span style="color:var(--info);font-size:11px;font-weight:600">📅 Planifié le ${pr.date}</span>`;
     }
     const cls=daysTo<-5?'late':daysTo<=3?'urgent':'';
     const label=daysTo<0?`En retard ${Math.abs(daysTo)}j`:daysTo===0?`Aujourd'hui`:`Dans ${daysTo}j`;
@@ -1956,7 +1963,11 @@ function openRdvModal(rdv){
   document.getElementById("rm-body").innerHTML=`
     <div class="form-grid">
       <div class="form-group form-full"><label>Apprenant *</label><select id="r-app">${S.apprenants.map(a=>`<option value="${a.id}" data-nom="${a.prenom} ${a.nom}" ${r.apprenant_id===a.id?"selected":""}>${a.prenom} ${a.nom}</option>`).join("")}</select></div>
-      <div class="form-group"><label>Type de contact *</label><select id="r-type">${CT.map(c=>`<option value="${c.nom}" ${r.type===c.nom?"selected":""}>${c.nom}</option>`).join("")}<option value="Autre" ${r.type==="Autre"?"selected":""}>Autre</option></select></div>
+      <div class="form-group"><label>Type de contact *</label><select id="r-type">
+        ${CT.map(c=>`<option value="${c.nom}" ${r.type===c.nom?"selected":""}>${c.nom}</option>`).join("")}
+        ${RDV_SUIVI.map(m=>`<option value="${m.nom}" ${r.type===m.nom?"selected":""}>${m.icon} ${m.nom}</option>`).join("")}
+        <option value="Autre" ${r.type==="Autre"?"selected":""}>Autre</option>
+      </select></div>
       <div class="form-group"><label>Coach *</label><select id="r-charge">
         <option value="">Sélectionner…</option>
         ${S.csmUsers.map(u=>{const name=`${u.prenom||""} ${u.nom||""}`.trim()||u.email;return`<option value="${u.id}" data-name="${name}" ${(r.csm_id===u.id||(r.charge_suivi===name&&!r.csm_id))?"selected":""}>${name}</option>`;}).join("")}
