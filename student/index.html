@@ -983,6 +983,22 @@ function loadData(){
     checkInitialBadges();
   });
   if(S.apprenant){
+    // Live sync apprenant profile (CSM edits propagate without page reload)
+    db.collection("apprenants").doc(S.apprenant.id).onSnapshot(d=>{
+      if(!d.exists)return;
+      const prev=S.apprenant;
+      S.apprenant={id:d.id,...d.data()};
+      // Update day counter if date_debut changed
+      const start=S.apprenant.date_debut?new Date(S.apprenant.date_debut):null;
+      if(start){
+        const days=Math.floor((Date.now()-start)/86400000)+1;
+        const el=document.getElementById("stat-days");
+        if(el)el.textContent=`J${Math.min(days,90)}`;
+      }
+      // Refresh XP/badges/streak if changed externally
+      if(S.apprenant.xp!==prev.xp){S.xp=S.apprenant.xp||0;updateXPUI();}
+      renderHomePage();
+    });
     // Pre-load unread message badge without subscribing to all messages
     db.collection("conversations").doc(S.apprenant.id).onSnapshot(d=>{
       const unread=d.exists?(d.data().nonLusStudent||0):0;
