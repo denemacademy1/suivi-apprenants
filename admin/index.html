@@ -937,7 +937,7 @@ function renderStatsPage(){
   el.innerHTML=`<table><thead><tr><th>Module</th><th>Phase</th><th>Apprenants ayant complété</th><th>Score moyen</th><th>Taux réussite</th></tr></thead><tbody>
   ${modules.map(m=>{
     const progs=progressions.filter(p=>p.id&&p.id.endsWith('_'+m.id));
-    const completed=progs.filter(p=>p.statut==='completed');
+    const completed=progs.filter(p=>p.statut==='completed'||p.statut==='termine');
     const scores=completed.filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
     const avgScore=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
     const passed=scores.filter(s=>s>=(m.score_minimum||70)).length;

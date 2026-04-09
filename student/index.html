@@ -988,9 +988,9 @@ function loadData(){
       const unread=d.exists?(d.data().nonLusStudent||0):0;
       if(S.chatTab!=='private'){S._privateUnread=unread;updateChatNavBadge();}
     });
-    db.collection("progressions").onSnapshot(snap=>{
+    db.collection("progressions").where("apprenant_id","==",S.apprenant.id).onSnapshot(snap=>{
       S.progressions={};
-      snap.docs.filter(d=>d.data().apprenant_id===S.apprenant.id).forEach(d=>{S.progressions[d.data().module_id]=d.data();});
+      snap.docs.forEach(d=>{S.progressions[d.data().module_id]=d.data();});
       S._progressionsLoaded=true;
       renderAll();
       checkInitialBadges();
@@ -1473,7 +1473,7 @@ function retryQuiz(mid){S.quizAnswers={};S.quizSubmitted=false;const m=S.modules
 async function completeModule(moduleId,score){
   if(!S.apprenant){alert("Dossier non lié. Contactez votre chargé de suivi.");return;}
   const progId=`${S.apprenant.id}_${moduleId}`;
-  const progData={apprenant_id:S.apprenant.id,module_id:moduleId,statut:"termine",score_quiz:score,completed_at:TS(),updatedAt:TS()};
+  const progData={apprenant_id:S.apprenant.id,module_id:moduleId,statut:"completed",score_quiz:score,completed_at:TS(),updatedAt:TS()};
   await db.collection("progressions").doc(progId).set(progData,{merge:true});
   S.progressions[moduleId]=progData;
   // Award XP

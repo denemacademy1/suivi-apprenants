@@ -839,7 +839,7 @@ function fDateLong(d){if(!d)return"—";try{return new Date(d).toLocaleDateStrin
 const today=()=>new Date().toISOString().split("T")[0];
 const isUpcoming=(d,n=7)=>{if(!d)return false;const dt=new Date(d),t=new Date();t.setHours(0,0,0,0);const l=new Date(t);l.setDate(l.getDate()+n);return dt>=t&&dt<=l;};
 const isPast=(d)=>{if(!d)return false;return new Date(d)<new Date(today());};
-const stuProgs=(appId)=>S.progressions.filter(p=>p.apprenant_id===appId&&p.statut==="completed");
+const stuProgs=(appId)=>S.progressions.filter(p=>p.apprenant_id===appId&&(p.statut==="completed"||p.statut==="termine"));
 const modulesOk=(a)=>stuProgs(a.id).length;
 const totalModules=()=>S.modules.length||MODULES.length;
 const moduleProgress=(a)=>{const t=totalModules();return t?Math.round((modulesOk(a)/t)*100):avp(calcJour(a));};
@@ -1309,7 +1309,7 @@ function renderRapports(){
     const PHASE_COLORS_CHART={onboarding:"#8B5CF6CC",formation:"#3B82F6CC",pratique:"#10B981CC",finalisation:"#F59E0BCC"};
     const rates=modSrc.map(m=>{
       const done=S.modules.length
-        ?data.filter(a=>S.progressions.some(p=>p.apprenant_id===a.id&&p.module_id===m.id&&p.statut==="completed")).length
+        ?data.filter(a=>S.progressions.some(p=>p.apprenant_id===a.id&&p.module_id===m.id&&(p.statut==="completed"||p.statut==="termine"))).length
         :data.filter(a=>(a.modules_scores||[])[m.id-1]!=null).length;
       return data.length?Math.round((done/data.length)*100):0;
     });
