@@ -427,7 +427,7 @@ nav::-webkit-scrollbar{width:0}
 .rdv-done-date{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}
 .rdv-done-badge{margin-left:auto;font-size:10px;font-weight:700;color:#10B981;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
 .rdv-next-label{font-size:10px;font-weight:700;color:rgba(52,211,153,.8);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.rdv-next-label span{display:inline-block;width:6px;height:6px;border-radius:50%;background:#10B981;animation:rdvPulse 2s infinite}
+.rdv-next-label span,.rdv-label span{display:inline-block;width:6px;height:6px;border-radius:50%;background:#10B981;animation:rdvPulse 2s infinite;flex-shrink:0}
 @keyframes rdvPulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ─── CHAT ─── */
@@ -1033,13 +1033,18 @@ function loadData(){
     S.todos=S.apprenant.todos||[];
     renderTodos();
     // RDVs — all non-cancelled RDVs for this student (including Réalisé for history)
-    db.collection("rdvs").where("apprenant_id","==",S.apprenant.id).onSnapshot(snap=>{
+    const rdvHandler=snap=>{
       S.rdvs=snap.docs
         .map(d=>({id:d.id,...d.data()}))
-        .filter(r=>r.statut!=="Annulé")
+        .filter(r=>r.apprenant_id===S.apprenant.id&&r.statut!=="Annulé")
         .sort((a,b)=>a.date.localeCompare(b.date));
       renderHomeRdv();
-    },_=>{});
+    };
+    try{
+      db.collection("rdvs").where("apprenant_id","==",S.apprenant.id).onSnapshot(rdvHandler,_=>{
+        db.collection("rdvs").onSnapshot(rdvHandler,()=>{});
+      });
+    }catch(_){db.collection("rdvs").onSnapshot(rdvHandler,()=>{});}
     renderHomeRdv();
   }
 }
