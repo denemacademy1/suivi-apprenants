@@ -453,8 +453,45 @@ tbody tr:last-child td{border-bottom:none}
 .alert-icon{font-size:18px;flex-shrink:0}
 .alert-title{font-size:13px;font-weight:600;margin-bottom:3px}
 .alert-desc{font-size:12px;color:var(--muted)}
-.alert-action{font-size:12px;font-weight:600;color:var(--primary);cursor:pointer;margin-top:6px;display:inline-block}
+.alert-action{font-size:12px;font-weight:600;color:var(--primary);cursor:pointer;margin-top:6px;display:inline-block;margin-right:10px}
 .alert-action:hover{text-decoration:underline}
+.alert-btn-plan{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;transition:.15s}
+.alert-btn-plan:hover{background:#4338CA}
+
+/* TRACKING TABLE */
+.suivi-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+.suivi-table{width:100%;border-collapse:collapse;font-size:12px;min-width:860px}
+.suivi-table th{background:var(--bg);padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+.suivi-table th.ms-col{text-align:center;width:60px}
+.suivi-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.suivi-table tr:last-child td{border-bottom:none}
+.suivi-table tr:hover td{background:var(--bg)}
+.ms-cell{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ms-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.ms-done{background:var(--success-light);border:2px solid var(--success);color:var(--success)}
+.ms-planned{background:var(--info-light);border:2px solid var(--info);color:var(--info)}
+.ms-urgent{background:#FEF3C7;border:2px solid var(--warning);color:var(--warning);animation:msPulse 1.2s ease-in-out infinite}
+.ms-late{background:var(--danger-light);border:2px solid var(--danger);color:var(--danger)}
+.ms-future{background:var(--bg);border:2px solid var(--border);color:var(--light)}
+@keyframes msPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}50%{box-shadow:0 0 0 5px rgba(245,158,11,0)}}
+.ms-lbl{font-size:9px;font-weight:600;text-align:center;white-space:nowrap}
+.ms-lbl.done{color:var(--success)}
+.ms-lbl.planned{color:var(--info)}
+.ms-lbl.urgent{color:var(--warning)}
+.ms-lbl.late{color:var(--danger)}
+.ms-lbl.future{color:var(--light)}
+.suivi-name{font-weight:600;font-size:13px;color:var(--text)}
+.suivi-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.jour-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.plan-btn{padding:4px 9px;background:var(--primary-light);color:var(--primary);border:1px solid rgba(79,70,229,.2);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.plan-btn:hover{background:var(--primary);color:#fff}
+.plan-btn.urgent{background:var(--warning-light);color:var(--warning);border-color:rgba(245,158,11,.3)}
+.plan-btn.urgent:hover{background:var(--warning);color:#fff}
+.plan-btn.late{background:var(--danger-light);color:var(--danger);border-color:rgba(239,68,68,.3)}
+.plan-btn.late:hover{background:var(--danger);color:#fff}
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.filter-chip{padding:5px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:var(--card);color:var(--muted);transition:.15s}
+.filter-chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 
 /* ACTIVITY */
 .activity-item{display:flex;gap:10px;padding-bottom:14px;position:relative}
@@ -819,7 +856,7 @@ const PAGE_INFO={
   dashboard:{title:"Tableau de bord",sub:"Vue d'ensemble de la formation",action:null},
   apprenants:{title:"Apprenants",sub:"Gestion et suivi des apprenants",action:"+ Apprenant"},
   planning:{title:"Planning RDVs",sub:"Rendez-vous et points de contact",action:"+ RDV"},
-  alertes:{title:"Alertes",sub:"Apprenants nécessitant une attention immédiate",action:null},
+  alertes:{title:"Alertes & Suivi RDV",sub:"Alertes actives + tableau de suivi des milestones par apprenant",action:null},
   rapports:{title:"Rapports & Analyses",sub:"Statistiques de la formation",action:null},
   reglages:{title:"Réglages",sub:"Configuration du dashboard",action:null},
   cohortes:{title:"Cohortes",sub:"Groupes d'apprenants — 8 membres max",action:"+ Cohorte"},
@@ -956,11 +993,49 @@ function computeAlerts(){
         if(!done)al.push({type:"warning",icon:"📞",title:`Contact manqué — ${ct.nom}`,desc:`${a.prenom} ${a.nom} (J${calcJour(a)}) — contact prévu J${ct.jour} non effectué.`,aid:a.id,p:3});
       }
     });
+    // RDV milestones alerts
+    if(a.date_debut){
+      const jourActuel=calcJour(a);
+      const rdvsDone=stuRdvsDone(a.id);
+      const nextIdx=rdvsDone.length; // prochain milestone à réaliser
+      if(nextIdx<RDV_SUIVI.length){
+        const m=RDV_SUIVI[nextIdx];
+        const daysTo=m.jour-jourActuel;
+        const hasPlanned=S.rdvs.some(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
+        if(daysTo<0&&Math.abs(daysTo)>5&&!hasPlanned){
+          // En retard sur le RDV
+          al.push({type:"danger",icon:"🔴",title:`RDV manqué — ${a.prenom} ${a.nom}`,
+            desc:`${m.icon} ${m.nom} (J${m.jour}) non réalisé. Actuellement J${jourActuel} (+${Math.abs(daysTo)} jours de retard).`,
+            aid:a.id,planApp:a.id,planType:m.nom,planDate:rdvMilestoneDate(a,m),p:1});
+        } else if(daysTo>=0&&daysTo<=3&&!hasPlanned){
+          // À planifier dans les 3 prochains jours
+          al.push({type:"warning",icon:"🔔",title:`À planifier — ${a.prenom} ${a.nom}`,
+            desc:`${m.icon} ${m.nom} arrive dans ${daysTo===0?"aujourd'hui":daysTo+' jour'+(daysTo>1?'s':'')} (J${m.jour}).`,
+            aid:a.id,planApp:a.id,planType:m.nom,planDate:rdvMilestoneDate(a,m),p:1});
+        } else if(daysTo>3&&daysTo<=7&&!hasPlanned){
+          // À anticiper dans la semaine
+          al.push({type:"info",icon:"📅",title:`À anticiper — ${a.prenom} ${a.nom}`,
+            desc:`${m.icon} ${m.nom} dans ${daysTo} jours (J${m.jour}). Pensez à fixer ce RDV.`,
+            aid:a.id,planApp:a.id,planType:m.nom,planDate:rdvMilestoneDate(a,m),p:3});
+        }
+      }
+    }
   });
   S.rdvs.forEach(r=>{
     if(r.statut==="Planifié"&&isPast(r.date))al.push({type:"danger",icon:"📅",title:`RDV non soldé — ${r.apprenant_nom}`,desc:`RDV "${r.type}" prévu le ${fDate(r.date)} — à marquer comme réalisé ou annulé.`,rid:r.id,p:2});
   });
   return al.sort((a,b)=>a.p-b.p);
+}
+
+function rdvMilestoneDate(a,milestone){
+  if(!a.date_debut)return today();
+  const d=new Date(a.date_debut);
+  d.setDate(d.getDate()+milestone.jour-1);
+  return localIso(d);
+}
+
+function openRdvModalPrefill(appId,rdvType,dateStr){
+  openRdvModal({apprenant_id:appId,type:rdvType,date:dateStr||today(),statut:'Planifié'});
 }
 
 // ══════════════════════════════════════
@@ -1444,19 +1519,124 @@ function showRdvPop(e,rdvId){
 // ══════════════════════════════════════
 function renderAlertes(){
   const alerts=computeAlerts();
-  document.getElementById("page-alertes").innerHTML=alerts.length?`
+  const data=byCharge(S.apprenants).filter(a=>a.date_debut);
+  const urgentes=alerts.filter(a=>a.type==="danger").length;
+  const warnings=alerts.filter(a=>a.type==="warning").length;
+  const infos=alerts.filter(a=>a.type==="info").length;
+
+  // ── build milestone cell HTML ──
+  function msCell(a,i){
+    const rdvsDone=stuRdvsDone(a.id);
+    const m=RDV_SUIVI[i];
+    const jourActuel=calcJour(a);
+    const daysTo=m.jour-jourActuel;
+    const hasPlanned=S.rdvs.some(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
+    const plannedRdv=S.rdvs.find(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
+    if(i<rdvsDone.length){
+      const rd=rdvsDone[i];
+      return`<div class="ms-cell"><div class="ms-dot ms-done" title="Réalisé le ${rd.date}">✓</div><div class="ms-lbl done">${rd.date.slice(5)}</div></div>`;
+    }
+    if(i>rdvsDone.length){
+      // milestone futur non encore accessible
+      return`<div class="ms-cell"><div class="ms-dot ms-future" title="J${m.jour}">·</div><div class="ms-lbl future">J${m.jour}</div></div>`;
+    }
+    // i === rdvsDone.length → c'est le prochain milestone
+    if(hasPlanned&&plannedRdv){
+      return`<div class="ms-cell"><div class="ms-dot ms-planned" title="Planifié le ${plannedRdv.date}">📅</div><div class="ms-lbl planned">${plannedRdv.date.slice(5)}</div></div>`;
+    }
+    if(daysTo<-5){
+      return`<div class="ms-cell"><div class="ms-dot ms-late" title="En retard de ${Math.abs(daysTo)}j">!</div><div class="ms-lbl late">J${m.jour}</div></div>`;
+    }
+    if(daysTo>=0&&daysTo<=3){
+      return`<div class="ms-cell"><div class="ms-dot ms-urgent" title="Dans ${daysTo}j">🔔</div><div class="ms-lbl urgent">J${m.jour}</div></div>`;
+    }
+    return`<div class="ms-cell"><div class="ms-dot ms-future" title="Dans ${daysTo} jours">·</div><div class="ms-lbl future">J${m.jour}</div></div>`;
+  }
+
+  function nextRdvCell(a){
+    const rdvsDone=stuRdvsDone(a.id);
+    const nextIdx=rdvsDone.length;
+    if(nextIdx>=RDV_SUIVI.length)return`<span style="color:var(--success);font-weight:700;font-size:12px">🎓 Terminé</span>`;
+    const m=RDV_SUIVI[nextIdx];
+    const jourActuel=calcJour(a);
+    const daysTo=m.jour-jourActuel;
+    const hasPlanned=S.rdvs.some(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
+    const milDate=rdvMilestoneDate(a,m);
+    if(hasPlanned){
+      const pr=S.rdvs.find(r=>r.apprenant_id===a.id&&r.statut==="Planifié");
+      return`<span style="color:var(--info);font-size:11px;font-weight:600">📅 Planifié ${pr?.date||''}</span>`;
+    }
+    const cls=daysTo<-5?'late':daysTo<=3?'urgent':'';
+    const label=daysTo<0?`En retard ${Math.abs(daysTo)}j`:daysTo===0?`Aujourd'hui`:`Dans ${daysTo}j`;
+    return`<button class="plan-btn ${cls}" onclick="openRdvModalPrefill('${a.id}','${m.nom}','${milDate}')">${m.icon} ${m.nom} · ${label}</button>`;
+  }
+
+  function jourBadge(a){
+    const j=calcJour(a);
+    const pct=Math.round(j/90*100);
+    const col=pct>=80?"var(--success)":pct>=50?"var(--warning)":"var(--primary)";
+    return`<span class="jour-badge" style="background:${col}18;color:${col}">J${j} · ${pct}%</span>`;
+  }
+
+  document.getElementById("page-alertes").innerHTML=`
+    <!-- KPIs -->
     <div class="grid-3 mb">
-      <div class="kpi-card" style="border-left-color:var(--danger)"><div class="kpi-icon" style="background:var(--danger-light)">🔴</div><div><div class="kpi-label">Urgentes</div><div class="kpi-value" style="color:var(--danger)">${alerts.filter(a=>a.type==="danger").length}</div></div></div>
-      <div class="kpi-card" style="border-left-color:var(--warning)"><div class="kpi-icon" style="background:var(--warning-light)">🟡</div><div><div class="kpi-label">Avertissements</div><div class="kpi-value" style="color:var(--warning)">${alerts.filter(a=>a.type==="warning").length}</div></div></div>
-      <div class="kpi-card" style="border-left-color:var(--info)"><div class="kpi-icon" style="background:var(--info-light)">ℹ️</div><div><div class="kpi-label">Info</div><div class="kpi-value" style="color:var(--info)">${alerts.filter(a=>a.type==="info").length}</div></div></div>
+      <div class="kpi-card" style="border-left-color:var(--danger)"><div class="kpi-icon" style="background:var(--danger-light)">🔴</div><div><div class="kpi-label">Urgentes</div><div class="kpi-value" style="color:var(--danger)">${urgentes}</div></div></div>
+      <div class="kpi-card" style="border-left-color:var(--warning)"><div class="kpi-icon" style="background:var(--warning-light)">🔔</div><div><div class="kpi-label">À planifier</div><div class="kpi-value" style="color:var(--warning)">${warnings}</div></div></div>
+      <div class="kpi-card" style="border-left-color:var(--info)"><div class="kpi-icon" style="background:var(--info-light)">📅</div><div><div class="kpi-label">À anticiper</div><div class="kpi-value" style="color:var(--info)">${infos}</div></div></div>
     </div>
-    <div class="card">${alerts.map(a=>`<div class="alert-item alert-${a.type}">
-      <div class="alert-icon">${a.icon}</div>
-      <div style="flex:1"><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div>
-        ${a.aid?`<span class="alert-action" onclick="openStudentPanel('${a.aid}')">Voir l'apprenant →</span>`:""}
-        ${a.rid?`<span class="alert-action" onclick="openRdvModal(S.rdvs.find(r=>r.id==='${a.rid}'))">Mettre à jour le RDV →</span>`:""}
-      </div></div>`).join("")}</div>`:
-  `<div class="empty" style="padding:80px"><div class="empty-icon">✅</div><h3>Aucune alerte active</h3><p>Tous les apprenants avancent correctement.</p></div>`;
+
+    <!-- Alertes actives -->
+    ${alerts.length?`<div class="card mb">
+      <div class="section-title" style="margin-bottom:12px">Alertes actives <span style="font-weight:400;font-size:12px;color:var(--muted)">${alerts.length} signalement(s)</span></div>
+      ${alerts.map(al=>`<div class="alert-item alert-${al.type}">
+        <div class="alert-icon">${al.icon}</div>
+        <div style="flex:1">
+          <div class="alert-title">${al.title}</div>
+          <div class="alert-desc">${al.desc}</div>
+          <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            ${al.aid?`<span class="alert-action" onclick="openStudentPanel('${al.aid}')">Voir l'apprenant →</span>`:""}
+            ${al.rid?`<span class="alert-action" onclick="openRdvModal(S.rdvs.find(r=>r.id==='${al.rid}'))">Mettre à jour le RDV →</span>`:""}
+            ${al.planApp?`<button class="alert-btn-plan" onclick="openRdvModalPrefill('${al.planApp}','${al.planType}','${al.planDate}')">📅 Planifier ce RDV</button>`:""}
+          </div>
+        </div>
+      </div>`).join("")}
+    </div>`:`<div class="card mb"><div class="empty" style="padding:32px"><div class="empty-icon">✅</div><p style="font-weight:600">Aucune alerte active</p><p style="font-size:12px;color:var(--muted)">Tous les apprenants avancent correctement.</p></div></div>`}
+
+    <!-- Tableau de suivi RDV -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+        <div class="section-title" style="margin:0">Tableau de suivi RDV <span style="font-weight:400;font-size:12px;color:var(--muted)">${data.length} apprenant(s)</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)"><span class="ms-dot ms-done" style="width:18px;height:18px;font-size:9px">✓</span>Réalisé</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)"><span class="ms-dot ms-planned" style="width:18px;height:18px;font-size:9px">📅</span>Planifié</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)"><span class="ms-dot ms-urgent" style="width:18px;height:18px;font-size:9px">🔔</span>Urgent</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)"><span class="ms-dot ms-late" style="width:18px;height:18px;font-size:9px">!</span>En retard</span>
+        </div>
+      </div>
+      ${data.length?`<div class="suivi-table-wrap">
+        <table class="suivi-table">
+          <thead><tr>
+            <th>Apprenant</th>
+            <th>Avancement</th>
+            ${RDV_SUIVI.map(m=>`<th class="ms-col" title="${m.nom}">${m.icon}<br><span style="font-size:9px">J${m.jour}</span></th>`).join("")}
+            <th style="min-width:200px">Prochain RDV</th>
+          </tr></thead>
+          <tbody>
+            ${data.map(a=>`<tr>
+              <td>
+                <div class="suivi-name" style="cursor:pointer" onclick="openStudentPanel('${a.id}')">${a.prenom} ${a.nom}</div>
+                <div class="suivi-sub">${a.cohorte||'—'} · ${a.charge||'—'}</div>
+              </td>
+              <td>${jourBadge(a)}</td>
+              ${RDV_SUIVI.map((_,i)=>`<td style="text-align:center">${msCell(a,i)}</td>`).join("")}
+              <td>${nextRdvCell(a)}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>`:`<div class="empty" style="padding:40px"><div class="empty-icon">📋</div><p>Aucun apprenant avec une date de début renseignée.</p></div>`}
+    </div>
+  `;
 }
 
 // ══════════════════════════════════════
