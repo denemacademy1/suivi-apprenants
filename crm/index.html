@@ -7,6 +7,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -391,6 +392,22 @@ tbody tr:last-child td{border-bottom:none}
 .conv-input::placeholder{color:var(--light)}
 .btn-conv-send{width:38px;height:38px;border-radius:9px;background:var(--primary);border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
 .btn-conv-send:hover{background:#4338CA;transform:translateY(-1px)}
+.btn-conv-mic{width:38px;height:38px;border-radius:9px;background:var(--bg);border:1px solid var(--border);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.btn-conv-mic:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+.btn-conv-mic.recording{background:#FEE2E2!important;border-color:#EF4444!important;color:#EF4444!important;animation:micPulse .8s ease-in-out infinite}
+@keyframes micPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.audio-msg{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;min-width:160px;max-width:100%}
+.adm-msg-row.mine .audio-msg{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff}
+.adm-msg-row.theirs .audio-msg{background:var(--bg);border:1px solid var(--border);color:var(--text)}
+.audio-play-btn{width:28px;height:28px;border-radius:50%;border:none;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;transition:.15s}
+.adm-msg-row.mine .audio-play-btn{background:rgba(255,255,255,.25);color:#fff}
+.adm-msg-row.mine .audio-play-btn:hover{background:rgba(255,255,255,.4)}
+.adm-msg-row.theirs .audio-play-btn{background:var(--primary);color:#fff}
+.audio-wave{flex:1;height:4px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden;min-width:60px}
+.adm-msg-row.theirs .audio-wave{background:var(--border)}
+.audio-wave-fill{height:100%;width:0%;background:rgba(255,255,255,.85);border-radius:2px;transition:width .1s linear}
+.adm-msg-row.theirs .audio-wave-fill{background:var(--primary)}
+.audio-dur-lbl{font-size:11px;font-weight:600;white-space:nowrap;opacity:.85}
 /* Nav unread */
 .nav-badge.danger{background:var(--danger)}
 
@@ -611,6 +628,7 @@ tbody tr:last-child td{border-bottom:none}
                 <div class="conv-input-wrap">
                   <textarea class="conv-input" id="csm-conv-input" placeholder="Votre message…" rows="1" onkeydown="csmConvKeydown(event)" oninput="csmConvResize(this)"></textarea>
                 </div>
+                <button class="btn-conv-mic" id="csm-mic-btn" onclick="csmToggleMic()" title="Message vocal">🎤</button>
                 <button class="btn-conv-send" onclick="sendCSMReply()">➤</button>
               </div>
             </div>
@@ -803,6 +821,7 @@ const S={
 firebase.initializeApp(FB);
 const auth=firebase.auth();
 const db=firebase.firestore();
+const storage=firebase.storage();
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 
 // ══════════════════════════════════════
@@ -2256,7 +2275,7 @@ function renderCSMCohortMessages(msgs,cohortId){
             <span class="adm-msg-time">${time}</span>
           </div>
           <div class="msg-bubble-row">
-            <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+            ${m.type==='audio'&&m.audioUrl?csmBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>`}
             <button class="msg-react-add" onclick="csmToggleReactPicker(this,'${m.id}','cohorts','${cohortId}')">😊</button>
           </div>
           ${csmBuildReactChips(m,'cohorts',cohortId)}
@@ -2417,7 +2436,7 @@ function renderCSMMessages(msgs,appId){
           <span class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':''}</span>
         </div>
         <div class="msg-bubble-row">
-          <div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>
+          ${m.type==='audio'&&m.audioUrl?csmBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="adm-msg-bubble">${csmEsc(m.text||'').replace(/\n/g,'<br>')}</div>`}
           <button class="msg-react-add" onclick="csmToggleReactPicker(this,'${m.id}','conversations','${appId}')">😊</button>
         </div>
         ${csmBuildReactChips(m,'conversations',appId)}
@@ -2520,6 +2539,108 @@ function csmConvResize(el){el.style.height='auto';el.style.height=Math.min(el.sc
 function csmFmtTime(d){const now=new Date(),diff=now-d;if(diff<60000)return'À l\'instant';if(diff<3600000)return Math.floor(diff/60000)+'min';if(diff<86400000)return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});if(diff<604800000)return d.toLocaleDateString('fr-FR',{weekday:'short'});return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
 function csmTrunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}
 function csmEsc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ══════════════════════════════════════
+//  VOICE MESSAGES
+// ══════════════════════════════════════
+let _csmRecorder=null,_csmRecChunks=[],_csmRecTimer=null,_csmRecSecs=0;
+function fmtVocDur(s){return Math.floor(s/60)+':'+(String(Math.round(s%60)).padStart(2,'0'));}
+
+async function csmToggleMic(){
+  if(_csmRecorder&&_csmRecorder.state==='recording'){
+    _csmRecorder.stop();
+    return;
+  }
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}
+  catch(e){alert('Microphone inaccessible : '+e.message);return;}
+  _csmRecChunks=[];
+  _csmRecorder=new MediaRecorder(stream);
+  _csmRecorder.ondataavailable=e=>{if(e.data.size>0)_csmRecChunks.push(e.data);};
+  _csmRecorder.onstop=async()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    clearInterval(_csmRecTimer);
+    const btn=document.getElementById('csm-mic-btn');
+    if(btn){btn.textContent='🎤';btn.classList.remove('recording');btn.title='Message vocal';}
+    const duration=_csmRecSecs;
+    if(_csmRecChunks.length===0)return;
+    const blob=new Blob(_csmRecChunks,{type:_csmRecorder.mimeType||'audio/webm'});
+    const col=_msgTab==='cohort'?'cohorts':'conversations';
+    const pid=_msgTab==='cohort'?_csmCurrentCohortId:_csmCurrentConvId;
+    if(!pid)return;
+    try{
+      const ref=storage.ref(`voice/${col}/${pid}/${Date.now()}.webm`);
+      await ref.put(blob,{contentType:'audio/webm'});
+      const url=await ref.getDownloadURL();
+      await csmSendAudioMsg(url,duration);
+    }catch(e){console.error('Upload vocal',e);alert('Erreur envoi vocal : '+e.message);}
+  };
+  _csmRecorder.start();
+  _csmRecSecs=0;
+  const btn=document.getElementById('csm-mic-btn');
+  if(btn){btn.textContent='⏹';btn.classList.add('recording');btn.title='Arrêter';}
+  _csmRecTimer=setInterval(()=>{
+    _csmRecSecs++;
+    const btn=document.getElementById('csm-mic-btn');
+    if(btn)btn.title=`Enregistrement ${fmtVocDur(_csmRecSecs)} — cliquer pour envoyer`;
+  },1000);
+}
+
+async function csmSendAudioMsg(url,duration){
+  if(!_csmUser)return;
+  const name=(_csmUser.prenom&&_csmUser.nom)?`${_csmUser.prenom} ${_csmUser.nom}`.trim():_csmUser.prenom||'Coach';
+  const role=_csmUser.role||'csm';
+  const msg={type:'audio',audioUrl:url,duration,text:'🎙️ Message vocal',senderId:_csmUser.uid,senderName:name,role,timestamp:TS(),lu:false};
+  if(_msgTab==='cohort'){
+    if(!_csmCurrentCohortId)return;
+    await db.collection("cohorts").doc(_csmCurrentCohortId).collection("messages").add(msg);
+  } else {
+    if(!_csmCurrentConvId)return;
+    await db.collection("conversations").doc(_csmCurrentConvId).collection("messages").add(msg);
+    const appData=S.apprenants.find(a=>a.id===_csmCurrentConvId);
+    const appName=appData?`${appData.prenom||''} ${appData.nom||''}`.trim()||appData.email:'Apprenant';
+    db.collection("conversations").doc(_csmCurrentConvId).set({
+      apprenant_id:_csmCurrentConvId,apprenantName:appName,csm_id:_csmUser.uid||null,
+      dernierMsg:'🎙️ Message vocal',timestamp:TS(),nonLusCSM:0,
+      nonLusStudent:firebase.firestore.FieldValue.increment(1)
+    },{merge:true}).catch(()=>{});
+  }
+}
+
+const _csmAudioReg={};
+function csmBuildAudioBubble(msgId,url,duration){
+  _csmAudioReg[msgId]=url;
+  const dur=duration>0?fmtVocDur(duration):'0:00';
+  return`<div class="audio-msg" id="caudio-${msgId}">
+    <button class="audio-play-btn" onclick="csmToggleAudio('${msgId}')">▶</button>
+    <div class="audio-wave"><div class="audio-wave-fill" id="caw-${msgId}"></div></div>
+    <span class="audio-dur-lbl" id="cad-${msgId}">${dur}</span>
+  </div>`;
+}
+function csmToggleAudio(msgId){
+  const url=_csmAudioReg[msgId];if(!url)return;
+  const wrap=document.getElementById('caudio-'+msgId);if(!wrap)return;
+  const btn=wrap.querySelector('.audio-play-btn');
+  const fill=document.getElementById('caw-'+msgId);
+  const durEl=document.getElementById('cad-'+msgId);
+  let audio=wrap._audio;
+  if(!audio){
+    audio=new Audio(url);wrap._audio=audio;
+    audio.ontimeupdate=()=>{
+      const pct=audio.duration?audio.currentTime/audio.duration*100:0;
+      if(fill)fill.style.width=pct+'%';
+      if(durEl)durEl.textContent=fmtVocDur(Math.floor(audio.currentTime));
+    };
+    audio.onended=()=>{
+      if(btn)btn.textContent='▶';
+      if(fill)fill.style.width='0%';
+    };
+  }
+  if(audio.paused){
+    document.querySelectorAll('.audio-msg').forEach(el=>{if(el!==wrap&&el._audio&&!el._audio.paused){el._audio.pause();const b=el.querySelector('.audio-play-btn');if(b)b.textContent='▶';}});
+    audio.play();if(btn)btn.textContent='⏸';
+  } else {audio.pause();if(btn)btn.textContent='▶';}
+}
 
 // ══════════════════════════════════════
 //  INIT

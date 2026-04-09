@@ -201,6 +201,22 @@ tr:hover td{background:#FAFBFF}
 .conv-input-wrap{flex:1;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:10px 14px;transition:.2s}
 .conv-input-wrap:focus-within{border-color:#4F46E5;background:#fff;box-shadow:0 0 0 3px #EEF2FF}
 .conv-input{width:100%;background:transparent;border:none;outline:none;font-size:14px;color:#1E293B;font-family:inherit;resize:none;line-height:1.5;max-height:120px;overflow-y:auto}
+.btn-conv-mic{width:42px;height:42px;border-radius:10px;background:#F8FAFC;border:1.5px solid #E2E8F0;color:#94A3B8;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.btn-conv-mic:hover{background:#EEF2FF;border-color:#4F46E5;color:#4F46E5}
+.btn-conv-mic.recording{background:#FEE2E2!important;border-color:#EF4444!important;color:#EF4444!important;animation:micPulseAdm .8s ease-in-out infinite}
+@keyframes micPulseAdm{0%,100%{opacity:1}50%{opacity:.4}}
+.audio-msg{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;min-width:160px;max-width:100%}
+.adm-msg-row.mine .audio-msg{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff}
+.adm-msg-row.theirs .audio-msg{background:#F8FAFC;border:1px solid #E2E8F0;color:#1E293B}
+.audio-play-btn{width:28px;height:28px;border-radius:50%;border:none;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;transition:.15s}
+.adm-msg-row.mine .audio-play-btn{background:rgba(255,255,255,.25);color:#fff}
+.adm-msg-row.mine .audio-play-btn:hover{background:rgba(255,255,255,.4)}
+.adm-msg-row.theirs .audio-play-btn{background:#4F46E5;color:#fff}
+.audio-wave{flex:1;height:4px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden;min-width:60px}
+.adm-msg-row.theirs .audio-wave{background:#E2E8F0}
+.audio-wave-fill{height:100%;width:0%;background:rgba(255,255,255,.85);border-radius:2px;transition:width .1s linear}
+.adm-msg-row.theirs .audio-wave-fill{background:#4F46E5}
+.audio-dur-lbl{font-size:11px;font-weight:600;white-space:nowrap;opacity:.85}
 .conv-input::placeholder{color:#CBD5E1}
 .btn-conv-send{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
 .btn-conv-send:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(79,70,229,.35)}
@@ -347,6 +363,7 @@ tr:hover td{background:#FAFBFF}
             <div class="conv-input-wrap">
               <textarea class="conv-input" id="conv-input" placeholder="Votre réponse…" rows="1" onkeydown="convKeydown(event)" oninput="convAutoResize(this)"></textarea>
             </div>
+            <button class="btn-conv-mic" id="adm-mic-btn" onclick="admToggleMic()" title="Message vocal">🎤</button>
             <button class="btn-conv-send" onclick="sendConvReply()" title="Envoyer">➤</button>
           </div>
         </div>
@@ -1070,7 +1087,7 @@ function renderAdminCohortMessages(msgs,cohortId){
             <span style="font-size:11px;font-weight:600;color:#475569">${escHtml(name)}${isStaff&&!isMe?' · Staff':''}</span>
             <span style="font-size:10px;color:#94A3B8">${time}</span>
           </div>
-          <div style="padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;${isMe?'background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px':'background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)'}">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>
+          <div class="adm-msg-row ${isMe?'mine':'theirs'}" style="background:none;border:none;padding:0;box-shadow:none;max-width:100%">${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div style="padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;${isMe?'background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px':'background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)'}">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}</div>
         </div>
       </div>`;
     }
@@ -1203,7 +1220,7 @@ function renderConvMessages(msgs,appId){
       <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
       <div class="adm-msg-body">
         <div class="adm-msg-sender">${escHtml(name)}</div>
-        <div class="adm-msg-bubble">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>
+        ${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="adm-msg-bubble">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}
         <div class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':isMe?' · Envoyé':''}</div>
       </div>
     </div>`;
@@ -1253,6 +1270,108 @@ function formatConvTime(date){
 }
 
 function truncate(str,n){return str.length>n?str.slice(0,n)+'…':str;}
+
+// ══════════════════════════════════════
+//  VOICE MESSAGES
+// ══════════════════════════════════════
+let _admRecorder=null,_admRecChunks=[],_admRecTimer=null,_admRecSecs=0;
+function fmtVocDur(s){return Math.floor(s/60)+':'+(String(Math.round(s%60)).padStart(2,'0'));}
+
+async function admToggleMic(){
+  if(_admRecorder&&_admRecorder.state==='recording'){
+    _admRecorder.stop();
+    return;
+  }
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}
+  catch(e){alert('Microphone inaccessible : '+e.message);return;}
+  _admRecChunks=[];
+  _admRecorder=new MediaRecorder(stream);
+  _admRecorder.ondataavailable=e=>{if(e.data.size>0)_admRecChunks.push(e.data);};
+  _admRecorder.onstop=async()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    clearInterval(_admRecTimer);
+    const btn=document.getElementById('adm-mic-btn');
+    if(btn){btn.textContent='🎤';btn.classList.remove('recording');btn.title='Message vocal';}
+    const duration=_admRecSecs;
+    if(_admRecChunks.length===0)return;
+    const blob=new Blob(_admRecChunks,{type:_admRecorder.mimeType||'audio/webm'});
+    const col=_adminMsgTab==='cohort'?'cohorts':'conversations';
+    const pid=_adminMsgTab==='cohort'?_adminCurrentCohortId:currentConvId;
+    if(!pid)return;
+    try{
+      const ref=storage.ref(`voice/${col}/${pid}/${Date.now()}.webm`);
+      await ref.put(blob,{contentType:'audio/webm'});
+      const url=await ref.getDownloadURL();
+      await admSendAudioMsg(url,duration);
+    }catch(e){console.error('Upload vocal',e);alert('Erreur envoi vocal : '+e.message);}
+  };
+  _admRecorder.start();
+  _admRecSecs=0;
+  const btn=document.getElementById('adm-mic-btn');
+  if(btn){btn.textContent='⏹';btn.classList.add('recording');btn.title='Arrêter';}
+  _admRecTimer=setInterval(()=>{
+    _admRecSecs++;
+    const btn=document.getElementById('adm-mic-btn');
+    if(btn)btn.title=`Enregistrement ${fmtVocDur(_admRecSecs)} — cliquer pour envoyer`;
+  },1000);
+}
+
+async function admSendAudioMsg(url,duration){
+  if(!_adminUser)return;
+  const name=(_adminUser.prenom&&_adminUser.nom)?`${_adminUser.prenom} ${_adminUser.nom}`.trim():_adminUser.prenom||'Admin';
+  const role=_adminUser.role||'admin';
+  const msg={type:'audio',audioUrl:url,duration,text:'🎙️ Message vocal',senderId:_adminUser.uid,senderName:name,role,timestamp:firebase.firestore.FieldValue.serverTimestamp(),lu:false};
+  if(_adminMsgTab==='cohort'){
+    if(!_adminCurrentCohortId)return;
+    await db.collection("cohorts").doc(_adminCurrentCohortId).collection("messages").add(msg);
+  } else {
+    if(!currentConvId)return;
+    await db.collection("conversations").doc(currentConvId).collection("messages").add(msg);
+    const appData=apprenants.find(a=>a.id===currentConvId);
+    const appName=appData?`${appData.prenom||''} ${appData.nom||''}`.trim()||appData.email:'Apprenant';
+    db.collection("conversations").doc(currentConvId).set({
+      apprenant_id:currentConvId,apprenantName:appName,
+      dernierMsg:'🎙️ Message vocal',timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      nonLusCSM:0,nonLusStudent:firebase.firestore.FieldValue.increment(1)
+    },{merge:true}).catch(()=>{});
+  }
+}
+
+const _admAudioReg={};
+function admBuildAudioBubble(msgId,url,duration){
+  _admAudioReg[msgId]=url;
+  const dur=duration>0?fmtVocDur(duration):'0:00';
+  return`<div class="audio-msg" id="aaudio-${msgId}">
+    <button class="audio-play-btn" onclick="admToggleAudio('${msgId}')">▶</button>
+    <div class="audio-wave"><div class="audio-wave-fill" id="aaw-${msgId}"></div></div>
+    <span class="audio-dur-lbl" id="aad-${msgId}">${dur}</span>
+  </div>`;
+}
+function admToggleAudio(msgId){
+  const url=_admAudioReg[msgId];if(!url)return;
+  const wrap=document.getElementById('aaudio-'+msgId);if(!wrap)return;
+  const btn=wrap.querySelector('.audio-play-btn');
+  const fill=document.getElementById('aaw-'+msgId);
+  const durEl=document.getElementById('aad-'+msgId);
+  let audio=wrap._audio;
+  if(!audio){
+    audio=new Audio(url);wrap._audio=audio;
+    audio.ontimeupdate=()=>{
+      const pct=audio.duration?audio.currentTime/audio.duration*100:0;
+      if(fill)fill.style.width=pct+'%';
+      if(durEl)durEl.textContent=fmtVocDur(Math.floor(audio.currentTime));
+    };
+    audio.onended=()=>{
+      if(btn)btn.textContent='▶';
+      if(fill)fill.style.width='0%';
+    };
+  }
+  if(audio.paused){
+    document.querySelectorAll('.audio-msg').forEach(el=>{if(el!==wrap&&el._audio&&!el._audio.paused){el._audio.pause();const b=el.querySelector('.audio-play-btn');if(b)b.textContent='▶';}});
+    audio.play();if(btn)btn.textContent='⏸';
+  } else {audio.pause();if(btn)btn.textContent='▶';}
+}
 
 // Close modal on backdrop click
 document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
