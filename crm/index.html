@@ -45,7 +45,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .nav-badge:empty{display:none}
 .sidebar-footer{padding:8px;border-top:1px solid rgba(255,255,255,0.08);margin-top:auto}
 .sidebar-user{display:flex;align-items:center;gap:10px;padding:10px;margin-top:4px}
-.u-avatar-el{width:32px;height:32px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.u-avatar-el{width:32px;height:32px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;position:relative;overflow:hidden;cursor:pointer}
+.u-avatar-el:hover::after{content:'📷';position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;font-size:13px;border-radius:50%}
+.u-avatar-el img,.conv-ava img,.csm-chat-ava img,.adm-msg-ava img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0}
 .u-name-el{font-size:12px;font-weight:600;color:#fff}
 .u-role-el{font-size:11px;color:rgba(255,255,255,0.55)}
 
@@ -618,7 +620,7 @@ tbody tr:last-child td{border-bottom:none}
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-user">
-        <div class="u-avatar-el" id="u-avatar">C</div>
+        <div class="u-avatar-el" id="u-avatar" onclick="pickAvatarCRM()" title="Changer la photo de profil">C</div>
         <div><div class="u-name-el" id="u-name">Chargé de suivi</div><div class="u-role-el">CSM · En ligne</div></div>
       </div>
       <button onclick="doLogout()" style="width:100%;background:rgba(255,255,255,.06);border:none;border-radius:8px;color:rgba(255,255,255,.6);font-size:12px;padding:8px;cursor:pointer;text-align:left;padding-left:12px;margin-top:4px" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.6)'">🚪 Déconnexion</button>
@@ -905,12 +907,44 @@ auth.onAuthStateChanged(async user=>{
     const d=doc.data();
     _csmUser={id:user.uid,uid:user.uid,...d,email:user.email};
     document.getElementById('u-name').textContent=`${d.prenom||''} ${d.nom||''}`.trim()||user.email;
-    document.getElementById('u-avatar').textContent=(d.prenom||user.email).charAt(0).toUpperCase();
+    crmApplyAvatar('u-avatar', d.photoURL, (d.prenom||user.email).charAt(0).toUpperCase());
   }
   startListeners();
 });
 
 function doLogout(){auth.signOut();}
+
+// ── PHOTO DE PROFIL ──
+function crmApplyAvatar(elId, url, initials){
+  const el=typeof elId==='string'?document.getElementById(elId):elId;
+  if(!el)return;
+  el.querySelectorAll('img').forEach(i=>i.remove());
+  if(url){
+    const img=document.createElement('img');
+    img.src=url;img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0';
+    img.onerror=()=>img.remove();
+    el.appendChild(img);
+  } else if(initials!==undefined){
+    el.textContent=initials;
+  }
+}
+async function pickAvatarCRM(){
+  if(!_csmUser)return;
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=async()=>{
+    const file=inp.files[0];if(!file)return;
+    if(file.size>5*1024*1024){alert('Image trop grande (max 5 Mo)');return;}
+    try{
+      const ref=storage.ref(`profiles/${_csmUser.uid}.jpg`);
+      await ref.put(file,{contentType:file.type});
+      const url=await ref.getDownloadURL();
+      await db.collection('users').doc(_csmUser.uid).update({photoURL:url});
+      _csmUser.photoURL=url;
+      crmApplyAvatar('u-avatar', url);
+    }catch(e){alert('Erreur upload : '+e.message);}
+  };
+  inp.click();
+}
 
 function startListeners(){
   db.collection("apprenants").orderBy("nom").onSnapshot(snap=>{
@@ -2536,6 +2570,7 @@ function renderCSMConvList(){
     return{
       id:a.id,
       apprenantName:`${a.prenom||''} ${a.nom||''}`.trim()||a.email||a.id,
+      photoURL:a.photoURL||null,
       dernierMsg:conv?.dernierMsg||null,
       timestamp:conv?.timestamp||null,
       nonLusCSM:conv?.nonLusCSM||0
@@ -2562,7 +2597,7 @@ function renderCSMConvList(){
     const ts=c.timestamp?.seconds?csmFmtTime(new Date(c.timestamp.seconds*1000)):'';
     const isActive=c.id===_csmCurrentConvId;
     return`<div class="conv-item${isActive?' active':''}" onclick="openCSMConv('${c.id}')">
-      <div class="conv-ava">${initial}</div>
+      <div class="conv-ava" style="position:relative;overflow:hidden">${c.photoURL?`<img src="${csmEsc(c.photoURL)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0" onerror="this.remove()">`:''}${initial}</div>
       <div class="conv-info">
         <div class="conv-name">${csmEsc(name)}</div>
         <div class="conv-preview" style="${!hasMsg?'color:var(--light);font-style:italic':''}">${csmEsc(preview)}</div>

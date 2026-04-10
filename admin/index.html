@@ -26,7 +26,9 @@ nav{flex:1;padding:16px 0;overflow-y:auto}
 .nav-item .icon{font-size:16px;width:20px;text-align:center}
 .sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,.1)}
 .user-info{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.user-avatar{width:32px;height:32px;background:linear-gradient(135deg,#4F46E5,#7C3AED);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.user-avatar{width:32px;height:32px;background:linear-gradient(135deg,#4F46E5,#7C3AED);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;position:relative;overflow:hidden;cursor:pointer}
+.user-avatar:hover::after{content:'📷';position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;font-size:13px;border-radius:8px}
+.user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0}
 .user-name{font-size:12px;font-weight:600;color:#fff}
 .user-email{font-size:10px;color:rgba(255,255,255,.4)}
 .btn-logout{width:100%;padding:8px;background:rgba(255,255,255,.06);border:none;border-radius:8px;color:rgba(255,255,255,.6);font-size:12px;cursor:pointer;transition:.2s;text-align:left;padding-left:12px}
@@ -272,7 +274,7 @@ tr:hover td{background:#FAFBFF}
   </nav>
   <div class="sidebar-footer">
     <div class="user-info">
-      <div class="user-avatar" id="user-avatar">A</div>
+      <div class="user-avatar" id="user-avatar" onclick="pickAvatarAdmin()" title="Changer la photo de profil">A</div>
       <div>
         <div class="user-name" id="user-name">Admin</div>
         <div class="user-email" id="user-email">—</div>
@@ -636,9 +638,41 @@ auth.onAuthStateChanged(async user=>{
   _adminUser={id:user.uid,uid:user.uid,...d,email:user.email};
   document.getElementById('user-name').textContent=`${d.prenom||''} ${d.nom||''}`.trim()||'Admin';
   document.getElementById('user-email').textContent=user.email;
-  document.getElementById('user-avatar').textContent=(d.prenom||'A').charAt(0).toUpperCase();
+  adminApplyAvatar('user-avatar', d.photoURL, (d.prenom||'A').charAt(0).toUpperCase());
   initListeners();
 });
+
+// ── PHOTO DE PROFIL ──
+function adminApplyAvatar(elId, url, initials){
+  const el=typeof elId==='string'?document.getElementById(elId):elId;
+  if(!el)return;
+  el.querySelectorAll('img').forEach(i=>i.remove());
+  if(url){
+    const img=document.createElement('img');
+    img.src=url;img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0';
+    img.onerror=()=>img.remove();
+    el.appendChild(img);
+  } else if(initials!==undefined){
+    el.textContent=initials;
+  }
+}
+async function pickAvatarAdmin(){
+  if(!_adminUser)return;
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=async()=>{
+    const file=inp.files[0];if(!file)return;
+    if(file.size>5*1024*1024){alert('Image trop grande (max 5 Mo)');return;}
+    try{
+      const ref=storage.ref(`profiles/${_adminUser.uid}.jpg`);
+      await ref.put(file,{contentType:file.type});
+      const url=await ref.getDownloadURL();
+      await db.collection('users').doc(_adminUser.uid).update({photoURL:url});
+      _adminUser.photoURL=url;
+      adminApplyAvatar('user-avatar', url);
+    }catch(e){alert('Erreur upload : '+e.message);}
+  };
+  inp.click();
+}
 
 function doLogout(){auth.signOut();}
 
