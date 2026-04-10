@@ -355,7 +355,7 @@ tbody tr:last-child td{border-bottom:none}
 .conv-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .conv-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--light);text-align:center;padding:32px}
 .conv-chat-header{background:var(--card);border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0}
-.conv-chat-ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.conv-chat-ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;position:relative;overflow:hidden}
 .conv-chat-name{font-size:14px;font-weight:700;color:var(--text)}
 .conv-chat-sub{font-size:11px;color:var(--muted);margin-top:1px}
 .conv-messages{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:10px}
@@ -954,6 +954,8 @@ function startListeners(){
     S.cohortes=[...new Set(S.apprenants.map(a=>a.cohorte))].filter(Boolean).sort();
     refreshChargeSelect();updateBadges();renderCurrent();
     if(S.student){const f=S.apprenants.find(a=>a.id===S.student.id);if(f){S.student=f;renderPanelTab();}}
+    renderCSMConvList();
+    refreshCSMOpenConvHeader();
   });
   db.collection("rdvs").orderBy("date").onSnapshot(snap=>{
     S.rdvs=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -2627,6 +2629,17 @@ function updateCSMConvBadge(){
   if(top){if(total>0){top.textContent=total;top.style.display='';}else top.style.display='none';}
 }
 
+function refreshCSMOpenConvHeader(){
+  if(!_csmCurrentConvId)return;
+  const appData=S.apprenants.find(a=>a.id===_csmCurrentConvId);
+  if(!appData)return;
+  const photo=appData.photoURL||null;
+  const name=`${appData.prenom||''} ${appData.nom||''}`.trim()||appData.email||_csmCurrentConvId;
+  const initial=name.charAt(0).toUpperCase()||'?';
+  const ava=document.getElementById("csm-chat-ava");
+  if(ava)ava.innerHTML=photo?`<img src="${csmEsc(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:initial;
+}
+
 function openCSMConv(appId){
   _csmCurrentConvId=appId;
   const conv=_csmConvs.find(c=>c.id===appId);
@@ -2637,7 +2650,9 @@ function openCSMConv(appId){
   const appData=S.apprenants.find(a=>a.id===appId);
   const name=appData?`${appData.prenom||''} ${appData.nom||''}`.trim():conv?.apprenantName||appId;
   const initial=name.charAt(0).toUpperCase()||'?';
-  document.getElementById("csm-chat-ava").textContent=initial;
+  const photo=appData?.photoURL||null;
+  const ava=document.getElementById("csm-chat-ava");
+  ava.innerHTML=photo?`<img src="${csmEsc(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:initial;
   document.getElementById("csm-chat-name").textContent=name;
   document.getElementById("csm-chat-sub").textContent=appData?.email||conv?.apprenant_id||'Apprenant';
   // Reset unread

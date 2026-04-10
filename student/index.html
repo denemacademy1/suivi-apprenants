@@ -1856,6 +1856,7 @@ async function initChat(){
   else setupCohortChat();
 }
 
+let _csmDataUnsub=null;
 async function loadCsmData(){
   if(!S.apprenant)return;
   const csmId=S.apprenant.csm_id||S.apprenant.charge_id||null;
@@ -1864,6 +1865,15 @@ async function loadCsmData(){
       const doc=await db.collection("users").doc(csmId).get();
       if(doc.exists)S.csmData={id:doc.id,...doc.data()};
     }catch(_){}
+    // Live listener for CSM photo updates
+    if(!_csmDataUnsub){
+      _csmDataUnsub=db.collection("users").doc(csmId).onSnapshot(d=>{
+        if(!d.exists)return;
+        S.csmData={id:d.id,...d.data()};
+        if(S._chatInitDone&&S.chatTab==='private')renderChatLeft();
+      },()=>{});
+    }
+    return;
   }
   // Fallback: find any admin/csm user
   if(!S.csmData){
@@ -1876,6 +1886,14 @@ async function loadCsmData(){
         const found=all.docs.find(d=>["admin","csm"].includes(d.data().role));
         if(found)S.csmData={id:found.id,...found.data()};
       }catch(_){}
+    }
+    // Live listener for fallback CSM
+    if(!_csmDataUnsub&&S.csmData?.id){
+      _csmDataUnsub=db.collection("users").doc(S.csmData.id).onSnapshot(d=>{
+        if(!d.exists)return;
+        S.csmData={id:d.id,...d.data()};
+        if(S._chatInitDone&&S.chatTab==='private')renderChatLeft();
+      },()=>{});
     }
   }
 }
