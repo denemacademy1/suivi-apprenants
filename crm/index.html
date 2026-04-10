@@ -366,7 +366,7 @@ tbody tr:last-child td{border-bottom:none}
 .adm-msg-row{display:flex;gap:10px;max-width:72%}
 .adm-msg-row.mine{align-self:flex-end;flex-direction:row-reverse}
 .adm-msg-row.theirs{align-self:flex-start}
-.adm-msg-ava{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-start;margin-top:2px}
+.adm-msg-ava{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-start;margin-top:2px;position:relative;overflow:hidden}
 .adm-msg-body{display:flex;flex-direction:column;gap:2px}
 .adm-msg-row.mine .adm-msg-body{align-items:flex-end}
 .adm-msg-header{display:flex;align-items:center;gap:6px;padding:0 4px}
@@ -2512,6 +2512,7 @@ function renderCSMCohortMessages(msgs,cohortId){
     const name=m.senderName||(isCoach?'Coach':'Apprenant');
     const initial=name.charAt(0).toUpperCase();
     const avatarBg=isCoach?"linear-gradient(135deg,var(--primary),var(--purple))":"linear-gradient(135deg,#10B981,#059669)";
+    const photo=m.senderPhoto||(isMe?(_csmUser?.photoURL||null):null)||null;
     if(m.type==='victory'){
       html+=`<div style="margin:6px 0;padding:12px 16px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:12px;border-left:4px solid #F59E0B">
         <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:4px">🏆 Victoire · ${csmEsc(name)}</div>
@@ -2520,7 +2521,7 @@ function renderCSMCohortMessages(msgs,cohortId){
       </div>`;
     } else {
       html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
-        <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
+        <div class="adm-msg-ava" style="background:${avatarBg}">${photo?`<img src="${csmEsc(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:''}${photo?'':initial}</div>
         <div class="adm-msg-body">
           <div class="adm-msg-header">
             <span class="adm-msg-sender">${csmEsc(name)}${isCoach&&!isMe?' · Coach':''}</span>
@@ -2683,8 +2684,10 @@ function renderCSMMessages(msgs,appId){
     const name=isMe?coachName:appName;
     const initial=name.charAt(0).toUpperCase();
     const avatarBg=isMe?"linear-gradient(135deg,var(--primary),var(--purple))":"linear-gradient(135deg,#10B981,#059669)";
+    const appData2=S.apprenants.find(a=>a.id===appId);
+    const photo=m.senderPhoto||(isMe?(_csmUser?.photoURL||null):(appData2?.photoURL||null))||null;
     html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
-      <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
+      <div class="adm-msg-ava" style="background:${avatarBg}">${photo?`<img src="${csmEsc(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:''}${photo?'':initial}</div>
       <div class="adm-msg-body">
         <div class="adm-msg-header">
           <span class="adm-msg-sender">${csmEsc(name)}</span>
@@ -2762,19 +2765,20 @@ async function sendCSMReply(){
   const name=(_csmUser.prenom&&_csmUser.nom)?`${_csmUser.prenom} ${_csmUser.nom}`.trim():_csmUser.prenom||'Coach';
   const role=_csmUser.role||'csm';
 
+  const senderPhoto=_csmUser?.photoURL||null;
   if(_msgTab==='cohort'){
     // Message de groupe vers la cohorte
     if(!_csmCurrentCohortId)return;
     await db.collection("cohorts").doc(_csmCurrentCohortId).collection("messages").add({
       text,senderId:_csmUser.uid,senderName:name,role,
-      timestamp:TS(),lu:false,type:'message'
+      timestamp:TS(),lu:false,type:'message',...(senderPhoto&&{senderPhoto})
     });
   } else {
     // Message privé vers un apprenant
     if(!_csmCurrentConvId)return;
     await db.collection("conversations").doc(_csmCurrentConvId).collection("messages").add({
       text,senderId:_csmUser.uid,senderName:name,role,
-      timestamp:TS(),lu:false
+      timestamp:TS(),lu:false,...(senderPhoto&&{senderPhoto})
     });
     const appData=S.apprenants.find(a=>a.id===_csmCurrentConvId);
     const appName=appData?`${appData.prenom||''} ${appData.nom||''}`.trim()||appData.email:'Apprenant';
