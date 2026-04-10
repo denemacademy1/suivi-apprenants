@@ -1045,11 +1045,13 @@ function applyAvatarPhoto(elId, url, initials){
   if(!el)return;
   el.querySelectorAll('img').forEach(i=>i.remove());
   if(url){
+    // Masquer le texte des initiales
+    el.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent='';});
     const img=document.createElement('img');
-    img.src=url;img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0';
-    img.onerror=()=>img.remove();
+    img.src=url;
+    img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0;z-index:1';
+    img.onerror=()=>{img.remove();if(initials!==undefined)el.textContent=initials;};
     el.appendChild(img);
-    if(initials!==undefined)el.dataset.initials=initials;
   } else {
     if(initials!==undefined)el.textContent=initials;
   }
@@ -1064,8 +1066,12 @@ async function pickAvatarStu(){
       const ref=storage.ref(`profiles/${S.user.uid}.jpg`);
       await ref.put(file,{contentType:file.type});
       const url=await ref.getDownloadURL();
+      // users/{uid} — toujours autorisé pour l'apprenant
       await db.collection('users').doc(S.user.uid).update({photoURL:url});
-      if(S.apprenant)await db.collection('apprenants').doc(S.apprenant.id).update({photoURL:url});
+      // apprenants/{id} — tentative silencieuse (permission CSM requise)
+      if(S.apprenant){
+        db.collection('apprenants').doc(S.apprenant.id).update({photoURL:url}).catch(()=>{});
+      }
       applyAvatarPhoto('suc-avatar', url);
       showToast('📷','Photo mise à jour','Votre photo de profil est en ligne ✓',true);
     }catch(e){alert('Erreur upload : '+e.message);}

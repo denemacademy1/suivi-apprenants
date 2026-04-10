@@ -920,9 +920,10 @@ function crmApplyAvatar(elId, url, initials){
   if(!el)return;
   el.querySelectorAll('img').forEach(i=>i.remove());
   if(url){
+    el.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent='';});
     const img=document.createElement('img');
-    img.src=url;img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0';
-    img.onerror=()=>img.remove();
+    img.src=url;img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0;z-index:1';
+    img.onerror=()=>{img.remove();if(initials!==undefined)el.textContent=initials;};
     el.appendChild(img);
   } else if(initials!==undefined){
     el.textContent=initials;
@@ -2597,7 +2598,7 @@ function renderCSMConvList(){
     const ts=c.timestamp?.seconds?csmFmtTime(new Date(c.timestamp.seconds*1000)):'';
     const isActive=c.id===_csmCurrentConvId;
     return`<div class="conv-item${isActive?' active':''}" onclick="openCSMConv('${c.id}')">
-      <div class="conv-ava" style="position:relative;overflow:hidden">${c.photoURL?`<img src="${csmEsc(c.photoURL)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0" onerror="this.remove()">`:''}${initial}</div>
+      <div class="conv-ava" style="position:relative;overflow:hidden">${c.photoURL?`<img src="${csmEsc(c.photoURL)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;position:absolute;inset:0;z-index:1" onerror="this.remove();this.parentNode.textContent='${initial}'">`:''}${c.photoURL?'':initial}</div>
       <div class="conv-info">
         <div class="conv-name">${csmEsc(name)}</div>
         <div class="conv-preview" style="${!hasMsg?'color:var(--light);font-style:italic':''}">${csmEsc(preview)}</div>
