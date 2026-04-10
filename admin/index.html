@@ -171,7 +171,7 @@ tr:hover td{background:#FAFBFF}
 .conv-item{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;border-bottom:1px solid #F8FAFC;transition:.15s;position:relative}
 .conv-item:hover{background:#F8FAFF}
 .conv-item.active{background:#EEF2FF;border-right:3px solid #4F46E5}
-.conv-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}
+.conv-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;position:relative;overflow:hidden}
 .conv-info{flex:1;min-width:0}
 .conv-name{font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .conv-preview{font-size:12px;color:#94A3B8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
@@ -194,7 +194,8 @@ tr:hover td{background:#FAFBFF}
 .adm-msg-row{display:flex;gap:8px;max-width:72%}
 .adm-msg-row.mine{align-self:flex-end;flex-direction:row-reverse}
 .adm-msg-row.theirs{align-self:flex-start}
-.adm-msg-ava{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-end}
+.adm-msg-ava{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-end;position:relative;overflow:hidden}
+.adm-msg-ava img{width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0}
 .adm-msg-body{display:flex;flex-direction:column;gap:3px}
 .adm-msg-row.mine .adm-msg-body{align-items:flex-end}
 .adm-msg-sender{font-size:10px;font-weight:600;color:#94A3B8;padding:0 4px}
@@ -1244,6 +1245,7 @@ function renderAdminCohortMessages(msgs,cohortId){
     const name=m.senderName||(isStaff?'Staff':'Apprenant');
     const initial=name.charAt(0).toUpperCase();
     const avatarBg=isStaff?'linear-gradient(135deg,#4F46E5,#7C3AED)':'linear-gradient(135deg,#10B981,#059669)';
+    const photo=m.senderPhoto||(isMe?(_adminUser?.photoURL||null):null)||null;
     if(m.type==='victory'){
       html+=`<div style="margin:6px 0;padding:12px 16px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:12px;border-left:4px solid #F59E0B">
         <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:4px">🏆 Victoire · ${escHtml(name)}</div>
@@ -1252,7 +1254,7 @@ function renderAdminCohortMessages(msgs,cohortId){
       </div>`;
     } else {
       html+=`<div style="display:flex;gap:10px;max-width:72%;${isMe?'align-self:flex-end;flex-direction:row-reverse':'align-self:flex-start'}">
-        <div style="width:28px;height:28px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-start;margin-top:2px">${initial}</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-start;margin-top:2px;position:relative;overflow:hidden">${photo?`<img src="${escHtml(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:''}${photo?'':initial}</div>
         <div style="display:flex;flex-direction:column;gap:2px;${isMe?'align-items:flex-end':''}">
           <div style="display:flex;align-items:center;gap:6px;padding:0 4px;${isMe?'flex-direction:row-reverse':''}">
             <span style="font-size:11px;font-weight:600;color:#475569">${escHtml(name)}${isStaff&&!isMe?' · Staff':''}</span>
@@ -1303,8 +1305,10 @@ function renderConvList(){
     const unread=c.nonLusCSM||0;
     const ts=c.timestamp?.seconds?formatConvTime(new Date(c.timestamp.seconds*1000)):'';
     const isActive=c.id===currentConvId;
+    const appData=apprenants.find(a=>a.id===c.id);
+    const photo=appData?.photoURL||null;
     return`<div class="conv-item${isActive?' active':''}" onclick="openConversation('${c.id}')">
-      <div class="conv-avatar">${initial}</div>
+      <div class="conv-avatar">${photo?`<img src="${escHtml(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:''}${photo?'':initial}</div>
       <div class="conv-info">
         <div class="conv-name">${escHtml(name)}</div>
         <div class="conv-preview">${escHtml(preview)}</div>
@@ -1388,8 +1392,10 @@ function renderConvMessages(msgs,appId){
     const name=isMe?adminName:appName;
     const initial=name.charAt(0).toUpperCase();
     const avatarBg=isMe?"linear-gradient(135deg,#4F46E5,#7C3AED)":"linear-gradient(135deg,#10B981,#059669)";
+    const appData=apprenants.find(a=>a.id===appId);
+    const photo=m.senderPhoto||(isMe?(_adminUser?.photoURL||null):(appData?.photoURL||null))||null;
     html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
-      <div class="adm-msg-ava" style="background:${avatarBg}">${initial}</div>
+      <div class="adm-msg-ava" style="background:${avatarBg}">${photo?`<img src="${escHtml(photo)}" onerror="this.remove()">`:''}${photo?'':initial}</div>
       <div class="adm-msg-body">
         <div class="adm-msg-sender">${escHtml(name)}${isMe?`<button class="msg-delete-btn" onclick="admDeleteMsg('${m.id}','conversations','${appId}')" title="Supprimer">🗑</button>`:''}</div>
         ${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="adm-msg-bubble">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}
@@ -1411,15 +1417,17 @@ async function sendConvReply(){
   const name=(_adminUser.prenom&&_adminUser.nom)?`${_adminUser.prenom} ${_adminUser.nom}`.trim():_adminUser.prenom||'Admin';
   const role=_adminUser.role||'admin';
 
+  const senderPhoto=_adminUser?.photoURL||null;
   if(_adminMsgTab==='cohort'){
     if(!_adminCurrentCohortId)return;
     await db.collection("cohorts").doc(_adminCurrentCohortId).collection("messages").add({
       text,senderId:_adminUser.uid,senderName:name,role,
-      timestamp:firebase.firestore.FieldValue.serverTimestamp(),lu:false,type:'message'
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(),lu:false,type:'message',
+      ...(senderPhoto&&{senderPhoto})
     });
   } else {
     if(!currentConvId)return;
-    const msg={text,senderId:_adminUser.uid,senderName:name,role,timestamp:firebase.firestore.FieldValue.serverTimestamp(),lu:false};
+    const msg={text,senderId:_adminUser.uid,senderName:name,role,timestamp:firebase.firestore.FieldValue.serverTimestamp(),lu:false,...(senderPhoto&&{senderPhoto})};
     await db.collection("conversations").doc(currentConvId).collection("messages").add(msg);
     db.collection("conversations").doc(currentConvId).set({
       dernierMsg:text,timestamp:firebase.firestore.FieldValue.serverTimestamp(),nonLusCSM:0,
@@ -1541,7 +1549,8 @@ async function admSendAudioMsg(url,duration){
   if(!_adminUser)return;
   const name=(_adminUser.prenom&&_adminUser.nom)?`${_adminUser.prenom} ${_adminUser.nom}`.trim():_adminUser.prenom||'Admin';
   const role=_adminUser.role||'admin';
-  const msg={type:'audio',audioUrl:url,duration,text:'🎙️ Message vocal',senderId:_adminUser.uid,senderName:name,role,timestamp:firebase.firestore.FieldValue.serverTimestamp(),lu:false};
+  const senderPhoto=_adminUser?.photoURL||null;
+  const msg={type:'audio',audioUrl:url,duration,text:'🎙️ Message vocal',senderId:_adminUser.uid,senderName:name,role,timestamp:firebase.firestore.FieldValue.serverTimestamp(),lu:false,...(senderPhoto&&{senderPhoto})};
   if(_adminMsgTab==='cohort'){
     if(!_adminCurrentCohortId)return;
     await db.collection("cohorts").doc(_adminCurrentCohortId).collection("messages").add(msg);
