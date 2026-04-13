@@ -180,6 +180,9 @@ tr:hover td{background:#FAFBFF}
 .conv-badge{background:#EF4444;color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:8px;min-width:18px;text-align:center}
 .conv-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:#94A3B8;padding:24px;text-align:center}
 /* Chat panel */
+.mvc-react{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer;transition:.15s;color:#92400E;font-family:inherit}
+.mvc-react:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
+.mvc-react.active{background:rgba(245,158,11,.22);border-color:rgba(245,158,11,.45);font-weight:600}
 .conv-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#F8FAFC}
 .conv-chat-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:#94A3B8;text-align:center}
 .conv-chat-header{background:#fff;border-bottom:1px solid #E2E8F0;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0}
@@ -1250,10 +1253,19 @@ function renderAdminCohortMessages(msgs,cohortId){
     const avatarBg=isStaff?'linear-gradient(135deg,#4F46E5,#7C3AED)':'linear-gradient(135deg,#10B981,#059669)';
     const photo=m.senderPhoto||(isMe?(_adminUser?.photoURL||null):null)||null;
     if(m.type==='victory'){
+      const vr=m.reactions||{};
+      const selfId=_adminUser?.uid;
+      const VEMOJIS=['🔥','👏','💪','🚀'];
+      const reactBtns=VEMOJIS.map(e=>{
+        const count=vr[e]||0;
+        const active=(vr[e+'_voters']||[]).includes(selfId)?'active':'';
+        return`<button class="mvc-react ${active}" onclick="admDoReact('${m.id}','${e}','${cohortId}')">${e}${count>0?' '+count:''}</button>`;
+      }).join('');
       html+=`<div style="margin:6px 0;padding:12px 16px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:12px;border-left:4px solid #F59E0B">
         <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:4px">🏆 Victoire · ${escHtml(name)}</div>
         <div style="font-size:13px;color:#1E293B">${escHtml(m.text||'')}</div>
-        <div style="font-size:10px;color:#94A3B8;margin-top:4px">${time}</div>
+        <div style="font-size:10px;color:#92400E;opacity:.6;margin-top:2px">${time}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${reactBtns}</div>
       </div>`;
     } else {
       html+=`<div style="display:flex;gap:10px;max-width:72%;${isMe?'align-self:flex-end;flex-direction:row-reverse':'align-self:flex-start'}">
@@ -1553,6 +1565,24 @@ function admVpCancel(){
   if(bar)bar.classList.remove('active');
   const btn=document.querySelector('#adm-vp-bar .vp-send');
   if(btn)btn.textContent='✓ Envoyer';
+}
+
+async function admDoReact(msgId,emoji,cohortId){
+  const selfId=_adminUser?.uid;
+  if(!selfId)return;
+  const ref=db.collection("cohorts").doc(cohortId).collection("messages").doc(msgId);
+  const doc=await ref.get();if(!doc.exists)return;
+  const r=doc.data().reactions||{};
+  const vk=emoji+'_voters';
+  const voters=r[vk]||[];
+  let count=r[emoji]||0;
+  if(voters.includes(selfId)){
+    count=Math.max(0,count-1);
+    await ref.update({[`reactions.${emoji}`]:count,[`reactions.${vk}`]:firebase.firestore.FieldValue.arrayRemove(selfId)});
+  } else {
+    count++;
+    await ref.update({[`reactions.${emoji}`]:count,[`reactions.${vk}`]:firebase.firestore.FieldValue.arrayUnion(selfId)});
+  }
 }
 
 async function admDeleteMsg(msgId,coll,parentId){

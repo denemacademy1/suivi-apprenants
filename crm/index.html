@@ -380,6 +380,9 @@ tbody tr:last-child td{border-bottom:none}
 .adm-msg-row.mine .msg-bubble-row{flex-direction:row-reverse}
 .msg-chips-wrap{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;padding:0 4px}
 .msg-react-chip{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.15);border-radius:12px;padding:2px 8px;font-size:12px;cursor:pointer;transition:.12s;font-family:inherit;line-height:1.5;color:var(--text)}
+.mvc-react{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer;transition:.15s;color:#92400E;font-family:inherit}
+.mvc-react:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
+.mvc-react.active{background:rgba(245,158,11,.22);border-color:rgba(245,158,11,.45);font-weight:600}
 .msg-react-chip:hover{background:rgba(99,102,241,.13)}
 .msg-react-chip.me{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.3);color:var(--primary);font-weight:600}
 .msg-react-add{background:transparent;border:1px dashed var(--border);border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--light);line-height:1;transition:.12s;opacity:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -2516,10 +2519,19 @@ function renderCSMCohortMessages(msgs,cohortId){
     const avatarBg=isCoach?"linear-gradient(135deg,var(--primary),var(--purple))":"linear-gradient(135deg,#10B981,#059669)";
     const photo=m.senderPhoto||(isMe?(_csmUser?.photoURL||null):null)||null;
     if(m.type==='victory'){
+      const vr=m.reactions||{};
+      const selfId=_csmUser?.uid;
+      const VEMOJIS=['🔥','👏','💪','🚀'];
+      const reactBtns=VEMOJIS.map(e=>{
+        const count=vr[e]||0;
+        const active=(vr[e+'_voters']||[]).includes(selfId)?'active':'';
+        return`<button class="mvc-react ${active}" onclick="csmDoReact('${m.id}','${e}','cohorts','${cohortId}')">${e}${count>0?' '+count:''}</button>`;
+      }).join('');
       html+=`<div style="margin:6px 0;padding:12px 16px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:12px;border-left:4px solid #F59E0B">
         <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:4px">🏆 Victoire · ${csmEsc(name)}</div>
-        <div style="font-size:13px;color:var(--text)">${csmEsc(m.text||'')}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">${time}</div>
+        <div style="font-size:13px;color:#1E293B">${csmEsc(m.text||'')}</div>
+        <div style="font-size:10px;color:#92400E;opacity:.6;margin-top:2px">${time}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${reactBtns}</div>
       </div>`;
     } else {
       html+=`<div class="adm-msg-row ${isMe?'mine':'theirs'}">
