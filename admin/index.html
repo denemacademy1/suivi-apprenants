@@ -183,6 +183,16 @@ tr:hover td{background:#FAFBFF}
 .mvc-react{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer;transition:.15s;color:#92400E;font-family:inherit}
 .mvc-react:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
 .mvc-react.active{background:rgba(245,158,11,.22);border-color:rgba(245,158,11,.45);font-weight:600}
+.adm-msg-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.adm-react-chip{background:rgba(79,70,229,.07);border:1px solid rgba(79,70,229,.15);border-radius:12px;padding:2px 8px;font-size:12px;cursor:pointer;transition:.12s;font-family:inherit;line-height:1.5;color:#1E293B}
+.adm-react-chip:hover{background:rgba(79,70,229,.13)}
+.adm-react-chip.me{background:rgba(79,70,229,.18);border-color:rgba(79,70,229,.3);color:#4F46E5;font-weight:600}
+.adm-react-add{background:transparent;border:1px dashed #CBD5E1;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-family:inherit;color:#94A3B8;line-height:1;transition:.12s;opacity:0;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle}
+.adm-cohort-msg-wrap:hover .adm-react-add{opacity:1}
+.adm-react-add:hover{background:#F1F5F9;color:#475569}
+.adm-react-picker{position:fixed;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:8px 10px;display:flex;gap:4px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500}
+.adm-react-picker button{background:none;border:none;font-size:22px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:.1s;line-height:1}
+.adm-react-picker button:hover{background:#F8FAFC;transform:scale(1.15)}
 .conv-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#F8FAFC}
 .conv-chat-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:#94A3B8;text-align:center}
 .conv-chat-header{background:#fff;border-bottom:1px solid #E2E8F0;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0}
@@ -1259,7 +1269,7 @@ function renderAdminCohortMessages(msgs,cohortId){
       const reactBtns=VEMOJIS.map(e=>{
         const count=vr[e]||0;
         const active=(vr[e+'_voters']||[]).includes(selfId)?'active':'';
-        return`<button class="mvc-react ${active}" onclick="admDoReact('${m.id}','${e}','${cohortId}')">${e}${count>0?' '+count:''}</button>`;
+        return`<button class="mvc-react ${active}" onclick="admDoReact('${m.id}','${e}','cohorts','${cohortId}')">${e}${count>0?' '+count:''}</button>`;
       }).join('');
       html+=`<div style="margin:6px 0;padding:12px 16px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:12px;border-left:4px solid #F59E0B">
         <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:4px">🏆 Victoire · ${escHtml(name)}</div>
@@ -1268,7 +1278,7 @@ function renderAdminCohortMessages(msgs,cohortId){
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${reactBtns}</div>
       </div>`;
     } else {
-      html+=`<div style="display:flex;gap:10px;max-width:72%;${isMe?'align-self:flex-end;flex-direction:row-reverse':'align-self:flex-start'}">
+      html+=`<div class="adm-cohort-msg-wrap" style="display:flex;gap:10px;max-width:72%;${isMe?'align-self:flex-end;flex-direction:row-reverse':'align-self:flex-start'}">
         <div style="width:28px;height:28px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-start;margin-top:2px;position:relative;overflow:hidden">${photo?`<img src="${escHtml(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:''}${photo?'':initial}</div>
         <div style="display:flex;flex-direction:column;gap:2px;${isMe?'align-items:flex-end':''}">
           <div style="display:flex;align-items:center;gap:6px;padding:0 4px;${isMe?'flex-direction:row-reverse':''}">
@@ -1276,7 +1286,11 @@ function renderAdminCohortMessages(msgs,cohortId){
             <span style="font-size:10px;color:#94A3B8">${time}</span>
             ${isMe?`<button class="msg-delete-btn" style="opacity:0" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0" onclick="admDeleteMsg('${m.id}','cohorts','${cohortId}')" title="Supprimer">🗑</button>`:''}
           </div>
-          <div class="adm-msg-row ${isMe?'mine':'theirs'}" style="background:none;border:none;padding:0;box-shadow:none;max-width:100%">${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div style="padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;${isMe?'background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px':'background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)'}">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}</div>
+          <div style="display:flex;align-items:flex-end;gap:4px;${isMe?'flex-direction:row-reverse':''}">
+            <div>${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div style="padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;${isMe?'background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px':'background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)'}">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}</div>
+            <button class="adm-react-add" onclick="admToggleReactPicker(this,'${m.id}','cohorts','${cohortId}')">😊</button>
+          </div>
+          ${admBuildReactChips(m,'cohorts',cohortId)}
         </div>
       </div>`;
     }
@@ -1567,10 +1581,42 @@ function admVpCancel(){
   if(btn)btn.textContent='✓ Envoyer';
 }
 
-async function admDoReact(msgId,emoji,cohortId){
+const ADM_REACT_EMOJIS=['👍','❤️','😂','🔥','👏','💯'];
+
+function admBuildReactChips(m,coll,parentId){
+  const selfId=_adminUser?.uid;
+  const r=m.reactions||{};
+  const chips=ADM_REACT_EMOJIS.filter(e=>(r[e]||0)>0).map(e=>{
+    const count=r[e]||0;
+    const me=(r[e+'_voters']||[]).includes(selfId)?'me':'';
+    return`<button class="adm-react-chip ${me}" onclick="admDoReact('${m.id}','${e}','${coll}','${parentId}')">${e} ${count}</button>`;
+  }).join('');
+  return chips?`<div class="adm-msg-chips">${chips}</div>`:'';
+}
+
+function admToggleReactPicker(btn,msgId,coll,parentId){
+  document.querySelectorAll('.adm-react-picker').forEach(p=>p.remove());
+  const picker=document.createElement('div');
+  picker.className='adm-react-picker';
+  ADM_REACT_EMOJIS.forEach(e=>{
+    const b=document.createElement('button');
+    b.textContent=e;
+    b.onclick=(ev)=>{ev.stopPropagation();admDoReact(msgId,e,coll,parentId);picker.remove();};
+    picker.appendChild(b);
+  });
+  const rect=btn.getBoundingClientRect();
+  picker.style.cssText=`bottom:${window.innerHeight-rect.top+6}px;left:${Math.min(rect.left,window.innerWidth-260)}px`;
+  document.body.appendChild(picker);
+  setTimeout(()=>{
+    const close=(ev)=>{if(!picker.contains(ev.target)&&ev.target!==btn){picker.remove();document.removeEventListener('click',close);}};
+    document.addEventListener('click',close);
+  },0);
+}
+
+async function admDoReact(msgId,emoji,coll,parentId){
   const selfId=_adminUser?.uid;
   if(!selfId)return;
-  const ref=db.collection("cohorts").doc(cohortId).collection("messages").doc(msgId);
+  const ref=db.collection(coll).doc(parentId).collection("messages").doc(msgId);
   const doc=await ref.get();if(!doc.exists)return;
   const r=doc.data().reactions||{};
   const vk=emoji+'_voters';
