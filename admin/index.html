@@ -180,19 +180,61 @@ tr:hover td{background:#FAFBFF}
 .conv-badge{background:#EF4444;color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:8px;min-width:18px;text-align:center}
 .conv-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:#94A3B8;padding:24px;text-align:center}
 /* Chat panel */
-.mvc-react{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer;transition:.15s;color:#92400E;font-family:inherit}
-.mvc-react:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
-.mvc-react.active{background:rgba(245,158,11,.22);border-color:rgba(245,158,11,.45);font-weight:600}
-.adm-msg-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
-.adm-react-chip{background:rgba(79,70,229,.07);border:1px solid rgba(79,70,229,.15);border-radius:12px;padding:2px 8px;font-size:12px;cursor:pointer;transition:.12s;font-family:inherit;line-height:1.5;color:#1E293B}
-.adm-react-chip:hover{background:rgba(79,70,229,.13)}
-.adm-react-chip.me{background:rgba(79,70,229,.18);border-color:rgba(79,70,229,.3);color:#4F46E5;font-weight:600}
-.adm-react-add{background:transparent;border:1px dashed #CBD5E1;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-family:inherit;color:#94A3B8;line-height:1;transition:.12s;opacity:0;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle}
-.adm-cohort-msg-wrap:hover .adm-react-add{opacity:1}
-.adm-react-add:hover{background:#F1F5F9;color:#475569}
-.adm-react-picker{position:fixed;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:8px 10px;display:flex;gap:4px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500}
-.adm-react-picker button{background:none;border:none;font-size:22px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:.1s;line-height:1}
-.adm-react-picker button:hover{background:#F8FAFC;transform:scale(1.15)}
+/* ── COHORT MESSAGES — same UX as student space ── */
+.coh-msg-row{display:flex;gap:10px;max-width:78%;animation:fadeUp .2s ease}
+.coh-msg-row.mine{align-self:flex-end;flex-direction:row-reverse}
+.coh-msg-row.theirs{align-self:flex-start}
+.coh-msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-start;margin-top:2px;position:relative;overflow:hidden}
+.coh-msg-content{display:flex;flex-direction:column;gap:2px}
+.coh-msg-row.mine .coh-msg-content{align-items:flex-end}
+.coh-msg-header{display:flex;align-items:center;gap:6px;padding:0 4px}
+.coh-msg-row.mine .coh-msg-header{flex-direction:row-reverse}
+.coh-msg-sender{font-size:11px;font-weight:600;color:#64748B}
+.coh-msg-time{font-size:10px;color:#CBD5E1}
+.coh-msg-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word}
+.coh-msg-row.mine .coh-msg-bubble{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px}
+.coh-msg-row.theirs .coh-msg-bubble{background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.coh-bubble-row{display:flex;align-items:center;gap:5px}
+.coh-msg-row.mine .coh-bubble-row{flex-direction:row-reverse}
+/* Victory card */
+.coh-victory-row{align-self:stretch;max-width:100%;animation:fadeUp .3s ease}
+.coh-victory-card{background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:1px solid rgba(245,158,11,.3);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.coh-mvc-header{display:flex;align-items:center;gap:8px}
+.coh-mvc-trophy{font-size:22px}
+.coh-mvc-label{font-size:11px;font-weight:800;color:#D97706;text-transform:uppercase;letter-spacing:.5px;flex:1}
+.coh-mvc-by{font-size:11px;color:#92400E;opacity:.7}
+.coh-mvc-time{font-size:10px;color:#92400E;opacity:.45}
+.coh-mvc-text{font-size:14px;font-weight:600;color:#1E293B;line-height:1.55}
+.coh-mvc-reactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.coh-mvc-react{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer;transition:.15s;color:#92400E;font-family:inherit}
+.coh-mvc-react:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
+.coh-mvc-react.active{background:rgba(245,158,11,.22);border-color:rgba(245,158,11,.45);color:#D97706;font-weight:600}
+/* Reaction chips on normal messages */
+.coh-chips-wrap{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;padding:0 4px}
+.coh-react-chip{background:rgba(79,70,229,.07);border:1px solid rgba(79,70,229,.15);border-radius:12px;padding:2px 8px;font-size:12px;cursor:pointer;transition:.12s;font-family:inherit;line-height:1.5;color:#1E293B}
+.coh-react-chip:hover{background:rgba(79,70,229,.13)}
+.coh-react-chip.me{background:rgba(79,70,229,.18);border-color:rgba(79,70,229,.3);color:#4F46E5;font-weight:600}
+.coh-react-add{background:transparent;border:1px dashed #CBD5E1;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;font-family:inherit;color:#CBD5E1;line-height:1;transition:.12s;opacity:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.coh-msg-row:hover .coh-react-add{opacity:1}
+.coh-react-add:hover{background:#EEF2FF;color:#4F46E5;border-color:#4F46E5}
+.coh-react-picker{position:fixed;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:8px 10px;display:flex;gap:4px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500}
+.coh-react-picker button{background:none;border:none;font-size:22px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:.1s;line-height:1}
+.coh-react-picker button:hover{background:#F8FAFC;transform:scale(1.15)}
+/* Delete btn on cohort messages */
+.coh-msg-row:hover .msg-delete-btn{opacity:.45}
+/* Audio in cohort */
+.coh-msg-row.mine .audio-msg{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff}
+.coh-msg-row.theirs .audio-msg{background:#F1F5F9;border:1px solid #E2E8F0;color:#1E293B}
+.coh-msg-row.mine .audio-play-btn{background:rgba(255,255,255,.25);color:#fff}
+.coh-msg-row.mine .audio-play-btn:hover{background:rgba(255,255,255,.4)}
+.coh-msg-row.theirs .audio-play-btn{background:#4F46E5;color:#fff}
+.coh-msg-row.theirs .audio-wave{background:#E2E8F0}
+.coh-msg-row.theirs .audio-wave-fill{background:#4F46E5}
+/* Empty state */
+.coh-chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;text-align:center;color:#94A3B8;padding:40px}
+.coh-chat-empty-icon{font-size:52px;opacity:.5}
+.coh-chat-empty-title{font-size:15px;font-weight:700;color:#64748B}
+.coh-chat-empty-sub{font-size:13px;line-height:1.65;max-width:320px}
 .conv-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#F8FAFC}
 .conv-chat-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:#94A3B8;text-align:center}
 .conv-chat-header{background:#fff;border-bottom:1px solid #E2E8F0;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0}
@@ -1243,10 +1285,10 @@ function renderAdminCohortMessages(msgs,cohortId){
   const cohort=cohorts.find(c=>c.id===cohortId);
   const myUid=_adminUser?.uid;
   if(!msgs.length){
-    el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:#94A3B8;text-align:center;padding:32px">
-      <div style="font-size:40px">👥</div>
-      <div style="font-size:14px;font-weight:600;color:#475569">${escHtml(cohort?.nom||'Cohorte')}</div>
-      <div style="font-size:12px">Envoyez un message à tous les apprenants de cette cohorte</div>
+    el.innerHTML=`<div class="coh-chat-empty">
+      <div class="coh-chat-empty-icon">👥</div>
+      <div class="coh-chat-empty-title">${escHtml(cohort?.nom||'Cohorte')}</div>
+      <div class="coh-chat-empty-sub">Envoyez un message à tous les apprenants de cette cohorte</div>
     </div>`;
     return;
   }
@@ -1255,7 +1297,7 @@ function renderAdminCohortMessages(msgs,cohortId){
     const ts=m.timestamp?.seconds?new Date(m.timestamp.seconds*1000):new Date();
     const day=ts.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
     const time=ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    if(day!==lastDay){lastDay=day;html+=`<div style="display:flex;align-items:center;gap:10px;margin:4px 0;font-size:11px;color:#94A3B8;font-weight:500"><div style="flex:1;height:1px;background:#E2E8F0"></div>${day}<div style="flex:1;height:1px;background:#E2E8F0"></div></div>`;}
+    if(day!==lastDay){lastDay=day;html+=`<div class="adm-day-sep">${day}</div>`;}
     const isMe=m.senderId===myUid;
     const isStaff=m.role==='csm'||m.role==='admin';
     const name=m.senderName||(isStaff?'Staff':'Apprenant');
@@ -1269,28 +1311,34 @@ function renderAdminCohortMessages(msgs,cohortId){
       const reactBtns=VEMOJIS.map(e=>{
         const count=vr[e]||0;
         const active=(vr[e+'_voters']||[]).includes(selfId)?'active':'';
-        return`<button class="mvc-react ${active}" onclick="admDoReact('${m.id}','${e}','cohorts','${cohortId}')">${e}${count>0?' '+count:''}</button>`;
+        return`<button class="coh-mvc-react ${active}" onclick="admDoReact('${m.id}','${e}','cohorts','${cohortId}')">${e}${count>0?' '+count:''}</button>`;
       }).join('');
-      html+=`<div style="margin:6px 0;padding:12px 16px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:12px;border-left:4px solid #F59E0B">
-        <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:4px">🏆 Victoire · ${escHtml(name)}</div>
-        <div style="font-size:13px;color:#1E293B">${escHtml(m.text||'')}</div>
-        <div style="font-size:10px;color:#92400E;opacity:.6;margin-top:2px">${time}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${reactBtns}</div>
+      html+=`<div class="coh-victory-row">
+        <div class="coh-victory-card">
+          <div class="coh-mvc-header">
+            <span class="coh-mvc-trophy">🏆</span>
+            <span class="coh-mvc-label">Victoire partagée</span>
+            <span class="coh-mvc-by">${escHtml(name)}</span>
+            <span class="coh-mvc-time">${time}</span>
+          </div>
+          <div class="coh-mvc-text">${escHtml(m.text||'')}</div>
+          <div class="coh-mvc-reactions">${reactBtns}</div>
+        </div>
       </div>`;
     } else {
-      html+=`<div class="adm-cohort-msg-wrap" style="display:flex;gap:10px;max-width:72%;${isMe?'align-self:flex-end;flex-direction:row-reverse':'align-self:flex-start'}">
-        <div style="width:28px;height:28px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;align-self:flex-start;margin-top:2px;position:relative;overflow:hidden">${photo?`<img src="${escHtml(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:''}${photo?'':initial}</div>
-        <div style="display:flex;flex-direction:column;gap:2px;${isMe?'align-items:flex-end':''}">
-          <div style="display:flex;align-items:center;gap:6px;padding:0 4px;${isMe?'flex-direction:row-reverse':''}">
-            <span style="font-size:11px;font-weight:600;color:#475569">${escHtml(name)}${isStaff&&!isMe?' · Staff':''}</span>
-            <span style="font-size:10px;color:#94A3B8">${time}</span>
-            ${isMe?`<button class="msg-delete-btn" style="opacity:0" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0" onclick="admDeleteMsg('${m.id}','cohorts','${cohortId}')" title="Supprimer">🗑</button>`:''}
+      html+=`<div class="coh-msg-row ${isMe?'mine':'theirs'}">
+        <div class="coh-msg-avatar" style="background:${avatarBg}">${photo?`<img src="${escHtml(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:''}${photo?'':initial}</div>
+        <div class="coh-msg-content">
+          <div class="coh-msg-header">
+            <span class="coh-msg-sender">${escHtml(name)}${isStaff&&!isMe?' · Staff':''}</span>
+            <span class="coh-msg-time">${time}</span>
+            ${isMe?`<button class="msg-delete-btn" onclick="admDeleteMsg('${m.id}','cohorts','${cohortId}')" title="Supprimer">🗑</button>`:''}
           </div>
-          <div style="display:flex;align-items:flex-end;gap:4px;${isMe?'flex-direction:row-reverse':''}">
-            <div class="adm-msg-row ${isMe?'mine':'theirs'}" style="background:none;border:none;padding:0;box-shadow:none;max-width:100%">${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0,isMe):`<div style="padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;${isMe?'background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px':'background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)'}">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}</div>
-            <button class="adm-react-add" onclick="admToggleReactPicker(this,'${m.id}','cohorts','${cohortId}')">😊</button>
+          <div class="coh-bubble-row">
+            <div>${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0,isMe):`<div class="coh-msg-bubble">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}</div>
+            <button class="coh-react-add" onclick="admToggleCohReactPicker(this,'${m.id}','${cohortId}')">😊</button>
           </div>
-          ${admBuildReactChips(m,'cohorts',cohortId)}
+          ${admBuildCohReactChips(m,cohortId)}
         </div>
       </div>`;
     }
@@ -1592,6 +1640,36 @@ function admBuildReactChips(m,coll,parentId){
     return`<button class="adm-react-chip ${me}" onclick="admDoReact('${m.id}','${e}','${coll}','${parentId}')">${e} ${count}</button>`;
   }).join('');
   return chips?`<div class="adm-msg-chips">${chips}</div>`:'';
+}
+
+function admBuildCohReactChips(m,cohortId){
+  const selfId=_adminUser?.uid;
+  const r=m.reactions||{};
+  const chips=ADM_REACT_EMOJIS.filter(e=>(r[e]||0)>0).map(e=>{
+    const count=r[e]||0;
+    const me=(r[e+'_voters']||[]).includes(selfId)?'me':'';
+    return`<button class="coh-react-chip ${me}" onclick="admDoReact('${m.id}','${e}','cohorts','${cohortId}')">${e} ${count}</button>`;
+  }).join('');
+  return chips?`<div class="coh-chips-wrap">${chips}</div>`:'';
+}
+
+function admToggleCohReactPicker(btn,msgId,cohortId){
+  document.querySelectorAll('.coh-react-picker').forEach(p=>p.remove());
+  const picker=document.createElement('div');
+  picker.className='coh-react-picker';
+  ADM_REACT_EMOJIS.forEach(e=>{
+    const b=document.createElement('button');
+    b.textContent=e;
+    b.onclick=(ev)=>{ev.stopPropagation();admDoReact(msgId,e,'cohorts',cohortId);picker.remove();};
+    picker.appendChild(b);
+  });
+  const rect=btn.getBoundingClientRect();
+  picker.style.cssText=`bottom:${window.innerHeight-rect.top+6}px;left:${Math.min(rect.left,window.innerWidth-260)}px`;
+  document.body.appendChild(picker);
+  setTimeout(()=>{
+    const close=(ev)=>{if(!picker.contains(ev.target)&&ev.target!==btn){picker.remove();document.removeEventListener('click',close);}};
+    document.addEventListener('click',close);
+  },0);
 }
 
 function admToggleReactPicker(btn,msgId,coll,parentId){
