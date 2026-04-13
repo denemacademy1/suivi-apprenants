@@ -1287,7 +1287,7 @@ function renderAdminCohortMessages(msgs,cohortId){
             ${isMe?`<button class="msg-delete-btn" style="opacity:0" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0" onclick="admDeleteMsg('${m.id}','cohorts','${cohortId}')" title="Supprimer">🗑</button>`:''}
           </div>
           <div style="display:flex;align-items:flex-end;gap:4px;${isMe?'flex-direction:row-reverse':''}">
-            <div class="adm-msg-row ${isMe?'mine':'theirs'}" style="background:none;border:none;padding:0;box-shadow:none;max-width:100%">${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div style="padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;${isMe?'background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px':'background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)'}">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}</div>
+            <div class="adm-msg-row ${isMe?'mine':'theirs'}" style="background:none;border:none;padding:0;box-shadow:none;max-width:100%">${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0,isMe):`<div style="padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;${isMe?'background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:14px 14px 4px 14px':'background:#fff;border:1px solid #E2E8F0;color:#1E293B;border-radius:14px 14px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.04)'}">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}</div>
             <button class="adm-react-add" onclick="admToggleReactPicker(this,'${m.id}','cohorts','${cohortId}')">😊</button>
           </div>
           ${admBuildReactChips(m,'cohorts',cohortId)}
@@ -1440,7 +1440,7 @@ function renderConvMessages(msgs,appId){
       <div class="adm-msg-ava" style="background:${avatarBg}">${photo?`<img src="${escHtml(photo)}" onerror="this.remove()">`:''}${photo?'':initial}</div>
       <div class="adm-msg-body">
         <div class="adm-msg-sender">${escHtml(name)}${isMe?`<button class="msg-delete-btn" onclick="admDeleteMsg('${m.id}','conversations','${appId}')" title="Supprimer">🗑</button>`:''}</div>
-        ${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0):`<div class="adm-msg-bubble">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}
+        ${m.type==='audio'&&m.audioUrl?admBuildAudioBubble(m.id,m.audioUrl,m.duration||0,isMe):`<div class="adm-msg-bubble">${escHtml(m.text||'').replace(/\n/g,'<br>')}</div>`}
         <div class="adm-msg-time">${time}${isMe&&m.lu?' · Lu ✓':isMe?' · Envoyé':''}</div>
       </div>
     </div>`;
@@ -1660,13 +1660,19 @@ async function admSendAudioMsg(url,duration){
 }
 
 const _admAudioReg={};
-function admBuildAudioBubble(msgId,url,duration){
+function admBuildAudioBubble(msgId,url,duration,isMe){
   _admAudioReg[msgId]=url;
   const dur=duration>0?fmtVocDur(duration):'0:00';
-  return`<div class="audio-msg" id="aaudio-${msgId}">
-    <button class="audio-play-btn" onclick="admToggleAudio('${msgId}')">▶</button>
-    <div class="audio-wave"><div class="audio-wave-fill" id="aaw-${msgId}"></div></div>
-    <span class="audio-dur-lbl" id="aad-${msgId}">${dur}</span>
+  const bg=isMe?'linear-gradient(135deg,#4F46E5,#7C3AED)':'#F1F5F9';
+  const btnBg=isMe?'rgba(255,255,255,.25)':'#4F46E5';
+  const btnColor=isMe?'#fff':'#fff';
+  const waveBg=isMe?'rgba(255,255,255,.25)':'#CBD5E1';
+  const waveFillBg=isMe?'rgba(255,255,255,.85)':'#4F46E5';
+  const durColor=isMe?'rgba(255,255,255,.85)':'#475569';
+  return`<div class="audio-msg" id="aaudio-${msgId}" style="background:${bg}">
+    <button class="audio-play-btn" onclick="admToggleAudio('${msgId}')" style="background:${btnBg};color:${btnColor}">▶</button>
+    <div class="audio-wave" style="background:${waveBg}"><div class="audio-wave-fill" id="aaw-${msgId}" style="background:${waveFillBg}"></div></div>
+    <span class="audio-dur-lbl" id="aad-${msgId}" style="color:${durColor}">${dur}</span>
   </div>`;
 }
 function admToggleAudio(msgId){
