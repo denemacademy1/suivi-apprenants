@@ -129,12 +129,14 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 function getBase(){return location.pathname.startsWith('/suivi-apprenants')?'/suivi-apprenants':'';}
 
-// Données de l'apprenant trouvé
-let foundApprenant=null;
+// Email en attente de création de compte
+let _pendingEmail='';
+// Flag pour éviter la redirection automatique pendant l'inscription
+let _registering=false;
 
 // Redirect si déjà connecté
 auth.onAuthStateChanged(async user=>{
-  if(user){
+  if(user&&!_registering){
     try{
       const doc=await db.collection("users").doc(user.uid).get();
       const role=doc.exists?doc.data().role:"student";
@@ -145,103 +147,43 @@ auth.onAuthStateChanged(async user=>{
     }catch(e){location.href=getBase()+'/student/';}
     return;
   }
-  document.getElementById("loading").classList.add("hidden");
-  document.getElementById("card").style.display="";
-  document.getElementById("check-email").focus();
+  if(!_registering){
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("card").style.display="";
+    document.getElementById("check-email").focus();
+  }
 });
 
-// ── ÉTAPE 1 : Vérification email ──
-async function checkEmail(){
+// ── ÉTAPE 1 : Validation email (pas de lecture Firestore ici) ──
+function checkEmail(){
   const emailRaw=document.getElementById('check-email').value.trim();
   const emailLower=emailRaw.toLowerCase();
   const err=document.getElementById('check-error');
-  const btn=document.getElementById('btn-check');
 
   if(!emailRaw){showError(err,'type-warn','Veuillez saisir votre email.');return;}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)){showError(err,'type-warn','Email invalide.');return;}
 
-  btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span>Vérification…';
-
-  try{
-    // Essai 1 : requête directe sur email en minuscules
-    let matchDoc=null;
-    try{
-      const snap1=await db.collection("apprenants").where("email","==",emailLower).limit(1).get();
-      if(!snap1.empty)matchDoc=snap1.docs[0];
-    }catch(_){}
-
-    // Essai 2 : requête sur email tel que saisi (casse originale)
-    if(!matchDoc&&emailRaw!==emailLower){
-      try{
-        const snap2=await db.collection("apprenants").where("email","==",emailRaw).limit(1).get();
-        if(!snap2.empty)matchDoc=snap2.docs[0];
-      }catch(_){}
-    }
-
-    // Essai 3 : scan complet insensible à la casse (fallback)
-    if(!matchDoc){
-      const allSnap=await db.collection("apprenants").get();
-      matchDoc=allSnap.docs.find(d=>(d.data().email||'').toLowerCase().trim()===emailLower)||null;
-    }
-
-    if(!matchDoc){
-      showError(err,'type-blocked',
-        '⛔ Cet email n\'est pas dans notre système.<br>Contactez votre chargé de suivi pour être inscrit avant de créer votre compte.');
-      btn.disabled=false;
-      btn.textContent='Vérifier mon email →';
-      return;
-    }
-
-    // Email trouvé — on normalise l'email en minuscules pour la suite
-    foundApprenant={id:matchDoc.id,...matchDoc.data(),_emailNorm:emailLower};
-
-    // Vérifier si un compte existe déjà (uid déjà lié)
-    if(foundApprenant.uid){
-      showError(err,'type-info',
-        'ℹ️ Un compte existe déjà pour cet email. <a href="../login/" style="color:#4338CA;font-weight:700">Se connecter →</a>');
-      btn.disabled=false;
-      btn.textContent='Vérifier mon email →';
-      return;
-    }
-
-    // Afficher l'étape 2
-    const prenom=foundApprenant.prenom||'';
-    const nom=foundApprenant.nom||'';
-    document.getElementById('verified-name').textContent=`${prenom} ${nom}`.trim()||'Apprenant';
-    document.getElementById('verified-email').textContent=emailRaw;
-    document.getElementById('step-email').classList.add('hidden');
-    document.getElementById('step-register').classList.remove('hidden');
-    document.getElementById('reg-pwd').focus();
-
-  }catch(e){
-    console.error('Register checkEmail error:',e);
-    const msg=e?.code||e?.message||String(e)||'';
-    if(msg.includes('permission')||msg.includes('PERMISSION')){
-      showError(err,'type-warn','Erreur de permissions Firestore. Contactez le support.');
-    } else if(msg.includes('network')||msg.includes('unavailable')){
-      showError(err,'type-warn','Erreur réseau. Vérifiez votre connexion.');
-    } else {
-      showError(err,'type-warn',`Erreur : ${msg||'inconnue'}. Réessayez.`);
-    }
-    btn.disabled=false;
-    btn.textContent='Vérifier mon email →';
-  }
+  _pendingEmail=emailLower;
+  document.getElementById('verified-email').textContent=emailRaw;
+  document.getElementById('verified-name').textContent='';
+  document.getElementById('step-email').classList.add('hidden');
+  document.getElementById('step-register').classList.remove('hidden');
+  document.getElementById('reg-pwd').focus();
 }
 
 function resetToEmail(){
-  foundApprenant=null;
+  _pendingEmail='';
   document.getElementById('step-register').classList.add('hidden');
   document.getElementById('step-email').classList.remove('hidden');
   document.getElementById('reg-error').classList.remove('show');
   document.getElementById('check-email').focus();
 }
 
-// ── ÉTAPE 2 : Création du compte ──
+// ── ÉTAPE 2 : Création du compte puis vérification apprenant ──
 async function doRegister(){
-  if(!foundApprenant){resetToEmail();return;}
+  const email=_pendingEmail;
+  if(!email){resetToEmail();return;}
 
-  const email=foundApprenant._emailNorm||document.getElementById('verified-email').textContent.trim();
   const pwd=document.getElementById('reg-pwd').value;
   const pwd2=document.getElementById('reg-pwd2').value;
   const err=document.getElementById('reg-error');
@@ -253,6 +195,7 @@ async function doRegister(){
 
   btn.disabled=true;
   btn.innerHTML='<span class="spinner"></span>Création en cours…';
+  _registering=true;
 
   try{
     // 1. Créer le compte Firebase Auth
@@ -260,31 +203,59 @@ async function doRegister(){
     const uid=cred.user.uid;
     const now=firebase.firestore.FieldValue.serverTimestamp();
 
-    // 2. Créer le doc users (rôle toujours "student")
+    // 2. Maintenant authentifié → chercher la fiche apprenant
+    let matchDoc=null;
+    try{
+      const snap=await db.collection("apprenants").where("email","==",email).limit(1).get();
+      if(!snap.empty)matchDoc=snap.docs[0];
+    }catch(_){}
+    if(!matchDoc){
+      try{
+        const allSnap=await db.collection("apprenants").get();
+        matchDoc=allSnap.docs.find(d=>(d.data().email||'').toLowerCase().trim()===email)||null;
+      }catch(_){}
+    }
+
+    if(!matchDoc){
+      // Email pas dans le système → supprimer le compte créé et afficher l'erreur
+      try{await cred.user.delete();}catch(_){}
+      await auth.signOut().catch(()=>{});
+      _registering=false;
+      showError(err,'type-blocked',
+        '⛔ Cet email n\'est pas dans notre système.<br>Contactez votre chargé de suivi pour être inscrit avant de créer votre compte.');
+      btn.disabled=false;
+      btn.textContent='Créer mon compte';
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("card").style.display="";
+      return;
+    }
+
+    const appData=matchDoc.data();
+
+    // 3. Créer le doc users (rôle toujours "student")
     await db.collection("users").doc(uid).set({
-      prenom:foundApprenant.prenom||'',
-      nom:foundApprenant.nom||'',
+      prenom:appData.prenom||'',
+      nom:appData.nom||'',
       email,
       role:'student',
       createdAt:now
     });
 
-    // 3. Lier l'UID à la fiche apprenant existante (ne pas créer de doublon)
-    await db.collection("apprenants").doc(foundApprenant.id).update({
-      uid,
-      updatedAt:now
-    });
+    // 4. Lier l'UID à la fiche apprenant existante
+    await db.collection("apprenants").doc(matchDoc.id).update({uid,updatedAt:now});
 
-    // 4. Succès → redirect
-    const name=`${foundApprenant.prenom||''} ${foundApprenant.nom||''}`.trim();
+    // 5. Succès → redirect
+    const name=`${appData.prenom||''} ${appData.nom||''}`.trim();
     document.getElementById('step-register').style.display='none';
     document.getElementById('footer-login').style.display='none';
     document.getElementById('success-name').textContent=name?`Bienvenue, ${name} 🚀`:'Bienvenue 🚀';
     document.getElementById('success-box').classList.add('show');
+    _registering=false;
     setTimeout(()=>{location.href=getBase()+'/student/';},2200);
 
   }catch(e){
     console.error(e);
+    _registering=false;
     showError(err,'type-blocked',getFrError(e.code));
     btn.disabled=false;
     btn.textContent='Créer mon compte';
