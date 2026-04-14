@@ -293,6 +293,19 @@ table.lead-table{width:100%;border-collapse:collapse}
   #page-stats .funnel-wrap-row{grid-template-columns:1fr!important}
 }
 .mobile-menu-btn{width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:18px}
+
+/* ─── CANDIDATURES LP ─── */
+.temp-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;white-space:nowrap}
+.temp-froid{background:#dbeafe;color:#1e40af}
+.temp-tiede{background:#fef3c7;color:#92400e}
+.temp-bouillant{background:#fee2e2;color:#991b1b}
+.etape-bar{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-left:6px}
+.etape-fill{height:100%;border-radius:99px;background:var(--primary)}
+.cand-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px}
+.cand-live-dot{width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;margin-right:6px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.statut-incomplet{background:#f1f5f9;color:#64748b}
+.statut-complet{background:#dcfce7;color:#166534}
 </style>
 </head>
 <body>
@@ -333,6 +346,11 @@ table.lead-table{width:100%;border-collapse:collapse}
     <div class="sb-section-label" style="margin-top:8px">Outils</div>
     <div class="sb-nav-item" data-page="script" onclick="showPage('script')">
       <span class="sb-nav-icon">📝</span>Script d'appel
+    </div>
+    <div class="sb-section-label" style="margin-top:8px">Landing Page</div>
+    <div class="sb-nav-item" data-page="candidatures-lp" onclick="showPage('candidatures-lp')">
+      <span class="sb-nav-icon">🎯</span>Candidatures LP
+      <span class="sb-notif-badge" id="badge-candidatures-lp" style="display:none">0</span>
     </div>
   </nav>
 
@@ -505,6 +523,68 @@ table.lead-table{width:100%;border-collapse:collapse}
           <div class="section-title">⏱️ Mes 5 derniers leads contactés</div>
         </div>
         <div id="recent-contacts" style="padding:0"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: CANDIDATURES LP -->
+    <div id="page-candidatures-lp" style="display:none">
+      <div class="kpi-row" id="cand-kpi-row">
+        <div class="kpi-card accent">
+          <div class="kpi-label">Total candidatures</div>
+          <div class="kpi-value" id="cand-kpi-total">—</div>
+          <div class="kpi-sub"><span class="cand-live-dot"></span>Temps réel</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🥶 Froids (incomplets)</div>
+          <div class="kpi-value" id="cand-kpi-froid" style="color:#1e40af">—</div>
+          <div class="kpi-sub">À relancer</div>
+        </div>
+        <div class="kpi-card warning">
+          <div class="kpi-label">🌡️ Tièdes</div>
+          <div class="kpi-value" id="cand-kpi-tiede">—</div>
+          <div class="kpi-sub">Questionnaire complet</div>
+        </div>
+        <div class="kpi-card success">
+          <div class="kpi-label">🔥 Bouillants</div>
+          <div class="kpi-value" id="cand-kpi-bouillant">—</div>
+          <div class="kpi-sub">Score 7-10 · Priorité</div>
+        </div>
+      </div>
+
+      <div class="cand-card">
+        <div class="section-header">
+          <div class="section-title">🎯 Candidatures Landing Page <span class="section-count" id="cand-table-count">0</span></div>
+        </div>
+        <div class="lead-filters">
+          <input type="text" class="filter-input" id="cand-search" placeholder="Rechercher par nom, email…" oninput="renderCandidatures()">
+          <select class="filter-select" id="cand-filter-temp" onchange="renderCandidatures()">
+            <option value="">Toutes les températures</option>
+            <option value="bouillant">🔥 Bouillant</option>
+            <option value="tiede">🌡️ Tiède</option>
+            <option value="froid">🥶 Froid</option>
+          </select>
+          <select class="filter-select" id="cand-filter-statut" onchange="renderCandidatures()">
+            <option value="">Tous les statuts</option>
+            <option value="complet">Complet</option>
+            <option value="incomplet">Incomplet</option>
+          </select>
+        </div>
+        <div class="lead-table-wrap">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Candidat</th>
+                <th>Température</th>
+                <th>Statut</th>
+                <th>Progression</th>
+                <th>Revenus visés</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cand-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -723,6 +803,35 @@ table.lead-table{width:100%;border-collapse:collapse}
     <div class="confirm-btns">
       <button class="btn-cancel" onclick="closeModal('modal-disqualify')">Annuler</button>
       <button class="btn-confirm-danger" onclick="confirmDisqualify()">❌ Marquer non qualifié</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CANDIDATURE DETAIL -->
+<div class="modal-backdrop" id="modal-cand">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-lead-name" id="mcand-name">—</div>
+        <div class="modal-lead-sub" id="mcand-contact">—</div>
+        <div class="modal-header-badges" id="mcand-badges"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-cand')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="questionnaire-title">📋 Questionnaire</div>
+      <div class="q-item"><span class="q-label">Situation actuelle</span><span class="q-value" id="mcand-situation">—</span></div>
+      <div class="q-item"><span class="q-label">Quand se lancer</span><span class="q-value" id="mcand-timeline">—</span></div>
+      <div class="q-item"><span class="q-label">Motivation(s)</span><span class="q-value" id="mcand-motivation">—</span></div>
+      <div class="q-item"><span class="q-label">Revenus visés</span><span class="q-value" id="mcand-revenus">—</span></div>
+      <div class="q-item"><span class="q-label">Score motivation /10</span><span class="q-value" id="mcand-score">—</span></div>
+      <div class="q-item"><span class="q-label">Étape atteinte</span><span class="q-value" id="mcand-etape">—</span></div>
+      <div class="q-item"><span class="q-label">Date candidature</span><span class="q-value" id="mcand-date">—</span></div>
+    </div>
+    <div class="modal-footer">
+      <a id="mcand-tel-link" href="#" class="btn-script-call" style="text-decoration:none">📞 Appeler</a>
+      <a id="mcand-wa-link" href="#" class="btn-script-wa" target="_blank" style="text-decoration:none">💬 WhatsApp</a>
+      <button class="btn-cancel" onclick="closeModal('modal-cand')">Fermer</button>
     </div>
   </div>
 </div>
@@ -964,6 +1073,23 @@ async function pickAvatarSetting(){
 //  INITIALISATION
 // ══════════════════════════════════════════════
 function initApp() {
+  // ── Écouter les candidatures LP en temps réel ──
+  S.candidatures = [];
+  db.collection('candidatures').orderBy('createdAt','desc').onSnapshot(snap => {
+    S.candidatures = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    // Badge sidebar
+    const newCount = S.candidatures.filter(c => !c._vuSetting).length;
+    const badge = document.getElementById('badge-candidatures-lp');
+    if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline-block' : 'none'; }
+    if (S.currentPage === 'candidatures-lp') renderCandidatures();
+  }, () => {
+    db.collection('candidatures').onSnapshot(snap => {
+      S.candidatures = snap.docs.map(d => ({id:d.id,...d.data()}))
+        .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+      if (S.currentPage === 'candidatures-lp') renderCandidatures();
+    });
+  });
+
   // Écouter les leads en temps réel
   db.collection('leads').orderBy('dateCreation','desc').onSnapshot(snap => {
     S.leads = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -999,6 +1125,7 @@ const PAGE_TITLES = {
   'tous-leads': 'Tous les leads',
   'stats': 'Dashboard',
   'script': "Script d'appel",
+  'candidatures-lp': '🎯 Candidatures LP',
 };
 
 function showPage(page) {
@@ -1017,6 +1144,7 @@ function renderCurrentPage() {
   if (S.currentPage === 'mes-leads') { renderKPIs(); renderPriority(); renderMesLeads(); }
   else if (S.currentPage === 'tous-leads') renderTousLeads();
   else if (S.currentPage === 'stats') renderStats();
+  else if (S.currentPage === 'candidatures-lp') renderCandidatures();
 }
 
 function toggleSidebar() {
@@ -1609,6 +1737,98 @@ async function saveTentative() {
       setTimeout(()=>openLead(id),300);
     }
   } catch(e) { toast('Erreur','error'); console.error(e); }
+}
+
+// ══════════════════════════════════════════════
+//  CANDIDATURES LP
+// ══════════════════════════════════════════════
+function tempBadge(t) {
+  if (t === 'bouillant') return '<span class="temp-badge temp-bouillant">🔥 Bouillant</span>';
+  if (t === 'tiede')     return '<span class="temp-badge temp-tiede">🌡️ Tiède</span>';
+  return                        '<span class="temp-badge temp-froid">🥶 Froid</span>';
+}
+
+function renderCandidatures() {
+  const list = S.candidatures || [];
+  const search  = (document.getElementById('cand-search')?.value || '').toLowerCase();
+  const fTemp   = document.getElementById('cand-filter-temp')?.value || '';
+  const fStatut = document.getElementById('cand-filter-statut')?.value || '';
+
+  const filtered = list.filter(c => {
+    const txt = `${c.prenom||''} ${c.email||''} ${c.telephone||''}`.toLowerCase();
+    if (search && !txt.includes(search)) return false;
+    if (fTemp   && (c.temperature||'froid') !== fTemp)   return false;
+    if (fStatut && (c.statut||'incomplet')  !== fStatut) return false;
+    return true;
+  });
+
+  // KPIs
+  const total     = list.length;
+  const froids    = list.filter(c => (c.temperature||'froid') === 'froid').length;
+  const tiedesN   = list.filter(c => c.temperature === 'tiede').length;
+  const bouillants= list.filter(c => c.temperature === 'bouillant').length;
+  document.getElementById('cand-kpi-total').textContent     = total;
+  document.getElementById('cand-kpi-froid').textContent     = froids;
+  document.getElementById('cand-kpi-tiede').textContent     = tiedesN;
+  document.getElementById('cand-kpi-bouillant').textContent = bouillants;
+  document.getElementById('cand-table-count').textContent   = filtered.length;
+
+  const tbody = document.getElementById('cand-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-text">Aucune candidature</div><div class="empty-sub">Les leads de la landing page apparaîtront ici en temps réel</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const etape = c.etape_atteinte || 1;
+    const pct   = Math.round((etape / 6) * 100);
+    const statutCl = c.statut === 'complet' ? 'statut-complet' : 'statut-incomplet';
+    const statutLabel = c.statut === 'complet' ? 'Complet' : `Incomplet (étape ${etape}/6)`;
+    return `
+    <tr style="cursor:pointer" onclick="openCandidature('${c.id}')">
+      <td>
+        <div class="lead-name">${escHtml(c.prenom||'—')}</div>
+        <div class="lead-email">${escHtml(c.email||'—')}</div>
+        <div class="lead-email">${escHtml(c.telephone||'')}</div>
+      </td>
+      <td>${tempBadge(c.temperature||'froid')}</td>
+      <td><span class="statut-badge ${statutCl}">${statutLabel}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--muted)">${etape}/6</span>
+          <div class="etape-bar"><div class="etape-fill" style="width:${pct}%"></div></div>
+        </div>
+      </td>
+      <td style="font-size:13px">${escHtml(c.revenus||'—')}</td>
+      <td class="last-contact">${fmtDateTime(c.createdAt)}</td>
+      <td>
+        <div class="actions-cell">
+          <a class="btn-icon btn-call" href="tel:${escHtml(c.telephone||'')}" onclick="event.stopPropagation()" title="Appeler">📞</a>
+          <a class="btn-icon btn-wa"   href="https://wa.me/${(c.telephone||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>
+          <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openCandidature('${c.id}')" title="Voir fiche">👁️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openCandidature(id) {
+  const c = (S.candidatures||[]).find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('mcand-name').textContent    = c.prenom || '—';
+  document.getElementById('mcand-contact').textContent = `${c.email||'—'} · ${c.telephone||'—'}`;
+  document.getElementById('mcand-badges').innerHTML    = `${tempBadge(c.temperature||'froid')} <span class="statut-badge ${c.statut==='complet'?'statut-complet':'statut-incomplet'}">${c.statut==='complet'?'Complet':'Incomplet'}</span>`;
+  document.getElementById('mcand-situation').textContent  = c.situation  || '—';
+  document.getElementById('mcand-timeline').textContent   = c.timeline   || '—';
+  document.getElementById('mcand-motivation').textContent = c.motivation || '—';
+  document.getElementById('mcand-revenus').textContent    = c.revenus    || '—';
+  document.getElementById('mcand-score').textContent      = c.score      || '—';
+  document.getElementById('mcand-etape').textContent      = `${c.etape_atteinte||1} / 6`;
+  document.getElementById('mcand-date').textContent       = fmtDateTime(c.createdAt);
+  const tel = (c.telephone||'').replace(/\D/g,'');
+  document.getElementById('mcand-tel-link').href = `tel:${c.telephone||''}`;
+  document.getElementById('mcand-wa-link').href  = `https://wa.me/${tel}`;
+  document.getElementById('modal-cand').classList.add('open');
 }
 
 // ══════════════════════════════════════════════
