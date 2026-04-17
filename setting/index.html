@@ -352,6 +352,10 @@ table.lead-table{width:100%;border-collapse:collapse}
       <span class="sb-nav-icon">🎯</span>Candidatures LP
       <span class="sb-notif-badge" id="badge-candidatures-lp" style="display:none">0</span>
     </div>
+    <div class="sb-nav-item" data-page="leads-vsl" onclick="showPage('leads-vsl')">
+      <span class="sb-nav-icon">🎬</span>Leads VSL
+      <span class="sb-notif-badge" id="badge-leads-vsl" style="display:none">0</span>
+    </div>
   </nav>
 
   <div class="sb-bottom">
@@ -583,6 +587,55 @@ table.lead-table{width:100%;border-collapse:collapse}
               </tr>
             </thead>
             <tbody id="cand-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: LEADS VSL -->
+    <div id="page-leads-vsl" style="display:none">
+      <div class="kpi-row">
+        <div class="kpi-card accent">
+          <div class="kpi-label">Total leads VSL</div>
+          <div class="kpi-value" id="vsl-kpi-total">—</div>
+          <div class="kpi-sub"><span class="cand-live-dot"></span>Temps réel</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">📞 Avec téléphone</div>
+          <div class="kpi-value" id="vsl-kpi-phone">—</div>
+          <div class="kpi-sub">Coord. complètes</div>
+        </div>
+        <div class="kpi-card warning">
+          <div class="kpi-label">📅 Aujourd'hui</div>
+          <div class="kpi-value" id="vsl-kpi-today">—</div>
+          <div class="kpi-sub">Nouveaux leads</div>
+        </div>
+        <div class="kpi-card success">
+          <div class="kpi-label">📆 Cette semaine</div>
+          <div class="kpi-value" id="vsl-kpi-week">—</div>
+          <div class="kpi-sub">Nouveaux leads</div>
+        </div>
+      </div>
+
+      <div class="cand-card">
+        <div class="section-header">
+          <div class="section-title">🎬 Leads page capture VSL <span class="section-count" id="vsl-table-count">0</span></div>
+        </div>
+        <div class="lead-filters">
+          <input type="text" class="filter-input" id="vsl-search" placeholder="Rechercher par nom, email…" oninput="renderLeadsVsl()">
+        </div>
+        <div class="lead-table-wrap">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Contact</th>
+                <th>Téléphone</th>
+                <th>Source</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vsl-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -899,6 +952,8 @@ const S = {
   user: null,
   userData: null,
   leads: [],
+  candidatures: [],
+  leadsVsl: [],
   currentPage: 'stats',
   activeLead: null,      // lead ouvert dans la fiche
   pendingQualifyId: null,
@@ -1090,6 +1145,22 @@ function initApp() {
     });
   });
 
+  // ── Écouter les leads VSL en temps réel ──
+  S.leadsVsl = [];
+  db.collection('leads_vsl').orderBy('createdAt','desc').onSnapshot(snap => {
+    S.leadsVsl = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    const newCount = S.leadsVsl.filter(v => !v._vuSetting).length;
+    const badge = document.getElementById('badge-leads-vsl');
+    if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline-block' : 'none'; }
+    if (S.currentPage === 'leads-vsl') renderLeadsVsl();
+  }, () => {
+    db.collection('leads_vsl').onSnapshot(snap => {
+      S.leadsVsl = snap.docs.map(d => ({id:d.id,...d.data()}))
+        .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+      if (S.currentPage === 'leads-vsl') renderLeadsVsl();
+    });
+  });
+
   // Écouter les leads en temps réel
   db.collection('leads').orderBy('dateCreation','desc').onSnapshot(snap => {
     S.leads = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -1126,6 +1197,7 @@ const PAGE_TITLES = {
   'stats': 'Dashboard',
   'script': "Script d'appel",
   'candidatures-lp': '🎯 Candidatures LP',
+  'leads-vsl': '🎬 Leads VSL',
 };
 
 function showPage(page) {
@@ -1145,6 +1217,7 @@ function renderCurrentPage() {
   else if (S.currentPage === 'tous-leads') renderTousLeads();
   else if (S.currentPage === 'stats') renderStats();
   else if (S.currentPage === 'candidatures-lp') renderCandidatures();
+  else if (S.currentPage === 'leads-vsl') renderLeadsVsl();
 }
 
 function toggleSidebar() {
@@ -1806,6 +1879,59 @@ function renderCandidatures() {
           <a class="btn-icon btn-call" href="tel:${escHtml(c.telephone||'')}" onclick="event.stopPropagation()" title="Appeler">📞</a>
           <a class="btn-icon btn-wa"   href="https://wa.me/${(c.telephone||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>
           <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openCandidature('${c.id}')" title="Voir fiche">👁️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  LEADS VSL
+// ══════════════════════════════════════════════
+function renderLeadsVsl() {
+  const list   = S.leadsVsl || [];
+  const search = (document.getElementById('vsl-search')?.value || '').toLowerCase();
+
+  const filtered = list.filter(v => {
+    const txt = `${v.prenom||''} ${v.email||''} ${v.telephone||''}`.toLowerCase();
+    return !search || txt.includes(search);
+  });
+
+  // KPIs
+  const now       = new Date();
+  const todayStr  = now.toISOString().slice(0,10);
+  const weekAgo   = new Date(now - 7*86400000);
+  const today     = list.filter(v => { const d=v.createdAt?.toDate?.(); return d&&d.toISOString().slice(0,10)===todayStr; }).length;
+  const week      = list.filter(v => { const d=v.createdAt?.toDate?.(); return d&&d>=weekAgo; }).length;
+  const withPhone = list.filter(v => v.telephone).length;
+
+  document.getElementById('vsl-kpi-total').textContent = list.length;
+  document.getElementById('vsl-kpi-phone').textContent = withPhone;
+  document.getElementById('vsl-kpi-today').textContent = today;
+  document.getElementById('vsl-kpi-week').textContent  = week;
+  document.getElementById('vsl-table-count').textContent = filtered.length;
+
+  const tbody = document.getElementById('vsl-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🎬</div><div class="empty-text">Aucun lead VSL</div><div class="empty-sub">Les leads de la page capture VSL apparaîtront ici en temps réel</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(v => {
+    const tel = (v.telephone||'').replace(/\D/g,'');
+    return `
+    <tr>
+      <td>
+        <div class="lead-name">${escHtml(v.prenom||'—')}</div>
+        <div class="lead-email">${escHtml(v.email||'—')}</div>
+      </td>
+      <td style="font-size:13px">${escHtml(v.telephone||'—')}</td>
+      <td><span class="statut-badge statut-complet">${escHtml(v.source||'vsl-capture')}</span></td>
+      <td class="last-contact">${fmtDateTime(v.createdAt)}</td>
+      <td>
+        <div class="actions-cell">
+          ${v.telephone ? `<a class="btn-icon btn-call" href="tel:${escHtml(v.telephone)}" title="Appeler">📞</a>` : ''}
+          ${tel ? `<a class="btn-icon btn-wa" href="https://wa.me/${tel}" target="_blank" title="WhatsApp">💬</a>` : ''}
         </div>
       </td>
     </tr>`;
