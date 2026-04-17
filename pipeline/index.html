@@ -242,6 +242,9 @@ table.data-table{width:100%;border-collapse:collapse}
       <span class="sb-nav-icon">🎉</span>Conversions
       <span class="sb-notif-dot" id="conv-dot" style="display:none"></span>
     </div>
+    <div class="sb-nav-item" data-page="sources" onclick="showPage('sources')">
+      <span class="sb-nav-icon">🔗</span>Sources LP / VSL
+    </div>
     <div class="sb-section-label" style="margin-top:8px">Espaces</div>
     <div class="sb-nav-item" onclick="window.location.href='../'" style="opacity:.7">
       <span class="sb-nav-icon">🏠</span>Accueil
@@ -425,6 +428,35 @@ table.data-table{width:100%;border-collapse:collapse}
       </div>
     </div>
 
+    <!-- PAGE: SOURCES LP / VSL -->
+    <div id="page-sources" style="display:none">
+      <div class="kpi-row" id="src-kpi-row"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px" id="src-funnels-grid">
+        <div class="funnel-section">
+          <div class="funnel-title">🎯 Funnel — Candidatures LP</div>
+          <div class="funnel-steps" id="src-funnel-cand"></div>
+        </div>
+        <div class="funnel-section">
+          <div class="funnel-title">🎬 Funnel — Leads VSL</div>
+          <div class="funnel-steps" id="src-funnel-vsl"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title">🎯 Top candidatures LP</div>
+          </div>
+          <div class="table-wrap"><table class="data-table" id="src-cand-table"></table></div>
+        </div>
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title">🎬 Top leads VSL</div>
+          </div>
+          <div class="table-wrap"><table class="data-table" id="src-vsl-table"></table></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>
@@ -472,6 +504,7 @@ const auth = firebase.auth();
 const S = {
   user: null, userData: null,
   leads: [], users: [], conversions: [], notifications: [],
+  candidatures: [], leadsVsl: [],
   currentPage: 'overview',
   activeLead: null,
 };
@@ -584,6 +617,34 @@ function initApp(){
       renderNotifs();
     },_=>{});
 
+  // Candidatures LP
+  db.collection('candidatures').orderBy('createdAt','desc').onSnapshot(snap=>{
+    S.candidatures=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(S.currentPage==='overview')renderFunnel();
+    if(S.currentPage==='sources')renderSourcesPage();
+  },_=>{
+    db.collection('candidatures').onSnapshot(snap=>{
+      S.candidatures=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      if(S.currentPage==='overview')renderFunnel();
+      if(S.currentPage==='sources')renderSourcesPage();
+    });
+  });
+
+  // Leads VSL
+  db.collection('leads_vsl').orderBy('createdAt','desc').onSnapshot(snap=>{
+    S.leadsVsl=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(S.currentPage==='overview')renderFunnel();
+    if(S.currentPage==='sources')renderSourcesPage();
+  },_=>{
+    db.collection('leads_vsl').onSnapshot(snap=>{
+      S.leadsVsl=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      if(S.currentPage==='overview')renderFunnel();
+      if(S.currentPage==='sources')renderSourcesPage();
+    });
+  });
+
   document.getElementById('loading').style.display='none';
   document.getElementById('app').style.display='flex';
 
@@ -597,7 +658,7 @@ function initApp(){
 // ══════════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════════
-const PAGE_TITLES={'overview':'Vue globale du pipeline','leads':'Tous les leads','setters':'Vue setters','closers':'Vue closers','conversions':'Conversions'};
+const PAGE_TITLES={'overview':'Vue globale du pipeline','leads':'Tous les leads','setters':'Vue setters','closers':'Vue closers','conversions':'Conversions','sources':'Sources LP / VSL'};
 function showPage(page){
   S.currentPage=page;
   document.querySelectorAll('.sb-nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
@@ -612,6 +673,7 @@ function renderCurrentPage(){
   else if(S.currentPage==='setters')renderSettersTable();
   else if(S.currentPage==='closers')renderClosersTable();
   else if(S.currentPage==='conversions')renderConversions();
+  else if(S.currentPage==='sources')renderSourcesPage();
 }
 
 // ══════════════════════════════════════════════
@@ -619,21 +681,71 @@ function renderCurrentPage(){
 // ══════════════════════════════════════════════
 function renderFunnel(){
   const leads=S.leads;
-  const total=leads.length;
+  // Combine all sources: leads + candidatures + VSL (by pipeline statut)
+  const allSources=[...S.candidatures,...S.leadsVsl];
+  const totalLeads=leads.length;
+  const totalSources=allSources.length;
+  const grandTotal=totalLeads+totalSources;
+
+  // Leads pipeline (setter/closer statuts)
   const contactes=leads.filter(l=>l.statutSetter&&l.statutSetter!=='Nouveau').length;
   const qualifies=leads.filter(l=>l.statutSetter==='Qualifié').length;
   const rdvPlanifies=leads.filter(l=>['RDV planifié','RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||'')).length;
-  const signes=leads.filter(l=>l.statutCloser==='Signé').length;
+  const signesLeads=leads.filter(l=>l.statutCloser==='Signé').length;
+
+  // LP/VSL pipeline (statutPipeline)
+  const sourceContactes=allSources.filter(x=>x.statutPipeline&&x.statutPipeline!=='nouveau').length;
+  const sourceRdvPris=allSources.filter(x=>['rdv_pris','rdv_passe','signe'].includes(x.statutPipeline||'')).length;
+  const sourceSignes=allSources.filter(x=>x.statutPipeline==='signe').length;
+
+  // Combined totals for display
+  const totalContactes=contactes+sourceContactes;
+  const totalRdv=rdvPlanifies+sourceRdvPris;
+  const totalSignes=signesLeads+sourceSignes;
 
   const steps=[
-    {icon:'📥',label:'Leads reçus',val:total,color:'#6366f1',pct:100},
-    {icon:'📞',label:'Contactés',val:contactes,color:'#3b82f6',pct:total?Math.round(contactes/total*100):0},
-    {icon:'✅',label:'Qualifiés',val:qualifies,color:'#f59e0b',pct:total?Math.round(qualifies/total*100):0},
-    {icon:'📅',label:'RDV planifiés',val:rdvPlanifies,color:'#8b5cf6',pct:total?Math.round(rdvPlanifies/total*100):0},
-    {icon:'🎉',label:'Signés',val:signes,color:'#10b981',pct:total?Math.round(signes/total*100):0},
+    {icon:'📥',label:'Total leads',val:grandTotal,color:'#6366f1',pct:100,sub:`${totalLeads} CRM · ${totalSources} LP/VSL`},
+    {icon:'📞',label:'Contactés',val:totalContactes,color:'#3b82f6',pct:grandTotal?Math.round(totalContactes/grandTotal*100):0,sub:`taux de contact`},
+    {icon:'✅',label:'Qualifiés / RDV',val:totalRdv,color:'#f59e0b',pct:grandTotal?Math.round(totalRdv/grandTotal*100):0,sub:`leads avancés`},
+    {icon:'🎉',label:'Signés',val:totalSignes,color:'#10b981',pct:grandTotal?Math.round(totalSignes/grandTotal*100):0,sub:`taux global`},
   ];
 
   document.getElementById('funnel-steps').innerHTML=steps.map(s=>`
+    <div class="funnel-step">
+      <div class="funnel-step-inner">
+        <div class="funnel-step-icon">${s.icon}</div>
+        <div class="funnel-step-label">${s.label}</div>
+        <div class="funnel-step-value" style="color:${s.color}">${s.val}</div>
+        <div class="funnel-step-sub">${s.pct}% — ${s.sub}</div>
+        <div class="funnel-step-bar" style="background:${s.color}22">
+          <div style="height:100%;width:${s.pct}%;background:${s.color};border-radius:4px;transition:width .6s"></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  PAGE SOURCES LP / VSL
+// ══════════════════════════════════════════════
+function pipeFunnelSteps(list){
+  const total=list.length||1;
+  const contact=list.filter(x=>x.statutPipeline&&x.statutPipeline!=='nouveau').length;
+  const rdvPris=list.filter(x=>['rdv_pris','rdv_passe','signe'].includes(x.statutPipeline||'')).length;
+  const rdvPass=list.filter(x=>['rdv_passe','signe'].includes(x.statutPipeline||'')).length;
+  const signes=list.filter(x=>x.statutPipeline==='signe').length;
+  const refus=list.filter(x=>x.statutPipeline==='refus').length;
+  return [
+    {icon:'📥',label:'Total',val:list.length,pct:100,color:'#6366f1'},
+    {icon:'📞',label:'Contactés',val:contact,pct:Math.round(contact/total*100),color:'#3b82f6'},
+    {icon:'📅',label:'RDV pris',val:rdvPris,pct:Math.round(rdvPris/total*100),color:'#8b5cf6'},
+    {icon:'✅',label:'RDV passés',val:rdvPass,pct:Math.round(rdvPass/total*100),color:'#f59e0b'},
+    {icon:'🎉',label:'Signés',val:signes,pct:Math.round(signes/total*100),color:'#10b981'},
+  ];
+}
+
+function renderPipeFunnelEl(steps,elId){
+  const el=document.getElementById(elId);if(!el)return;
+  el.innerHTML=steps.map(s=>`
     <div class="funnel-step">
       <div class="funnel-step-inner">
         <div class="funnel-step-icon">${s.icon}</div>
@@ -645,6 +757,44 @@ function renderFunnel(){
         </div>
       </div>
     </div>`).join('');
+}
+
+function renderSourcesPage(){
+  const cand=S.candidatures;
+  const vsl=S.leadsVsl;
+  const allSrc=[...cand,...vsl];
+
+  // KPIs
+  const totalSrc=allSrc.length;
+  const rdvPris=allSrc.filter(x=>['rdv_pris','rdv_passe','signe'].includes(x.statutPipeline||'')).length;
+  const signes=allSrc.filter(x=>x.statutPipeline==='signe').length;
+  const tauxRdv=totalSrc?Math.round(rdvPris/totalSrc*100):0;
+  const tauxSign=rdvPris?Math.round(signes/rdvPris*100):0;
+
+  document.getElementById('src-kpi-row').innerHTML=`
+    <div class="kpi-card primary"><div class="kpi-label">Total LP + VSL</div><div class="kpi-value">${totalSrc}</div><div class="kpi-sub">${cand.length} LP · ${vsl.length} VSL</div></div>
+    <div class="kpi-card warning"><div class="kpi-label">RDV pris</div><div class="kpi-value">${rdvPris}</div><div class="kpi-sub">Taux de RDV : ${tauxRdv}%</div></div>
+    <div class="kpi-card success"><div class="kpi-label">Signés LP/VSL</div><div class="kpi-value">${signes}</div><div class="kpi-sub">Taux closing RDV : ${tauxSign}%</div></div>`;
+
+  // Funnels
+  renderPipeFunnelEl(pipeFunnelSteps(cand),'src-funnel-cand');
+  renderPipeFunnelEl(pipeFunnelSteps(vsl),'src-funnel-vsl');
+
+  // Mini tables
+  const PIPE_LABELS={nouveau:'📥 Nouveau',contacte:'📞 Contacté',rdv_pris:'📅 RDV pris',rdv_passe:'✅ RDV passé',signe:'🎉 Signé',refus:'❌ Refus',relance:'🔄 Relance'};
+  const candRows=cand.slice(0,20).map(c=>`<tr>
+    <td><div class="lead-name">${escHtml(c.prenom||'—')}</div><div class="lead-email">${escHtml(c.email||'—')}</div></td>
+    <td><span class="badge ${c.statutPipeline==='signe'?'badge-green':c.statutPipeline==='rdv_pris'||c.statutPipeline==='rdv_passe'?'badge-purple':c.statutPipeline==='refus'?'badge-red':'badge-gray'}">${PIPE_LABELS[c.statutPipeline||'nouveau']||'📥 Nouveau'}</span></td>
+    <td style="font-size:12px;color:var(--muted)">${fmtDate(c.createdAt)}</td>
+  </tr>`).join('');
+  document.getElementById('src-cand-table').innerHTML=`<thead><tr><th>Candidat</th><th>Pipeline</th><th>Date</th></tr></thead><tbody>${candRows||'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">Aucune candidature</td></tr>'}</tbody>`;
+
+  const vslRows=vsl.slice(0,20).map(v=>`<tr>
+    <td><div class="lead-name">${escHtml(v.prenom||'—')}</div><div class="lead-email">${escHtml(v.email||'—')}</div></td>
+    <td><span class="badge ${v.statutPipeline==='signe'?'badge-green':v.statutPipeline==='rdv_pris'||v.statutPipeline==='rdv_passe'?'badge-purple':v.statutPipeline==='refus'?'badge-red':'badge-gray'}">${PIPE_LABELS[v.statutPipeline||'nouveau']||'📥 Nouveau'}</span></td>
+    <td style="font-size:12px;color:var(--muted)">${fmtDate(v.createdAt)}</td>
+  </tr>`).join('');
+  document.getElementById('src-vsl-table').innerHTML=`<thead><tr><th>Lead VSL</th><th>Pipeline</th><th>Date</th></tr></thead><tbody>${vslRows||'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">Aucun lead VSL</td></tr>'}</tbody>`;
 }
 
 // ══════════════════════════════════════════════

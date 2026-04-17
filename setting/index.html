@@ -306,6 +306,25 @@ table.lead-table{width:100%;border-collapse:collapse}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .statut-incomplet{background:#f1f5f9;color:#64748b}
 .statut-complet{background:#dcfce7;color:#166534}
+/* ─── PIPELINE TRACKING ─── */
+.pipe-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;white-space:nowrap}
+.pipe-nouveau{background:#dbeafe;color:#1e40af}
+.pipe-contacte{background:#fef3c7;color:#92400e}
+.pipe-rdv-pris{background:#ede9ff;color:#5b21b6}
+.pipe-rdv-passe{background:#ffedd5;color:#c2410c}
+.pipe-signe{background:#dcfce7;color:#166534}
+.pipe-refus{background:#fee2e2;color:#991b1b}
+.pipe-relance{background:#f1f5f9;color:#475569}
+.pipe-funnel{display:flex;gap:0;margin-bottom:20px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}
+.pipe-step{flex:1;padding:14px 8px;text-align:center;border-right:1px solid var(--border)}
+.pipe-step:last-child{border-right:none}
+.pipe-step-val{font-size:22px;font-weight:900;line-height:1;margin-bottom:2px}
+.pipe-step-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.pipe-step-pct{font-size:11px;color:var(--muted);margin-top:4px}
+.pipe-step-bar{height:3px;margin-top:6px;border-radius:0}
+.pipe-select{padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;background:#fff;color:var(--text);cursor:pointer}
+.pipe-select:focus{outline:none;border-color:var(--primary)}
+@media(max-width:600px){.pipe-step{padding:10px 4px}.pipe-step-val{font-size:16px}}
 </style>
 </head>
 <body>
@@ -555,6 +574,9 @@ table.lead-table{width:100%;border-collapse:collapse}
         </div>
       </div>
 
+      <!-- Mini funnel pipeline candidatures -->
+      <div class="pipe-funnel" id="cand-pipe-funnel"></div>
+
       <div class="cand-card">
         <div class="section-header">
           <div class="section-title">🎯 Candidatures Landing Page <span class="section-count" id="cand-table-count">0</span></div>
@@ -572,6 +594,16 @@ table.lead-table{width:100%;border-collapse:collapse}
             <option value="complet">Complet</option>
             <option value="incomplet">Incomplet</option>
           </select>
+          <select class="filter-select" id="cand-filter-pipeline" onchange="renderCandidatures()">
+            <option value="">Statut pipeline</option>
+            <option value="nouveau">📥 Nouveau</option>
+            <option value="contacte">📞 Contacté</option>
+            <option value="rdv_pris">📅 RDV pris</option>
+            <option value="rdv_passe">✅ RDV passé</option>
+            <option value="signe">🎉 Signé</option>
+            <option value="refus">❌ Refus</option>
+            <option value="relance">🔄 Relance</option>
+          </select>
         </div>
         <div class="lead-table-wrap">
           <table class="lead-table">
@@ -580,6 +612,7 @@ table.lead-table{width:100%;border-collapse:collapse}
                 <th>Candidat</th>
                 <th>Température</th>
                 <th>Statut</th>
+                <th>Pipeline</th>
                 <th>Progression</th>
                 <th>Revenus visés</th>
                 <th>Date</th>
@@ -617,12 +650,25 @@ table.lead-table{width:100%;border-collapse:collapse}
         </div>
       </div>
 
+      <!-- Mini funnel pipeline VSL -->
+      <div class="pipe-funnel" id="vsl-pipe-funnel"></div>
+
       <div class="cand-card">
         <div class="section-header">
           <div class="section-title">🎬 Leads page capture VSL <span class="section-count" id="vsl-table-count">0</span></div>
         </div>
         <div class="lead-filters">
           <input type="text" class="filter-input" id="vsl-search" placeholder="Rechercher par nom, email…" oninput="renderLeadsVsl()">
+          <select class="filter-select" id="vsl-filter-pipeline" onchange="renderLeadsVsl()">
+            <option value="">Statut pipeline</option>
+            <option value="nouveau">📥 Nouveau</option>
+            <option value="contacte">📞 Contacté</option>
+            <option value="rdv_pris">📅 RDV pris</option>
+            <option value="rdv_passe">✅ RDV passé</option>
+            <option value="signe">🎉 Signé</option>
+            <option value="refus">❌ Refus</option>
+            <option value="relance">🔄 Relance</option>
+          </select>
         </div>
         <div class="lead-table-wrap">
           <table class="lead-table">
@@ -630,7 +676,7 @@ table.lead-table{width:100%;border-collapse:collapse}
               <tr>
                 <th>Contact</th>
                 <th>Téléphone</th>
-                <th>Source</th>
+                <th>Pipeline</th>
                 <th>Date</th>
                 <th>Actions</th>
               </tr>
@@ -880,11 +926,71 @@ table.lead-table{width:100%;border-collapse:collapse}
       <div class="q-item"><span class="q-label">Score motivation /10</span><span class="q-value" id="mcand-score">—</span></div>
       <div class="q-item"><span class="q-label">Étape atteinte</span><span class="q-value" id="mcand-etape">—</span></div>
       <div class="q-item"><span class="q-label">Date candidature</span><span class="q-value" id="mcand-date">—</span></div>
+
+      <!-- Pipeline tracking -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px">📊 Suivi pipeline commercial</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <select class="pipe-select" id="mcand-pipe-select" onchange="setPipelineStatut(window._activeCandId,'candidatures',this.value)" style="font-size:13px;padding:7px 12px">
+            <option value="nouveau">📥 Nouveau</option>
+            <option value="contacte">📞 Contacté</option>
+            <option value="rdv_pris">📅 RDV pris</option>
+            <option value="rdv_passe">✅ RDV passé</option>
+            <option value="signe">🎉 Signé</option>
+            <option value="refus">❌ Refus</option>
+            <option value="relance">🔄 Relance</option>
+          </select>
+          <input type="date" id="mcand-rdv-date" class="form-input" style="width:150px;font-size:12px;padding:7px 10px">
+          <button class="btn-confirm-ok" style="padding:7px 14px;font-size:12px" onclick="savePipelineRdv(window._activeCandId,'candidatures')">💾 Enregistrer RDV</button>
+        </div>
+        <textarea id="mcand-pipe-note" class="form-textarea" placeholder="Note pipeline (contexte, objections, prochaine étape…)" style="width:100%;min-height:64px;font-size:12px" onblur="savePipelineNote(window._activeCandId,'candidatures',this.value)"></textarea>
+      </div>
     </div>
     <div class="modal-footer">
       <a id="mcand-tel-link" href="#" class="btn-script-call" style="text-decoration:none">📞 Appeler</a>
       <a id="mcand-wa-link" href="#" class="btn-script-wa" target="_blank" style="text-decoration:none">💬 WhatsApp</a>
       <button class="btn-cancel" onclick="closeModal('modal-cand')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: VSL LEAD DETAIL -->
+<div class="modal-backdrop" id="modal-vsl">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-lead-name" id="mvsl-name">—</div>
+        <div class="modal-lead-sub" id="mvsl-contact">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-vsl')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="q-item"><span class="q-label">Email</span><span class="q-value" id="mvsl-email">—</span></div>
+      <div class="q-item"><span class="q-label">Téléphone</span><span class="q-value" id="mvsl-tel">—</span></div>
+      <div class="q-item"><span class="q-label">Source</span><span class="q-value" id="mvsl-source">—</span></div>
+      <div class="q-item"><span class="q-label">Date capture</span><span class="q-value" id="mvsl-date">—</span></div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px">📊 Suivi pipeline commercial</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <select class="pipe-select" id="mvsl-pipe-select" onchange="setPipelineStatut(window._activeVslId,'leads_vsl',this.value)" style="font-size:13px;padding:7px 12px">
+            <option value="nouveau">📥 Nouveau</option>
+            <option value="contacte">📞 Contacté</option>
+            <option value="rdv_pris">📅 RDV pris</option>
+            <option value="rdv_passe">✅ RDV passé</option>
+            <option value="signe">🎉 Signé</option>
+            <option value="refus">❌ Refus</option>
+            <option value="relance">🔄 Relance</option>
+          </select>
+          <input type="date" id="mvsl-rdv-date" class="form-input" style="width:150px;font-size:12px;padding:7px 10px">
+          <button class="btn-confirm-ok" style="padding:7px 14px;font-size:12px" onclick="savePipelineRdv(window._activeVslId,'leads_vsl')">💾 Enregistrer RDV</button>
+        </div>
+        <textarea id="mvsl-pipe-note" class="form-textarea" placeholder="Note pipeline (contexte, objections, prochaine étape…)" style="width:100%;min-height:64px;font-size:12px" onblur="savePipelineNote(window._activeVslId,'leads_vsl',this.value)"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a id="mvsl-tel-link" href="#" class="btn-script-call" style="text-decoration:none">📞 Appeler</a>
+      <a id="mvsl-wa-link" href="#" target="_blank" class="btn-script-wa" style="text-decoration:none">💬 WhatsApp</a>
+      <button class="btn-cancel" onclick="closeModal('modal-vsl')">Fermer</button>
     </div>
   </div>
 </div>
@@ -1823,17 +1929,22 @@ function tempBadge(t) {
 
 function renderCandidatures() {
   const list = S.candidatures || [];
-  const search  = (document.getElementById('cand-search')?.value || '').toLowerCase();
-  const fTemp   = document.getElementById('cand-filter-temp')?.value || '';
-  const fStatut = document.getElementById('cand-filter-statut')?.value || '';
+  const search    = (document.getElementById('cand-search')?.value || '').toLowerCase();
+  const fTemp     = document.getElementById('cand-filter-temp')?.value || '';
+  const fStatut   = document.getElementById('cand-filter-statut')?.value || '';
+  const fPipeline = document.getElementById('cand-filter-pipeline')?.value || '';
 
   const filtered = list.filter(c => {
     const txt = `${c.prenom||''} ${c.email||''} ${c.telephone||''}`.toLowerCase();
-    if (search && !txt.includes(search)) return false;
-    if (fTemp   && (c.temperature||'froid') !== fTemp)   return false;
-    if (fStatut && (c.statut||'incomplet')  !== fStatut) return false;
+    if (search    && !txt.includes(search)) return false;
+    if (fTemp     && (c.temperature||'froid') !== fTemp)   return false;
+    if (fStatut   && (c.statut||'incomplet')  !== fStatut) return false;
+    if (fPipeline && (c.statutPipeline||'nouveau') !== fPipeline) return false;
     return true;
   });
+
+  // Funnel pipeline
+  renderPipeFunnel(list, 'cand-pipe-funnel');
 
   // KPIs
   const total     = list.length;
@@ -1848,7 +1959,7 @@ function renderCandidatures() {
 
   const tbody = document.getElementById('cand-tbody');
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-text">Aucune candidature</div><div class="empty-sub">Les leads de la landing page apparaîtront ici en temps réel</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-text">Aucune candidature</div><div class="empty-sub">Les leads de la landing page apparaîtront ici en temps réel</div></div></td></tr>`;
     return;
   }
 
@@ -1866,6 +1977,11 @@ function renderCandidatures() {
       </td>
       <td>${tempBadge(c.temperature||'froid')}</td>
       <td><span class="statut-badge ${statutCl}">${statutLabel}</span></td>
+      <td onclick="event.stopPropagation()">
+        <select class="pipe-select" onchange="setPipelineStatut('${c.id}','candidatures',this.value)">
+          ${['nouveau','contacte','rdv_pris','rdv_passe','signe','refus','relance'].map(v=>`<option value="${v}" ${(c.statutPipeline||'nouveau')===v?'selected':''}>${{nouveau:'📥 Nouveau',contacte:'📞 Contacté',rdv_pris:'📅 RDV pris',rdv_passe:'✅ RDV passé',signe:'🎉 Signé',refus:'❌ Refus',relance:'🔄 Relance'}[v]}</option>`).join('')}
+        </select>
+      </td>
       <td>
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:12px;color:var(--muted)">${etape}/6</span>
@@ -1889,13 +2005,19 @@ function renderCandidatures() {
 //  LEADS VSL
 // ══════════════════════════════════════════════
 function renderLeadsVsl() {
-  const list   = S.leadsVsl || [];
-  const search = (document.getElementById('vsl-search')?.value || '').toLowerCase();
+  const list      = S.leadsVsl || [];
+  const search    = (document.getElementById('vsl-search')?.value || '').toLowerCase();
+  const fPipeline = document.getElementById('vsl-filter-pipeline')?.value || '';
 
   const filtered = list.filter(v => {
     const txt = `${v.prenom||''} ${v.email||''} ${v.telephone||''}`.toLowerCase();
-    return !search || txt.includes(search);
+    if (search    && !txt.includes(search)) return false;
+    if (fPipeline && (v.statutPipeline||'nouveau') !== fPipeline) return false;
+    return true;
   });
+
+  // Funnel pipeline
+  renderPipeFunnel(list, 'vsl-pipe-funnel');
 
   // KPIs
   const now       = new Date();
@@ -1917,30 +2039,118 @@ function renderLeadsVsl() {
     return;
   }
 
+  const PIPE_LABELS = {nouveau:'📥 Nouveau',contacte:'📞 Contacté',rdv_pris:'📅 RDV pris',rdv_passe:'✅ RDV passé',signe:'🎉 Signé',refus:'❌ Refus',relance:'🔄 Relance'};
+
   tbody.innerHTML = filtered.map(v => {
     const tel = (v.telephone||'').replace(/\D/g,'');
     return `
-    <tr>
+    <tr style="cursor:pointer" onclick="openLeadVsl('${v.id}')">
       <td>
         <div class="lead-name">${escHtml(v.prenom||'—')}</div>
         <div class="lead-email">${escHtml(v.email||'—')}</div>
       </td>
       <td style="font-size:13px">${escHtml(v.telephone||'—')}</td>
-      <td><span class="statut-badge statut-complet">${escHtml(v.source||'vsl-capture')}</span></td>
+      <td onclick="event.stopPropagation()">
+        <select class="pipe-select" onchange="setPipelineStatut('${v.id}','leads_vsl',this.value)">
+          ${['nouveau','contacte','rdv_pris','rdv_passe','signe','refus','relance'].map(s=>`<option value="${s}" ${(v.statutPipeline||'nouveau')===s?'selected':''}>${PIPE_LABELS[s]}</option>`).join('')}
+        </select>
+      </td>
       <td class="last-contact">${fmtDateTime(v.createdAt)}</td>
       <td>
         <div class="actions-cell">
-          ${v.telephone ? `<a class="btn-icon btn-call" href="tel:${escHtml(v.telephone)}" title="Appeler">📞</a>` : ''}
-          ${tel ? `<a class="btn-icon btn-wa" href="https://wa.me/${tel}" target="_blank" title="WhatsApp">💬</a>` : ''}
+          ${v.telephone ? `<a class="btn-icon btn-call" href="tel:${escHtml(v.telephone)}" onclick="event.stopPropagation()" title="Appeler">📞</a>` : ''}
+          ${tel ? `<a class="btn-icon btn-wa" href="https://wa.me/${tel}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>` : ''}
+          <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openLeadVsl('${v.id}')" title="Voir fiche">👁️</button>
         </div>
       </td>
     </tr>`;
   }).join('');
 }
 
+// ══════════════════════════════════════════════
+//  PIPELINE HELPERS
+// ══════════════════════════════════════════════
+function pipeBadge(statut) {
+  const map = {
+    nouveau:   ['pipe-nouveau',  '📥 Nouveau'],
+    contacte:  ['pipe-contacte', '📞 Contacté'],
+    rdv_pris:  ['pipe-rdv-pris', '📅 RDV pris'],
+    rdv_passe: ['pipe-rdv-passe','✅ RDV passé'],
+    signe:     ['pipe-signe',    '🎉 Signé'],
+    refus:     ['pipe-refus',    '❌ Refus'],
+    relance:   ['pipe-relance',  '🔄 Relance'],
+  };
+  const [cls, label] = map[statut||'nouveau'] || ['pipe-nouveau','📥 Nouveau'];
+  return `<span class="pipe-badge ${cls}">${label}</span>`;
+}
+
+function renderPipeFunnel(list, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const total   = list.length;
+  const contact = list.filter(x => x.statutPipeline && x.statutPipeline !== 'nouveau').length;
+  const rdvPris = list.filter(x => ['rdv_pris','rdv_passe','signe'].includes(x.statutPipeline||'')).length;
+  const rdvPass = list.filter(x => ['rdv_passe','signe'].includes(x.statutPipeline||'')).length;
+  const signes  = list.filter(x => x.statutPipeline === 'signe').length;
+  const p = n => total ? Math.round(n/total*100) : 0;
+  const colors = ['#6c63ff','#3b82f6','#8b5cf6','#f59e0b','#10b981'];
+  const steps = [
+    {icon:'📥',label:'Total leads',val:total,color:colors[0],pct:100},
+    {icon:'📞',label:'Contactés',val:contact,color:colors[1],pct:p(contact)},
+    {icon:'📅',label:'RDV pris',val:rdvPris,color:colors[2],pct:p(rdvPris)},
+    {icon:'✅',label:'RDV passés',val:rdvPass,color:colors[3],pct:p(rdvPass)},
+    {icon:'🎉',label:'Signés',val:signes,color:colors[4],pct:p(signes)},
+  ];
+  el.innerHTML = steps.map(s => `
+    <div class="pipe-step">
+      <div class="pipe-step-val" style="color:${s.color}">${s.val}</div>
+      <div class="pipe-step-label">${s.icon} ${s.label}</div>
+      <div class="pipe-step-pct">${s.pct}%</div>
+      <div class="pipe-step-bar" style="background:${s.color}22"><div style="height:100%;width:${s.pct}%;background:${s.color};transition:width .6s"></div></div>
+    </div>`).join('');
+}
+
+async function setPipelineStatut(id, col, statut) {
+  if (!id) return;
+  try {
+    await db.collection(col).doc(id).update({ statutPipeline: statut, updatedPipelineAt: TS() });
+    toast('Statut pipeline mis à jour', 'success');
+  } catch(e) { toast('Erreur', 'error'); console.error(e); }
+}
+
+async function savePipelineRdv(id, col) {
+  if (!id) return;
+  const dateEl = col === 'candidatures'
+    ? document.getElementById('mcand-rdv-date')
+    : document.getElementById('mvsl-rdv-date');
+  const val = dateEl?.value;
+  if (!val) { toast('Sélectionne une date RDV', 'error'); return; }
+  try {
+    await db.collection(col).doc(id).update({
+      rdvDate: val,
+      statutPipeline: 'rdv_pris',
+      updatedPipelineAt: TS()
+    });
+    // Update the pipeline select UI
+    const sel = col === 'candidatures'
+      ? document.getElementById('mcand-pipe-select')
+      : document.getElementById('mvsl-pipe-select');
+    if (sel) sel.value = 'rdv_pris';
+    toast('RDV enregistré', 'success');
+  } catch(e) { toast('Erreur', 'error'); console.error(e); }
+}
+
+async function savePipelineNote(id, col, note) {
+  if (!id || !note) return;
+  try {
+    await db.collection(col).doc(id).update({ notePipeline: note, updatedPipelineAt: TS() });
+  } catch(e) { console.error(e); }
+}
+
 function openCandidature(id) {
   const c = (S.candidatures||[]).find(x => x.id === id);
   if (!c) return;
+  window._activeCandId = id;
   document.getElementById('mcand-name').textContent    = c.prenom || '—';
   document.getElementById('mcand-contact').textContent = `${c.email||'—'} · ${c.telephone||'—'}`;
   document.getElementById('mcand-badges').innerHTML    = `${tempBadge(c.temperature||'froid')} <span class="statut-badge ${c.statut==='complet'?'statut-complet':'statut-incomplet'}">${c.statut==='complet'?'Complet':'Incomplet'}</span>`;
@@ -1954,7 +2164,36 @@ function openCandidature(id) {
   const tel = (c.telephone||'').replace(/\D/g,'');
   document.getElementById('mcand-tel-link').href = `tel:${c.telephone||''}`;
   document.getElementById('mcand-wa-link').href  = `https://wa.me/${tel}`;
+  // Pipeline
+  const sel = document.getElementById('mcand-pipe-select');
+  if (sel) sel.value = c.statutPipeline || 'nouveau';
+  const rdvEl = document.getElementById('mcand-rdv-date');
+  if (rdvEl) rdvEl.value = c.rdvDate || '';
+  const noteEl = document.getElementById('mcand-pipe-note');
+  if (noteEl) noteEl.value = c.notePipeline || '';
   document.getElementById('modal-cand').classList.add('open');
+}
+
+function openLeadVsl(id) {
+  const v = (S.leadsVsl||[]).find(x => x.id === id);
+  if (!v) return;
+  window._activeVslId = id;
+  document.getElementById('mvsl-name').textContent    = v.prenom || '—';
+  document.getElementById('mvsl-contact').textContent = v.email || '—';
+  document.getElementById('mvsl-email').textContent   = v.email || '—';
+  document.getElementById('mvsl-tel').textContent     = v.telephone || '—';
+  document.getElementById('mvsl-source').textContent  = v.source || 'vsl-capture';
+  document.getElementById('mvsl-date').textContent    = fmtDateTime(v.createdAt);
+  const tel = (v.telephone||'').replace(/\D/g,'');
+  document.getElementById('mvsl-tel-link').href = `tel:${v.telephone||''}`;
+  document.getElementById('mvsl-wa-link').href  = `https://wa.me/${tel}`;
+  const sel = document.getElementById('mvsl-pipe-select');
+  if (sel) sel.value = v.statutPipeline || 'nouveau';
+  const rdvEl = document.getElementById('mvsl-rdv-date');
+  if (rdvEl) rdvEl.value = v.rdvDate || '';
+  const noteEl = document.getElementById('mvsl-pipe-note');
+  if (noteEl) noteEl.value = v.notePipeline || '';
+  document.getElementById('modal-vsl').classList.add('open');
 }
 
 // ══════════════════════════════════════════════
