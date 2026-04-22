@@ -485,6 +485,17 @@ tr:hover td{background:#FAFBFF}
 
   <!-- ── TRACKING LP ── -->
   <div class="page" id="page-tracking">
+
+    <!-- Sélecteur de période -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" id="tr-btn-today" onclick="trSetPeriod('today')">Aujourd'hui</button>
+      <button class="btn btn-secondary btn-sm" id="tr-btn-month" onclick="trSetPeriod('month')">Ce mois</button>
+      <button class="btn btn-secondary btn-sm" id="tr-btn-total" onclick="trSetPeriod('total')">Total</button>
+      <input type="date" id="tr-date-pick" style="padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;font-size:13px;color:#475569;cursor:pointer" onchange="trSetPeriod('custom')">
+      <input type="month" id="tr-month-pick" style="padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;font-size:13px;color:#475569;cursor:pointer" onchange="trSetPeriod('customMonth')">
+      <span id="tr-period-label" style="font-size:12px;color:#94A3B8;margin-left:4px"></span>
+    </div>
+
     <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
       <div class="stat-card">
         <div class="val" id="tr-vues" style="color:#4F46E5">—</div>
@@ -500,27 +511,14 @@ tr:hover td{background:#FAFBFF}
       </div>
       <div class="stat-card">
         <div class="val" id="tr-leads" style="color:#16A34A">—</div>
-        <div class="lbl">Leads capturés</div>
+        <div class="lbl">Leads VSL capturés</div>
       </div>
     </div>
-    <div class="panel">
+
+    <div class="panel" style="margin-top:4px">
       <div class="panel-header">
-        <div class="panel-title">📈 Activité en temps réel</div>
-        <span id="tr-updated" style="font-size:11px;color:#94A3B8"></span>
-      </div>
-      <div class="panel-body">
-        <p style="font-size:13px;color:#64748B;margin-bottom:20px">Données issues de <strong>methodeBTD.html</strong> — landing page VSL principale.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:18px">
-            <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Tunnel actuel</div>
-            <div style="font-size:13px;font-weight:600;color:#1E293B">Organique — VSL principale</div>
-            <div style="font-size:12px;color:#64748B;margin-top:4px">denemacademy.com/methodeBTD.html</div>
-          </div>
-          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:18px">
-            <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Conversion visiteur → lead</div>
-            <div class="val" id="tr-conv" style="font-size:24px;font-weight:800;color:#4F46E5">—</div>
-          </div>
-        </div>
+        <div class="panel-title">📈 Activité <span id="tr-updated" style="font-size:11px;color:#94A3B8;font-weight:400;margin-left:8px"></span></div>
+        <div id="tr-conv-wrap" style="font-size:12px;color:#64748B">Conversion : <strong id="tr-conv" style="color:#4F46E5">—</strong></div>
       </div>
     </div>
 
@@ -1840,55 +1838,85 @@ function admToggleAudio(msgId){
 // Close modal on backdrop click
 document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
 
-// ─── Tracking LP VSL — init immédiat au chargement ───────────
-function renderTrackingVues(d) {
-  const vues  = d.vues || 0;
-  const clics = d.clics_cta || 0;
-  const taux  = vues > 0 ? Math.round((clics / vues) * 100) : 0;
-  const elV = document.getElementById('tr-vues');
-  const elC = document.getElementById('tr-clics');
-  const elT = document.getElementById('tr-taux');
-  const elU = document.getElementById('tr-updated');
-  if (elV) elV.textContent = vues.toLocaleString('fr-FR');
-  if (elC) elC.textContent = clics.toLocaleString('fr-FR');
-  if (elT) elT.textContent = taux + '%';
-  if (elU && d.updatedAt) {
-    const dt = d.updatedAt.toDate();
-    elU.textContent = 'Mis à jour ' + dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR');
+// ─── Tracking LP VSL ─────────────────────────────────────────
+let _trUnsub = null;
+
+function trDocId(period) {
+  const now = new Date();
+  const day   = now.toISOString().slice(0,10);
+  const month = now.toISOString().slice(0,7);
+  if (period === 'today')  return `btd_${day}`;
+  if (period === 'month')  return `btd_${month}`;
+  if (period === 'total')  return 'btd_landing';
+  if (period === 'custom') {
+    const v = document.getElementById('tr-date-pick')?.value;
+    return v ? `btd_${v}` : `btd_${day}`;
   }
+  if (period === 'customMonth') {
+    const v = document.getElementById('tr-month-pick')?.value;
+    return v ? `btd_${v}` : `btd_${month}`;
+  }
+  return 'btd_landing';
 }
 
-// Listener analytics — actif dès le chargement, pas besoin de clic
-db.collection('analytics').doc('btd_landing').onSnapshot(snap => {
-  renderTrackingVues(snap.data() || {});
-});
+function trSetPeriod(period) {
+  // Boutons actifs
+  ['today','month','total'].forEach(p => {
+    const btn = document.getElementById(`tr-btn-${p}`);
+    if (btn) btn.className = p === period ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+  });
+  const docId = trDocId(period);
+  // Label période
+  const labels = {today:'Aujourd\'hui',month:'Ce mois-ci',total:'Toutes périodes confondues'};
+  const lbl = document.getElementById('tr-period-label');
+  if (lbl) lbl.textContent = labels[period] || `Période : ${docId.replace('btd_','')}`;
 
-// Listener leads VSL — actif dès le chargement
+  // Détacher l'ancien listener
+  if (_trUnsub) { _trUnsub(); _trUnsub = null; }
+
+  // Nouveau listener en temps réel sur le doc sélectionné
+  _trUnsub = db.collection('analytics').doc(docId).onSnapshot(snap => {
+    const d = snap.data() || {};
+    const vues  = d.vues || 0;
+    const clics = d.clics_cta || 0;
+    const taux  = vues > 0 ? Math.round((clics / vues) * 100) : 0;
+    const el = id => document.getElementById(id);
+    if (el('tr-vues'))  el('tr-vues').textContent  = vues.toLocaleString('fr-FR');
+    if (el('tr-clics')) el('tr-clics').textContent = clics.toLocaleString('fr-FR');
+    if (el('tr-taux'))  el('tr-taux').textContent  = taux + '%';
+    if (el('tr-updated') && d.updatedAt) {
+      const dt = d.updatedAt.toDate();
+      el('tr-updated').textContent = '— MàJ ' + dt.toLocaleDateString('fr-FR') + ' ' + dt.toLocaleTimeString('fr-FR');
+    }
+  });
+}
+
+// Init par défaut : aujourd'hui
+trSetPeriod('today');
+
+// Leads VSL live (tableau toujours en temps réel, indépendant de la période)
 db.collection('leads_vsl').orderBy('createdAt','desc').limit(50).onSnapshot(snap => {
   const count = snap.size;
-  const elL = document.getElementById('tr-leads');
-  const elConv = document.getElementById('tr-conv');
-  if (elL) elL.textContent = count.toLocaleString('fr-FR');
-  if (elConv) {
-    const vues = parseInt((document.getElementById('tr-vues')?.textContent||'0').replace(/[\s\u00A0]/g,'')) || 0;
-    elConv.textContent = vues > 0 ? Math.round((count / vues) * 100) + '%' : '0%';
+  const el = id => document.getElementById(id);
+  if (el('tr-leads')) el('tr-leads').textContent = count.toLocaleString('fr-FR');
+  if (el('tr-conv')) {
+    const vues = parseInt((el('tr-vues')?.textContent||'0').replace(/[\s\u00A0]/g,'')) || 0;
+    el('tr-conv').textContent = vues > 0 ? Math.round((count / vues) * 100) + '%' : '0%';
   }
-
   const tbody = snap.docs.map((d, i) => {
     const r = d.data();
     const date = r.createdAt ? r.createdAt.toDate().toLocaleString('fr-FR') : '—';
     const isNew = i === 0 && snap.docChanges().some(c => c.type === 'added' && c.doc.id === d.id);
     return `<tr class="${isNew ? 'lead-new' : ''}">
-      <td><strong>${r.prenom || '—'}</strong></td>
-      <td>${r.email || '—'}</td>
-      <td>${r.telephone || '—'}</td>
-      <td><span class="badge badge-purple">${r.source || '—'}</span></td>
+      <td><strong>${r.prenom||'—'}</strong></td>
+      <td>${r.email||'—'}</td>
+      <td>${r.telephone||'—'}</td>
+      <td><span class="badge badge-purple">${r.source||'—'}</span></td>
       <td style="color:#94A3B8;font-size:12px">${date}</td>
     </tr>`;
   }).join('');
-
-  const el = document.getElementById('leads-vsl-table');
-  if (el) el.innerHTML = count === 0
+  const tbl = el('leads-vsl-table');
+  if (tbl) tbl.innerHTML = count === 0
     ? '<div style="padding:32px;text-align:center;color:#94A3B8;font-size:13px">Aucun lead pour l\'instant.</div>'
     : `<table><thead><tr><th>Prénom</th><th>Email</th><th>Téléphone</th><th>Source</th><th>Date</th></tr></thead><tbody>${tbody}</tbody></table>`;
 });
