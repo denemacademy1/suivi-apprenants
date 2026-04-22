@@ -1330,18 +1330,13 @@ function initApp() {
 
   // ── Écouter les candidatures LP - Youtube en temps réel ──
   S.candidaturesYt = [];
-  db.collection('candidatures').where('source','==','youtube').orderBy('createdAt','desc').onSnapshot(snap => {
-    S.candidaturesYt = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  db.collection('candidatures').where('source','==','youtube').onSnapshot(snap => {
+    S.candidaturesYt = snap.docs.map(d => ({id: d.id, ...d.data()}))
+      .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
     const newCount = S.candidaturesYt.filter(c => !c._vuSetting).length;
     const badge = document.getElementById('badge-candidatures-yt');
     if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline-block' : 'none'; }
     if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
-  }, () => {
-    db.collection('candidatures').where('source','==','youtube').onSnapshot(snap => {
-      S.candidaturesYt = snap.docs.map(d => ({id:d.id,...d.data()}))
-        .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-      if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
-    });
   });
 
   // ── Écouter les leads VSL en temps réel ──
