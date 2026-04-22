@@ -323,6 +323,7 @@ tr:hover td{background:#FAFBFF}
     <div class="nav-item" id="nav-conv" onclick="showPage('conv')"><span class="icon">💬</span>Conversations<span class="nav-unread" id="nav-conv-badge" style="display:none">0</span></div>
     <div class="nav-section">Système</div>
     <div class="nav-item" onclick="showPage('stats')"><span class="icon">📊</span>Statistiques</div>
+    <div class="nav-item" onclick="showPage('tracking')"><span class="icon">🎯</span>Tracking LP</div>
     <div class="nav-item" onclick="normalizeAllEmails()"><span class="icon">🔧</span>Normaliser emails</div>
     <div class="nav-section">Commercial</div>
     <div class="nav-item" onclick="window.open('../pipeline/')"><span class="icon">📈</span>Pipeline commercial</div>
@@ -478,6 +479,49 @@ tr:hover td{background:#FAFBFF}
       <div id="module-progress-table"><div class="empty"><div class="e-icon">📊</div><div class="e-text">Chargement…</div></div></div>
     </div>
   </div>
+
+  <!-- ── TRACKING LP ── -->
+  <div class="page" id="page-tracking">
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="stat-card">
+        <div class="val" id="tr-vues" style="color:#4F46E5">—</div>
+        <div class="lbl">Visiteurs page LP</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" id="tr-clics" style="color:#7C3AED">—</div>
+        <div class="lbl">Clics "Lancer la vidéo"</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" id="tr-taux" style="color:#0F766E">—</div>
+        <div class="lbl">Taux de clic CTA</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" id="tr-leads" style="color:#16A34A">—</div>
+        <div class="lbl">Leads capturés</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📈 Activité en temps réel</div>
+        <span id="tr-updated" style="font-size:11px;color:#94A3B8"></span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:13px;color:#64748B;margin-bottom:20px">Données issues de <strong>methodeBTD.html</strong> — landing page VSL principale.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:18px">
+            <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Tunnel actuel</div>
+            <div style="font-size:13px;font-weight:600;color:#1E293B">Organique — VSL principale</div>
+            <div style="font-size:12px;color:#64748B;margin-top:4px">denemacademy.com/methodeBTD.html</div>
+          </div>
+          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:18px">
+            <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Conversion visiteur → lead</div>
+            <div class="val" id="tr-conv" style="font-size:24px;font-weight:800;color:#4F46E5">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- MODULE MODAL -->
@@ -765,8 +809,8 @@ function initListeners(){
 }
 
 // ─── Navigation ───────────────────────────────────────────
-const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales',conv:'Conversations'};
-const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../crm/','_blank')"},stats:{text:'',fn:''},conv:{text:'',fn:''}};
+const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales',conv:'Conversations',tracking:'Tracking Landing Page'};
+const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../crm/','_blank')"},stats:{text:'',fn:''},conv:{text:'',fn:''},tracking:{text:'',fn:''}};
 
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
@@ -1780,6 +1824,49 @@ function admToggleAudio(msgId){
 
 // Close modal on backdrop click
 document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
+
+// ─── Tracking LP ─────────────────────────────────────────────
+let trackingInited = false;
+function initTracking() {
+  if (trackingInited) return;
+  trackingInited = true;
+
+  // Vues + clics en temps réel
+  db.collection('analytics').doc('btd_landing').onSnapshot(snap => {
+    const d = snap.data() || {};
+    const vues = d.vues || 0;
+    const clics = d.clics_cta || 0;
+    const taux = vues > 0 ? Math.round((clics / vues) * 100) : 0;
+    document.getElementById('tr-vues').textContent = vues.toLocaleString('fr-FR');
+    document.getElementById('tr-clics').textContent = clics.toLocaleString('fr-FR');
+    document.getElementById('tr-taux').textContent = taux + '%';
+    if (d.updatedAt) {
+      const dt = d.updatedAt.toDate();
+      document.getElementById('tr-updated').textContent =
+        'Mis à jour ' + dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR');
+    }
+  });
+
+  // Leads capturés
+  async function refreshLeads() {
+    const snap = await db.collection('leads_vsl').where('source','==','vsl-capture').get();
+    const count = snap.size;
+    document.getElementById('tr-leads').textContent = count.toLocaleString('fr-FR');
+    // Conversion visiteur → lead
+    const vues = parseInt(document.getElementById('tr-vues').textContent.replace(/\s/g,'')) || 0;
+    const conv = vues > 0 ? Math.round((count / vues) * 100) : 0;
+    document.getElementById('tr-conv').textContent = conv + '%';
+  }
+  refreshLeads();
+  setInterval(refreshLeads, 30000);
+}
+
+// Init tracking quand on clique sur l'onglet
+const origShowPage = showPage;
+window.showPage = function(p) {
+  origShowPage(p);
+  if (p === 'tracking') initTracking();
+};
 </script>
 </body>
 </html>
