@@ -299,6 +299,9 @@ tr:hover td{background:#FAFBFF}
 .btn-conv-send:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(79,70,229,.35)}
 /* Nav unread badge */
 .nav-unread{min-width:18px;height:18px;background:#EF4444;color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;margin-left:auto}
+@keyframes pulse-dot{0%,100%{opacity:.4;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+.lead-new{animation:highlight-row .8s ease-out}
+@keyframes highlight-row{from{background:#F0FDF4}to{background:transparent}}
 </style>
 </head>
 <body>
@@ -520,6 +523,18 @@ tr:hover td{background:#FAFBFF}
         </div>
       </div>
     </div>
+
+    <!-- Tableau leads VSL live -->
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-header">
+        <div class="panel-title">📋 Leads VSL — en direct</div>
+        <span style="font-size:11px;color:#94A3B8;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;background:#22C55E;border-radius:50%;display:inline-block;animation:pulse-dot 1.4s ease-in-out infinite"></span>Live</span>
+      </div>
+      <div id="leads-vsl-table">
+        <div style="padding:32px;text-align:center;color:#94A3B8;font-size:13px">Chargement…</div>
+      </div>
+    </div>
+
   </div>
 
 </main>
@@ -1847,18 +1862,36 @@ function initTracking() {
     }
   });
 
-  // Leads capturés
-  async function refreshLeads() {
-    const snap = await db.collection('leads_vsl').where('source','==','vsl-capture').get();
+  // Leads VSL en temps réel (onSnapshot)
+  db.collection('leads_vsl').orderBy('createdAt','desc').limit(50).onSnapshot(snap => {
     const count = snap.size;
     document.getElementById('tr-leads').textContent = count.toLocaleString('fr-FR');
-    // Conversion visiteur → lead
-    const vues = parseInt(document.getElementById('tr-vues').textContent.replace(/\s/g,'')) || 0;
+    const vues = parseInt((document.getElementById('tr-vues').textContent||'0').replace(/[\s\u00A0]/g,'')) || 0;
     const conv = vues > 0 ? Math.round((count / vues) * 100) : 0;
     document.getElementById('tr-conv').textContent = conv + '%';
-  }
-  refreshLeads();
-  setInterval(refreshLeads, 30000);
+
+    const tbody = snap.docs.map((d,i) => {
+      const r = d.data();
+      const date = r.createdAt ? r.createdAt.toDate().toLocaleString('fr-FR') : '—';
+      const isNew = i === 0 && snap.docChanges().some(c => c.type === 'added' && c.doc.id === d.id);
+      return `<tr class="${isNew ? 'lead-new' : ''}">
+        <td><strong>${r.prenom || '—'}</strong></td>
+        <td>${r.email || '—'}</td>
+        <td>${r.telephone || '—'}</td>
+        <td><span class="badge badge-purple">${r.source || '—'}</span></td>
+        <td style="color:#94A3B8;font-size:12px">${date}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('leads-vsl-table').innerHTML = count === 0
+      ? '<div style="padding:32px;text-align:center;color:#94A3B8;font-size:13px">Aucun lead pour l\'instant.</div>'
+      : `<table>
+          <thead><tr>
+            <th>Prénom</th><th>Email</th><th>Téléphone</th><th>Source</th><th>Date</th>
+          </tr></thead>
+          <tbody>${tbody}</tbody>
+        </table>`;
+  });
 }
 
 // Init tracking quand on clique sur l'onglet
