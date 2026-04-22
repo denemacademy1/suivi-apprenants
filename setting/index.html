@@ -371,6 +371,10 @@ table.lead-table{width:100%;border-collapse:collapse}
       <span class="sb-nav-icon">🎯</span>Candidatures LP
       <span class="sb-notif-badge" id="badge-candidatures-lp" style="display:none">0</span>
     </div>
+    <div class="sb-nav-item" data-page="candidatures-yt" onclick="showPage('candidatures-yt')">
+      <span class="sb-nav-icon">▶️</span>Candidatures LP - Youtube
+      <span class="sb-notif-badge" id="badge-candidatures-yt" style="display:none">0</span>
+    </div>
     <div class="sb-nav-item" data-page="leads-vsl" onclick="showPage('leads-vsl')">
       <span class="sb-nav-icon">🎬</span>Leads VSL
       <span class="sb-notif-badge" id="badge-leads-vsl" style="display:none">0</span>
@@ -620,6 +624,79 @@ table.lead-table{width:100%;border-collapse:collapse}
               </tr>
             </thead>
             <tbody id="cand-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: CANDIDATURES LP - YOUTUBE -->
+    <div id="page-candidatures-yt" style="display:none">
+      <div class="kpi-row" id="cand-yt-kpi-row">
+        <div class="kpi-card accent">
+          <div class="kpi-label">Total candidatures</div>
+          <div class="kpi-value" id="cand-yt-kpi-total">—</div>
+          <div class="kpi-sub"><span class="cand-live-dot"></span>Temps réel</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🥶 Froids (incomplets)</div>
+          <div class="kpi-value" id="cand-yt-kpi-froid" style="color:#1e40af">—</div>
+          <div class="kpi-sub">À relancer</div>
+        </div>
+        <div class="kpi-card warning">
+          <div class="kpi-label">🌡️ Tièdes</div>
+          <div class="kpi-value" id="cand-yt-kpi-tiede">—</div>
+          <div class="kpi-sub">Questionnaire complet</div>
+        </div>
+        <div class="kpi-card success">
+          <div class="kpi-label">🔥 Bouillants</div>
+          <div class="kpi-value" id="cand-yt-kpi-bouillant">—</div>
+          <div class="kpi-sub">Score 7-10 · Priorité</div>
+        </div>
+      </div>
+      <div class="pipe-funnel" id="cand-yt-pipe-funnel"></div>
+      <div class="cand-card">
+        <div class="section-header">
+          <div class="section-title">▶️ Candidatures LP - Youtube <span class="section-count" id="cand-yt-table-count">0</span></div>
+        </div>
+        <div class="lead-filters">
+          <input type="text" class="filter-input" id="cand-yt-search" placeholder="Rechercher par nom, email…" oninput="renderCandidaturesYt()">
+          <select class="filter-select" id="cand-yt-filter-temp" onchange="renderCandidaturesYt()">
+            <option value="">Toutes les températures</option>
+            <option value="bouillant">🔥 Bouillant</option>
+            <option value="tiede">🌡️ Tiède</option>
+            <option value="froid">🥶 Froid</option>
+          </select>
+          <select class="filter-select" id="cand-yt-filter-statut" onchange="renderCandidaturesYt()">
+            <option value="">Tous les statuts</option>
+            <option value="complet">Complet</option>
+            <option value="incomplet">Incomplet</option>
+          </select>
+          <select class="filter-select" id="cand-yt-filter-pipeline" onchange="renderCandidaturesYt()">
+            <option value="">Statut pipeline</option>
+            <option value="nouveau">📥 Nouveau</option>
+            <option value="contacte">📞 Contacté</option>
+            <option value="rdv_pris">📅 RDV pris</option>
+            <option value="rdv_passe">✅ RDV passé</option>
+            <option value="signe">🎉 Signé</option>
+            <option value="refus">❌ Refus</option>
+            <option value="relance">🔄 Relance</option>
+          </select>
+        </div>
+        <div class="lead-table-wrap">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Candidat</th>
+                <th>Température</th>
+                <th>Statut</th>
+                <th>Pipeline</th>
+                <th>Progression</th>
+                <th>Revenus visés</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cand-yt-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1248,6 +1325,22 @@ function initApp() {
       S.candidatures = snap.docs.map(d => ({id:d.id,...d.data()}))
         .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
       if (S.currentPage === 'candidatures-lp') renderCandidatures();
+    });
+  });
+
+  // ── Écouter les candidatures LP - Youtube en temps réel ──
+  S.candidaturesYt = [];
+  db.collection('candidatures').where('source','==','youtube').orderBy('createdAt','desc').onSnapshot(snap => {
+    S.candidaturesYt = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    const newCount = S.candidaturesYt.filter(c => !c._vuSetting).length;
+    const badge = document.getElementById('badge-candidatures-yt');
+    if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline-block' : 'none'; }
+    if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
+  }, () => {
+    db.collection('candidatures').where('source','==','youtube').onSnapshot(snap => {
+      S.candidaturesYt = snap.docs.map(d => ({id:d.id,...d.data()}))
+        .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+      if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
     });
   });
 
@@ -1960,6 +2053,77 @@ function renderCandidatures() {
   const tbody = document.getElementById('cand-tbody');
   if (!filtered.length) {
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-text">Aucune candidature</div><div class="empty-sub">Les leads de la landing page apparaîtront ici en temps réel</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const etape = c.etape_atteinte || 1;
+    const pct   = Math.round((etape / 6) * 100);
+    const statutCl = c.statut === 'complet' ? 'statut-complet' : 'statut-incomplet';
+    const statutLabel = c.statut === 'complet' ? 'Complet' : `Incomplet (étape ${etape}/6)`;
+    return `
+    <tr style="cursor:pointer" onclick="openCandidature('${c.id}')">
+      <td>
+        <div class="lead-name">${escHtml(c.prenom||'—')}</div>
+        <div class="lead-email">${escHtml(c.email||'—')}</div>
+        <div class="lead-email">${escHtml(c.telephone||'')}</div>
+      </td>
+      <td>${tempBadge(c.temperature||'froid')}</td>
+      <td><span class="statut-badge ${statutCl}">${statutLabel}</span></td>
+      <td onclick="event.stopPropagation()">
+        <select class="pipe-select" onchange="setPipelineStatut('${c.id}','candidatures',this.value)">
+          ${['nouveau','contacte','rdv_pris','rdv_passe','signe','refus','relance'].map(v=>`<option value="${v}" ${(c.statutPipeline||'nouveau')===v?'selected':''}>${{nouveau:'📥 Nouveau',contacte:'📞 Contacté',rdv_pris:'📅 RDV pris',rdv_passe:'✅ RDV passé',signe:'🎉 Signé',refus:'❌ Refus',relance:'🔄 Relance'}[v]}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--muted)">${etape}/6</span>
+          <div class="etape-bar"><div class="etape-fill" style="width:${pct}%"></div></div>
+        </div>
+      </td>
+      <td style="font-size:13px">${escHtml(c.revenus||'—')}</td>
+      <td class="last-contact">${fmtDateTime(c.createdAt)}</td>
+      <td>
+        <div class="actions-cell">
+          <a class="btn-icon btn-call" href="tel:${escHtml(c.telephone||'')}" onclick="event.stopPropagation()" title="Appeler">📞</a>
+          <a class="btn-icon btn-wa"   href="https://wa.me/${(c.telephone||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>
+          <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openCandidature('${c.id}')" title="Voir fiche">👁️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  CANDIDATURES LP - YOUTUBE
+// ══════════════════════════════════════════════
+function renderCandidaturesYt() {
+  const list = S.candidaturesYt || [];
+  const search    = (document.getElementById('cand-yt-search')?.value || '').toLowerCase();
+  const fTemp     = document.getElementById('cand-yt-filter-temp')?.value || '';
+  const fStatut   = document.getElementById('cand-yt-filter-statut')?.value || '';
+  const fPipeline = document.getElementById('cand-yt-filter-pipeline')?.value || '';
+
+  const filtered = list.filter(c => {
+    const txt = `${c.prenom||''} ${c.email||''} ${c.telephone||''}`.toLowerCase();
+    if (search    && !txt.includes(search)) return false;
+    if (fTemp     && (c.temperature||'froid') !== fTemp)   return false;
+    if (fStatut   && (c.statut||'incomplet')  !== fStatut) return false;
+    if (fPipeline && (c.statutPipeline||'nouveau') !== fPipeline) return false;
+    return true;
+  });
+
+  renderPipeFunnel(list, 'cand-yt-pipe-funnel');
+
+  document.getElementById('cand-yt-kpi-total').textContent     = list.length;
+  document.getElementById('cand-yt-kpi-froid').textContent     = list.filter(c => (c.temperature||'froid') === 'froid').length;
+  document.getElementById('cand-yt-kpi-tiede').textContent     = list.filter(c => c.temperature === 'tiede').length;
+  document.getElementById('cand-yt-kpi-bouillant').textContent = list.filter(c => c.temperature === 'bouillant').length;
+  document.getElementById('cand-yt-table-count').textContent   = filtered.length;
+
+  const tbody = document.getElementById('cand-yt-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">▶️</div><div class="empty-text">Aucune candidature YouTube</div><div class="empty-sub">Les leads de la LP Youtube apparaîtront ici en temps réel</div></div></td></tr>`;
     return;
   }
 
