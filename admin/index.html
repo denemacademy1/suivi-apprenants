@@ -326,7 +326,7 @@ tr:hover td{background:#FAFBFF}
     <div class="nav-item" id="nav-conv" onclick="showPage('conv')"><span class="icon">💬</span>Conversations<span class="nav-unread" id="nav-conv-badge" style="display:none">0</span></div>
     <div class="nav-section">Système</div>
     <div class="nav-item" onclick="showPage('stats')"><span class="icon">📊</span>Statistiques</div>
-    <div class="nav-item" onclick="showPage('tracking')"><span class="icon">🎯</span>Tracking LP</div>
+    <div class="nav-item" onclick="showPage('tracking')"><span class="icon">🎯</span>Tracking LP VSL</div>
     <div class="nav-item" onclick="normalizeAllEmails()"><span class="icon">🔧</span>Normaliser emails</div>
     <div class="nav-section">Commercial</div>
     <div class="nav-item" onclick="window.open('../pipeline/')"><span class="icon">📈</span>Pipeline commercial</div>
@@ -824,7 +824,7 @@ function initListeners(){
 }
 
 // ─── Navigation ───────────────────────────────────────────
-const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales',conv:'Conversations',tracking:'Tracking Landing Page'};
+const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales',conv:'Conversations',tracking:'Tracking LP VSL'};
 const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../crm/','_blank')"},stats:{text:'',fn:''},conv:{text:'',fn:''},tracking:{text:'',fn:''}};
 
 function showPage(p){
@@ -1840,66 +1840,58 @@ function admToggleAudio(msgId){
 // Close modal on backdrop click
 document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');}));
 
-// ─── Tracking LP ─────────────────────────────────────────────
-let trackingInited = false;
-function initTracking() {
-  if (trackingInited) return;
-  trackingInited = true;
-
-  // Vues + clics en temps réel
-  db.collection('analytics').doc('btd_landing').onSnapshot(snap => {
-    const d = snap.data() || {};
-    const vues = d.vues || 0;
-    const clics = d.clics_cta || 0;
-    const taux = vues > 0 ? Math.round((clics / vues) * 100) : 0;
-    document.getElementById('tr-vues').textContent = vues.toLocaleString('fr-FR');
-    document.getElementById('tr-clics').textContent = clics.toLocaleString('fr-FR');
-    document.getElementById('tr-taux').textContent = taux + '%';
-    if (d.updatedAt) {
-      const dt = d.updatedAt.toDate();
-      document.getElementById('tr-updated').textContent =
-        'Mis à jour ' + dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR');
-    }
-  });
-
-  // Leads VSL en temps réel (onSnapshot)
-  db.collection('leads_vsl').orderBy('createdAt','desc').limit(50).onSnapshot(snap => {
-    const count = snap.size;
-    document.getElementById('tr-leads').textContent = count.toLocaleString('fr-FR');
-    const vues = parseInt((document.getElementById('tr-vues').textContent||'0').replace(/[\s\u00A0]/g,'')) || 0;
-    const conv = vues > 0 ? Math.round((count / vues) * 100) : 0;
-    document.getElementById('tr-conv').textContent = conv + '%';
-
-    const tbody = snap.docs.map((d,i) => {
-      const r = d.data();
-      const date = r.createdAt ? r.createdAt.toDate().toLocaleString('fr-FR') : '—';
-      const isNew = i === 0 && snap.docChanges().some(c => c.type === 'added' && c.doc.id === d.id);
-      return `<tr class="${isNew ? 'lead-new' : ''}">
-        <td><strong>${r.prenom || '—'}</strong></td>
-        <td>${r.email || '—'}</td>
-        <td>${r.telephone || '—'}</td>
-        <td><span class="badge badge-purple">${r.source || '—'}</span></td>
-        <td style="color:#94A3B8;font-size:12px">${date}</td>
-      </tr>`;
-    }).join('');
-
-    document.getElementById('leads-vsl-table').innerHTML = count === 0
-      ? '<div style="padding:32px;text-align:center;color:#94A3B8;font-size:13px">Aucun lead pour l\'instant.</div>'
-      : `<table>
-          <thead><tr>
-            <th>Prénom</th><th>Email</th><th>Téléphone</th><th>Source</th><th>Date</th>
-          </tr></thead>
-          <tbody>${tbody}</tbody>
-        </table>`;
-  });
+// ─── Tracking LP VSL — init immédiat au chargement ───────────
+function renderTrackingVues(d) {
+  const vues  = d.vues || 0;
+  const clics = d.clics_cta || 0;
+  const taux  = vues > 0 ? Math.round((clics / vues) * 100) : 0;
+  const elV = document.getElementById('tr-vues');
+  const elC = document.getElementById('tr-clics');
+  const elT = document.getElementById('tr-taux');
+  const elU = document.getElementById('tr-updated');
+  if (elV) elV.textContent = vues.toLocaleString('fr-FR');
+  if (elC) elC.textContent = clics.toLocaleString('fr-FR');
+  if (elT) elT.textContent = taux + '%';
+  if (elU && d.updatedAt) {
+    const dt = d.updatedAt.toDate();
+    elU.textContent = 'Mis à jour ' + dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR');
+  }
 }
 
-// Init tracking quand on clique sur l'onglet
-const origShowPage = showPage;
-window.showPage = function(p) {
-  origShowPage(p);
-  if (p === 'tracking') initTracking();
-};
+// Listener analytics — actif dès le chargement, pas besoin de clic
+db.collection('analytics').doc('btd_landing').onSnapshot(snap => {
+  renderTrackingVues(snap.data() || {});
+});
+
+// Listener leads VSL — actif dès le chargement
+db.collection('leads_vsl').orderBy('createdAt','desc').limit(50).onSnapshot(snap => {
+  const count = snap.size;
+  const elL = document.getElementById('tr-leads');
+  const elConv = document.getElementById('tr-conv');
+  if (elL) elL.textContent = count.toLocaleString('fr-FR');
+  if (elConv) {
+    const vues = parseInt((document.getElementById('tr-vues')?.textContent||'0').replace(/[\s\u00A0]/g,'')) || 0;
+    elConv.textContent = vues > 0 ? Math.round((count / vues) * 100) + '%' : '0%';
+  }
+
+  const tbody = snap.docs.map((d, i) => {
+    const r = d.data();
+    const date = r.createdAt ? r.createdAt.toDate().toLocaleString('fr-FR') : '—';
+    const isNew = i === 0 && snap.docChanges().some(c => c.type === 'added' && c.doc.id === d.id);
+    return `<tr class="${isNew ? 'lead-new' : ''}">
+      <td><strong>${r.prenom || '—'}</strong></td>
+      <td>${r.email || '—'}</td>
+      <td>${r.telephone || '—'}</td>
+      <td><span class="badge badge-purple">${r.source || '—'}</span></td>
+      <td style="color:#94A3B8;font-size:12px">${date}</td>
+    </tr>`;
+  }).join('');
+
+  const el = document.getElementById('leads-vsl-table');
+  if (el) el.innerHTML = count === 0
+    ? '<div style="padding:32px;text-align:center;color:#94A3B8;font-size:13px">Aucun lead pour l\'instant.</div>'
+    : `<table><thead><tr><th>Prénom</th><th>Email</th><th>Téléphone</th><th>Source</th><th>Date</th></tr></thead><tbody>${tbody}</tbody></table>`;
+});
 </script>
 </body>
 </html>
