@@ -1314,7 +1314,7 @@ function initApp() {
   // ── Écouter les candidatures LP en temps réel ──
   S.candidatures = [];
   function _onCandidaturesUpdate(all) {
-    S.candidatures = all;
+    S.candidatures = all.filter(c => c.source === 'landing-page');
     S.candidaturesYt = all.filter(c => c.source === 'youtube');
     // Badges sidebar
     const newLp = S.candidatures.filter(c => !c._vuSetting).length;
