@@ -1313,31 +1313,28 @@ async function pickAvatarSetting(){
 function initApp() {
   // ── Écouter les candidatures LP en temps réel ──
   S.candidatures = [];
-  db.collection('candidatures').orderBy('createdAt','desc').onSnapshot(snap => {
-    S.candidatures = snap.docs.map(d => ({id: d.id, ...d.data()}));
-    // Badge sidebar
-    const newCount = S.candidatures.filter(c => !c._vuSetting).length;
-    const badge = document.getElementById('badge-candidatures-lp');
-    if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline-block' : 'none'; }
+  function _onCandidaturesUpdate(all) {
+    S.candidatures = all;
+    S.candidaturesYt = all.filter(c => c.source === 'youtube');
+    // Badges sidebar
+    const newLp = S.candidatures.filter(c => !c._vuSetting).length;
+    const badgeLp = document.getElementById('badge-candidatures-lp');
+    if (badgeLp) { badgeLp.textContent = newLp; badgeLp.style.display = newLp ? 'inline-block' : 'none'; }
+    const newYt = S.candidaturesYt.filter(c => !c._vuSetting).length;
+    const badgeYt = document.getElementById('badge-candidatures-yt');
+    if (badgeYt) { badgeYt.textContent = newYt; badgeYt.style.display = newYt ? 'inline-block' : 'none'; }
     if (S.currentPage === 'candidatures-lp') renderCandidatures();
+    if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
+  }
+  db.collection('candidatures').orderBy('createdAt','desc').onSnapshot(snap => {
+    _onCandidaturesUpdate(snap.docs.map(d => ({id: d.id, ...d.data()})));
   }, () => {
     db.collection('candidatures').onSnapshot(snap => {
-      S.candidatures = snap.docs.map(d => ({id:d.id,...d.data()}))
-        .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-      if (S.currentPage === 'candidatures-lp') renderCandidatures();
+      _onCandidaturesUpdate(snap.docs.map(d => ({id:d.id,...d.data()}))
+        .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0)));
     });
   });
 
-  // ── Écouter les candidatures LP - Youtube en temps réel ──
-  S.candidaturesYt = [];
-  db.collection('candidatures').where('source','==','youtube').onSnapshot(snap => {
-    S.candidaturesYt = snap.docs.map(d => ({id: d.id, ...d.data()}))
-      .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-    const newCount = S.candidaturesYt.filter(c => !c._vuSetting).length;
-    const badge = document.getElementById('badge-candidatures-yt');
-    if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline-block' : 'none'; }
-    if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
-  });
 
   // ── Écouter les leads VSL en temps réel ──
   S.leadsVsl = [];
