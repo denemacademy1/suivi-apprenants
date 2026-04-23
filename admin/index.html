@@ -1360,7 +1360,8 @@ function renderAdminCohortMessages(msgs,cohortId){
     const name=m.senderName||(isStaff?'Staff':'Apprenant');
     const initial=name.charAt(0).toUpperCase();
     const avatarBg=isStaff?'linear-gradient(135deg,#4F46E5,#7C3AED)':'linear-gradient(135deg,#10B981,#059669)';
-    const photo=m.senderPhoto||(isMe?(_adminUser?.photoURL||null):null)||null;
+    const _appSender=!isMe&&!isStaff?apprenants.find(a=>a.id===m.senderId||a.uid===m.senderId):null;
+    const photo=m.senderPhoto||(isMe?(_adminUser?.photoURL||null):(_appSender?.photoURL||null))||null;
     if(m.type==='victory'){
       const vr=m.reactions||{};
       const selfId=_adminUser?.uid;
