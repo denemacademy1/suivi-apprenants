@@ -2110,9 +2110,14 @@ function renderCohortMessages(msgs){
       // Victory card — full width
       const reactions=m.reactions||{};
       const emojis=['🔥','👏','💪','🚀'];
+      const vIsMe=m.senderId===selfId;
+      const vPhoto=vIsMe?(S.userData?.photoURL||S.apprenant?.photoURL||m.senderPhoto||null):(m.senderPhoto||null);
+      const vInitial=(m.senderName||'A').charAt(0).toUpperCase();
+      const vAvatarEl=vPhoto?`<img src="${escHtml(vPhoto)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:`${vInitial}`;
       html+=`<div class="msg-victory-row">
         <div class="msg-victory-card">
           <div class="mvc-header">
+            <div class="msg-avatar" style="background:linear-gradient(135deg,#6366F1,#8B5CF6);width:26px;height:26px;font-size:10px;position:relative;overflow:hidden">${vAvatarEl}</div>
             <span class="mvc-trophy">🏆</span>
             <span class="mvc-label">Victoire partagée</span>
             <span class="mvc-by">${escHtml(m.senderName||'Apprenant')}</span>
@@ -2211,8 +2216,9 @@ async function postVictory(){
   const prenom=S.userData?.prenom||S.user.email.split('@')[0]||'?';
   const nom=S.userData?.nom||'';
   const senderName=nom?`${prenom} ${nom}`.trim():prenom;
+  const senderPhoto=S.userData?.photoURL||S.apprenant?.photoURL||null;
   await db.collection("cohorts").doc(S.cohort.id).collection("messages").add({
-    text,senderId:S.user.uid,senderName,role:'student',timestamp:TS(),type:'victory',reactions:{}
+    text,senderId:S.user.uid,senderName,role:'student',timestamp:TS(),type:'victory',reactions:{},...(senderPhoto&&{senderPhoto})
   });
   closeVictoryModal();
   showToast('🏆','Victoire partagée !','Votre cohorte va adorer 🚀',true);

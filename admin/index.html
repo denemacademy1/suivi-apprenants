@@ -1370,9 +1370,11 @@ function renderAdminCohortMessages(msgs,cohortId){
         const active=(vr[e+'_voters']||[]).includes(selfId)?'active':'';
         return`<button class="coh-mvc-react ${active}" onclick="admDoReact('${m.id}','${e}','cohorts','${cohortId}')">${e}${count>0?' '+count:''}</button>`;
       }).join('');
+      const vAvatarEl=photo?`<img src="${escHtml(photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:`${initial}`;
       html+=`<div class="coh-victory-row">
         <div class="coh-victory-card">
           <div class="coh-mvc-header">
+            <div class="coh-msg-avatar" style="background:${avatarBg};position:relative;overflow:hidden">${vAvatarEl}</div>
             <span class="coh-mvc-trophy">🏆</span>
             <span class="coh-mvc-label">Victoire partagée</span>
             <span class="coh-mvc-by">${escHtml(name)}</span>
