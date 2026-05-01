@@ -2305,7 +2305,7 @@ async function savePipelineNote(id, col, note) {
 }
 
 function openCandidature(id) {
-  const c = (S.candidatures||[]).find(x => x.id === id);
+  const c = (S.candidatures||[]).find(x => x.id === id) || (S.candidaturesYt||[]).find(x => x.id === id);
   if (!c) return;
   window._activeCandId = id;
   document.getElementById('mcand-name').textContent    = c.prenom || '—';
