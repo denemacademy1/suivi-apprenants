@@ -329,6 +329,17 @@ table.lead-table{width:100%;border-collapse:collapse}
   .lead-table th,.lead-table td{padding:8px 6px;font-size:11px}
   .temp-badge,.pipe-badge,.statut-badge{font-size:10px;padding:2px 7px}
 }
+/* Bottom nav mobile */
+.mobile-bottom-nav{display:none}
+@media(max-width:768px){
+  .mobile-menu-btn{width:42px;height:42px;font-size:22px;background:var(--primary);color:#fff;border-color:var(--primary)}
+  .content{padding-bottom:80px}
+  .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.08);z-index:300;padding:6px 0 max(6px,env(safe-area-inset-bottom))}
+  .mobile-bottom-nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px;text-decoration:none;color:var(--muted);font-size:10px;font-weight:600;border:none;background:none;cursor:pointer;position:relative}
+  .mobile-bottom-nav a.active{color:var(--primary)}
+  .mobile-bottom-nav a span.icon{font-size:20px;line-height:1}
+  .mobile-bottom-nav a span.badge{position:absolute;top:4px;right:calc(50% - 22px);background:var(--danger);color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+}
 .mobile-menu-btn{width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:18px}
 
 /* ─── CANDIDATURES LP ─── */
@@ -2509,6 +2520,53 @@ async function seedLeads() {
 // Lancer le seed au chargement si la base est vide (après auth)
 // seedLeads() est appelé manuellement ou depuis la console si besoin
 
+</script>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-bottom-nav" aria-label="Navigation mobile">
+  <a href="#" onclick="event.preventDefault();showPage('candidatures-lp')" id="mbn-lp">
+    <span class="icon">🎯</span>
+    <span>LP</span>
+    <span class="badge" id="mbn-badge-lp" style="display:none">0</span>
+  </a>
+  <a href="#" onclick="event.preventDefault();showPage('candidatures-yt')" id="mbn-yt">
+    <span class="icon">▶️</span>
+    <span>YouTube</span>
+    <span class="badge" id="mbn-badge-yt" style="display:none">0</span>
+  </a>
+  <a href="#" onclick="event.preventDefault();showPage('leads-vsl')" id="mbn-vsl">
+    <span class="icon">🎬</span>
+    <span>VSL</span>
+    <span class="badge" id="mbn-badge-vsl" style="display:none">0</span>
+  </a>
+  <a href="#" onclick="event.preventDefault();showPage('mes-leads')" id="mbn-leads">
+    <span class="icon">📋</span>
+    <span>Mes leads</span>
+  </a>
+</nav>
+
+<script>
+// Active state mobile bottom nav + sync badges
+(function(){
+  const _origShowPage = window.showPage;
+  if(_origShowPage){
+    window.showPage = function(page){
+      _origShowPage(page);
+      document.querySelectorAll('.mobile-bottom-nav a').forEach(a=>a.classList.remove('active'));
+      const m={'candidatures-lp':'mbn-lp','candidatures-yt':'mbn-yt','leads-vsl':'mbn-vsl','mes-leads':'mbn-leads'};
+      const el=document.getElementById(m[page]);
+      if(el)el.classList.add('active');
+    };
+  }
+  // Sync badges depuis sidebar
+  function syncBadges(){
+    [['badge-candidatures-lp','mbn-badge-lp'],['badge-candidatures-yt','mbn-badge-yt'],['badge-leads-vsl','mbn-badge-vsl']].forEach(([src,dst])=>{
+      const s=document.getElementById(src);const d=document.getElementById(dst);
+      if(s&&d){d.textContent=s.textContent;d.style.display=s.style.display==='none'||!s.textContent||s.textContent==='0'?'none':'flex';}
+    });
+  }
+  setInterval(syncBadges,2000);
+})();
 </script>
 </body>
 </html>
