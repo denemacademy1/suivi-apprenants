@@ -280,17 +280,54 @@ table.lead-table{width:100%;border-collapse:collapse}
   .sidebar.open{left:0}
   .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:399;display:none}
   .sidebar-overlay.open{display:block}
-  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .kpi-row{grid-template-columns:repeat(2,1fr);gap:10px}
   .info-grid{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:1fr}
   .form-grid{grid-template-columns:1fr}
   .modal{max-height:95vh}
   .mobile-menu-btn{display:flex}
   .actions-cell{gap:4px}
-  .lead-table th:nth-child(3),.lead-table td:nth-child(3),
-  .lead-table th:nth-child(5),.lead-table td:nth-child(5){display:none}
   .priority-grid{grid-template-columns:1fr}
   #page-stats .funnel-wrap-row{grid-template-columns:1fr!important}
+  /* Pipeline funnel : compact sur mobile */
+  .pipe-funnel{overflow-x:auto}
+  .pipe-step{min-width:80px}
+  /* Filtres : pleine largeur mobile */
+  .lead-filters{flex-direction:column;gap:8px}
+  .filter-input,.filter-select{width:100%;min-width:0}
+  /* KPI cards moins paddées */
+  .kpi-card{padding:12px}
+  .kpi-value{font-size:22px}
+  .kpi-label{font-size:11px}
+  .kpi-sub{font-size:10px}
+  /* Padding contenu */
+  .content{padding:14px}
+  /* Tables: scroll horizontal + cellules compactes */
+  .lead-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .lead-table th,.lead-table td{padding:10px 10px;font-size:12px}
+  /* Candidatures LP/YT (8 colonnes) : cacher Statut, Progression, Revenus, Date */
+  #cand-tbody tr td:nth-child(3),#cand-tbody tr td:nth-child(5),#cand-tbody tr td:nth-child(6),#cand-tbody tr td:nth-child(7),
+  #page-candidatures-lp .lead-table th:nth-child(3),#page-candidatures-lp .lead-table th:nth-child(5),#page-candidatures-lp .lead-table th:nth-child(6),#page-candidatures-lp .lead-table th:nth-child(7),
+  #cand-yt-tbody tr td:nth-child(3),#cand-yt-tbody tr td:nth-child(5),#cand-yt-tbody tr td:nth-child(6),#cand-yt-tbody tr td:nth-child(7),
+  #page-candidatures-yt .lead-table th:nth-child(3),#page-candidatures-yt .lead-table th:nth-child(5),#page-candidatures-yt .lead-table th:nth-child(6),#page-candidatures-yt .lead-table th:nth-child(7){display:none}
+  /* Leads VSL (5 colonnes) : cacher Téléphone + Date */
+  #vsl-tbody tr td:nth-child(2),#vsl-tbody tr td:nth-child(4),
+  #page-leads-vsl .lead-table th:nth-child(2),#page-leads-vsl .lead-table th:nth-child(4){display:none}
+  /* Boutons actions plus touchables */
+  .btn-icon{width:34px;height:34px;font-size:14px}
+  /* Pipe select plus compact */
+  .pipe-select{font-size:11px;padding:4px 6px;max-width:120px}
+  /* Section title plus petit */
+  .section-title{font-size:14px}
+  /* Topbar padding réduit */
+  .topbar{padding:0 14px;height:52px}
+  .topbar-title{font-size:15px}
+}
+@media(max-width:480px){
+  .kpi-row{grid-template-columns:1fr 1fr;gap:8px}
+  /* Tables encore plus compactes */
+  .lead-table th,.lead-table td{padding:8px 6px;font-size:11px}
+  .temp-badge,.pipe-badge,.statut-badge{font-size:10px;padding:2px 7px}
 }
 .mobile-menu-btn{width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:18px}
 
