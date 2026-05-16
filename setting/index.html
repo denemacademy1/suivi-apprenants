@@ -131,6 +131,8 @@ table.lead-table{width:100%;border-collapse:collapse}
 .btn-call:hover{background:#bbf7d0}
 .btn-wa{background:#d1fae5;color:#065f46}
 .btn-wa:hover{background:#a7f3d0}
+.btn-vcard{background:#fef3c7;color:#92400e}
+.btn-vcard:hover{background:#fde68a}
 .btn-fiche{background:var(--primary-light);color:var(--primary)}
 .btn-fiche:hover{background:#d4d1ff}
 .statut-select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;color:var(--text);cursor:pointer;max-width:140px}
@@ -1460,6 +1462,33 @@ function renderCurrentPage() {
   else if (S.currentPage === 'leads-vsl') renderLeadsVsl();
 }
 
+function downloadVCard(prenom, telephone, email) {
+  const safe = (s) => (s||'').replace(/[\r\n,;]/g, ' ').trim();
+  const name = safe(prenom) || 'Lead DENEM';
+  const tel  = (telephone||'').replace(/\s+/g,'');
+  const mail = safe(email);
+  const fullName = `${name} (Lead DENEM)`;
+  const vcard = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${fullName}`,
+    `N:Lead DENEM;${name};;;`,
+    tel ? `TEL;TYPE=CELL:${tel}` : '',
+    mail ? `EMAIL:${mail}` : '',
+    'ORG:DENEM Academy',
+    'NOTE:Lead capturé depuis le dashboard DENEM',
+    'END:VCARD'
+  ].filter(Boolean).join('\n');
+  const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${name.replace(/[^a-z0-9]/gi,'_')}.vcf`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+}
+
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sidebar-overlay').classList.toggle('open');
@@ -2128,6 +2157,7 @@ function renderCandidatures() {
         <div class="actions-cell">
           <a class="btn-icon btn-call" href="tel:${escHtml(c.telephone||'')}" onclick="event.stopPropagation()" title="Appeler">📞</a>
           <a class="btn-icon btn-wa"   href="https://wa.me/${(c.telephone||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>
+          <button class="btn-icon btn-vcard" onclick="event.stopPropagation();downloadVCard('${escHtml(c.prenom||'')}','${escHtml(c.telephone||'')}','${escHtml(c.email||'')}')" title="Ajouter aux contacts">📇</button>
           <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openCandidature('${c.id}')" title="Voir fiche">👁️</button>
         </div>
       </td>
@@ -2199,6 +2229,7 @@ function renderCandidaturesYt() {
         <div class="actions-cell">
           <a class="btn-icon btn-call" href="tel:${escHtml(c.telephone||'')}" onclick="event.stopPropagation()" title="Appeler">📞</a>
           <a class="btn-icon btn-wa"   href="https://wa.me/${(c.telephone||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>
+          <button class="btn-icon btn-vcard" onclick="event.stopPropagation();downloadVCard('${escHtml(c.prenom||'')}','${escHtml(c.telephone||'')}','${escHtml(c.email||'')}')" title="Ajouter aux contacts">📇</button>
           <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openCandidature('${c.id}')" title="Voir fiche">👁️</button>
         </div>
       </td>
@@ -2265,6 +2296,7 @@ function renderLeadsVsl() {
         <div class="actions-cell">
           ${v.telephone ? `<a class="btn-icon btn-call" href="tel:${escHtml(v.telephone)}" onclick="event.stopPropagation()" title="Appeler">📞</a>` : ''}
           ${tel ? `<a class="btn-icon btn-wa" href="https://wa.me/${tel}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>` : ''}
+          ${v.telephone ? `<button class="btn-icon btn-vcard" onclick="event.stopPropagation();downloadVCard('${escHtml(v.prenom||'')}','${escHtml(v.telephone||'')}','${escHtml(v.email||'')}')" title="Ajouter aux contacts">📇</button>` : ''}
           <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openLeadVsl('${v.id}')" title="Voir fiche">👁️</button>
         </div>
       </td>
