@@ -459,6 +459,7 @@ table.lead-table{width:100%;border-collapse:collapse}
       <div class="topbar-title" id="topbar-title">Mes leads</div>
     </div>
     <div class="topbar-right">
+      <button class="btn-add-lead" onclick="exportContactsCsv()" style="background:#10b981" title="Export contacts FR/BE/CH au format WhatsApp">📥 Export CSV</button>
       <button class="btn-add-lead" onclick="openAddLead()">＋ Nouveau lead</button>
     </div>
   </div>
@@ -1464,6 +1465,44 @@ function renderCurrentPage() {
   else if (S.currentPage === 'candidatures-lp') renderCandidatures();
   else if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
   else if (S.currentPage === 'leads-vsl') renderLeadsVsl();
+}
+
+function exportContactsCsv() {
+  const all = [...(S.candidatures||[]),...(S.candidaturesYt||[]),...(S.leadsVsl||[])];
+  const cleanPhone = (t) => String(t||'').replace(/[\s\-\(\)\.]/g,'');
+  // Normalise un numéro français/belge/suisse vers E.164
+  const normalize = (t) => {
+    let p = cleanPhone(t);
+    if (!p) return '';
+    if (p.startsWith('0033')) p = '+33'+p.slice(4);
+    else if (p.startsWith('0032')) p = '+32'+p.slice(4);
+    else if (p.startsWith('0041')) p = '+41'+p.slice(4);
+    else if (p.startsWith('+')) {} // déjà international
+    else if (p.startsWith('0')) p = '+33'+p.slice(1); // FR par défaut
+    return p;
+  };
+  const isAllowed = (p) => /^\+33[1-9]\d{8}$/.test(p) || /^\+32\d{8,9}$/.test(p) || /^\+41\d{8,9}$/.test(p);
+  const seen = new Set();
+  const rows = [];
+  all.forEach(l => {
+    const tel = normalize(l.telephone);
+    if (!isAllowed(tel)) return;
+    if (seen.has(tel)) return;
+    seen.add(tel);
+    const prenom = String(l.prenom||'').replace(/[",;\r\n]/g,' ').trim() || 'Lead';
+    rows.push({prenom, telephone: tel});
+  });
+  if (!rows.length) { alert('Aucun contact avec un numéro FR/BE/CH valide.'); return; }
+  const csv = '﻿prenom,telephone\n' + rows.map(r => `${r.prenom},${r.telephone}`).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `contacts-whatsapp-fr-be-ch-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);}, 500);
+  console.log(`✅ ${rows.length} contacts exportés sur ${all.length} leads (FR/BE/CH uniquement, dédupliqués)`);
 }
 
 function openManyChat(prenom, telephone) {
