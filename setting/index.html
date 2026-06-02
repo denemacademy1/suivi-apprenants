@@ -1484,10 +1484,18 @@ function exportContactsCsv() {
   const isAllowed = (p) => /^\+33[1-9]\d{8}$/.test(p) || /^\+32\d{8,9}$/.test(p) || /^\+41\d{8,9}$/.test(p);
   const seen = new Set();
   const rows = [];
+  const isTestPrenom = (p) => {
+    const n = String(p||'').trim().toLowerCase();
+    if (!n) return true;
+    if (n.startsWith('tes')) return true; // Test, Tests, Testing…
+    if (n.startsWith('axe')) return true; // Axel, Axem, Axelle…
+    return false;
+  };
   all.forEach(l => {
     const tel = normalize(l.telephone);
     if (!isAllowed(tel)) return;
     if (seen.has(tel)) return;
+    if (isTestPrenom(l.prenom)) return;
     seen.add(tel);
     const prenom = String(l.prenom||'').replace(/[",;\r\n]/g,' ').trim() || 'Lead';
     rows.push({prenom, telephone: tel});
