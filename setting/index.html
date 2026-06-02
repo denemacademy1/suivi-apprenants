@@ -133,6 +133,10 @@ table.lead-table{width:100%;border-collapse:collapse}
 .btn-wa:hover{background:#a7f3d0}
 .btn-vcard{background:#fef3c7;color:#92400e}
 .btn-vcard:hover{background:#fde68a}
+.btn-mc{background:#ede9fe;color:#5b21b6}
+.btn-mc:hover{background:#ddd6fe}
+.mc-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 32px rgba(91,33,182,.3);z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;display:flex;align-items:center;gap:8px}
+.mc-toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
 .btn-fiche{background:var(--primary-light);color:var(--primary)}
 .btn-fiche:hover{background:#d4d1ff}
 .statut-select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;color:var(--text);cursor:pointer;max-width:140px}
@@ -1462,6 +1466,35 @@ function renderCurrentPage() {
   else if (S.currentPage === 'leads-vsl') renderLeadsVsl();
 }
 
+function openManyChat(prenom, telephone) {
+  const tel = (telephone||'').replace(/\s+/g,'');
+  const showToast = (msg) => {
+    let t = document.getElementById('mc-toast');
+    if(!t){ t = document.createElement('div'); t.id='mc-toast'; t.className='mc-toast'; document.body.appendChild(t); }
+    t.innerHTML = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  };
+  const fallbackCopy = (txt) => {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  };
+  const doCopy = async (txt) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(txt); return true; }
+      catch(e) { fallbackCopy(txt); return true; }
+    }
+    fallbackCopy(txt); return true;
+  };
+  doCopy(tel).then(() => {
+    showToast(`📋 ${tel} copié — ouvre ManyChat`);
+    window.open('https://app.manychat.com/', '_blank', 'noopener');
+  });
+}
+
 function downloadVCard(prenom, telephone, email) {
   const safe = (s) => (s||'').replace(/[\r\n,;]/g, ' ').trim();
   const name = safe(prenom) || 'Lead DENEM';
@@ -2158,6 +2191,7 @@ function renderCandidatures() {
           <a class="btn-icon btn-call" href="tel:${escHtml(c.telephone||'')}" onclick="event.stopPropagation()" title="Appeler">📞</a>
           <a class="btn-icon btn-wa"   href="https://wa.me/${(c.telephone||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>
           <button class="btn-icon btn-vcard" onclick="event.stopPropagation();downloadVCard('${escHtml(c.prenom||'')}','${escHtml(c.telephone||'')}','${escHtml(c.email||'')}')" title="Ajouter aux contacts">📇</button>
+          <button class="btn-icon btn-mc" onclick="event.stopPropagation();openManyChat('${escHtml(c.prenom||'')}','${escHtml(c.telephone||'')}')" title="Ouvrir ManyChat (numéro copié)">💜</button>
           <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openCandidature('${c.id}')" title="Voir fiche">👁️</button>
         </div>
       </td>
@@ -2230,6 +2264,7 @@ function renderCandidaturesYt() {
           <a class="btn-icon btn-call" href="tel:${escHtml(c.telephone||'')}" onclick="event.stopPropagation()" title="Appeler">📞</a>
           <a class="btn-icon btn-wa"   href="https://wa.me/${(c.telephone||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>
           <button class="btn-icon btn-vcard" onclick="event.stopPropagation();downloadVCard('${escHtml(c.prenom||'')}','${escHtml(c.telephone||'')}','${escHtml(c.email||'')}')" title="Ajouter aux contacts">📇</button>
+          <button class="btn-icon btn-mc" onclick="event.stopPropagation();openManyChat('${escHtml(c.prenom||'')}','${escHtml(c.telephone||'')}')" title="Ouvrir ManyChat (numéro copié)">💜</button>
           <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openCandidature('${c.id}')" title="Voir fiche">👁️</button>
         </div>
       </td>
@@ -2297,6 +2332,7 @@ function renderLeadsVsl() {
           ${v.telephone ? `<a class="btn-icon btn-call" href="tel:${escHtml(v.telephone)}" onclick="event.stopPropagation()" title="Appeler">📞</a>` : ''}
           ${tel ? `<a class="btn-icon btn-wa" href="https://wa.me/${tel}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>` : ''}
           ${v.telephone ? `<button class="btn-icon btn-vcard" onclick="event.stopPropagation();downloadVCard('${escHtml(v.prenom||'')}','${escHtml(v.telephone||'')}','${escHtml(v.email||'')}')" title="Ajouter aux contacts">📇</button>` : ''}
+          ${v.telephone ? `<button class="btn-icon btn-mc" onclick="event.stopPropagation();openManyChat('${escHtml(v.prenom||'')}','${escHtml(v.telephone||'')}')" title="Ouvrir ManyChat (numéro copié)">💜</button>` : ''}
           <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openLeadVsl('${v.id}')" title="Voir fiche">👁️</button>
         </div>
       </td>
