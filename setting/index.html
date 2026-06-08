@@ -135,6 +135,31 @@ table.lead-table{width:100%;border-collapse:collapse}
 .btn-vcard:hover{background:#fde68a}
 .btn-mc{background:#ede9fe;color:#5b21b6}
 .btn-mc:hover{background:#ddd6fe}
+/* TEMPLATES & INFOS */
+.tpl-header{margin-bottom:20px}
+.tpl-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px}
+.tpl-sub{font-size:14px;color:var(--muted)}
+.tpl-cat{font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.6px;margin:20px 0 10px}
+.tpl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+.tpl-card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#fafbff;border-bottom:1px solid var(--border)}
+.tpl-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px}
+.tpl-badge-hot{background:#fee2e2;color:#991b1b}
+.tpl-badge-warm{background:#fef3c7;color:#92400e}
+.tpl-badge-cold{background:#dbeafe;color:#1e40af}
+.tpl-badge-relance{background:#f3e8ff;color:#6b21a8}
+.tpl-copy{background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.tpl-copy:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.tpl-copy.copied{background:#10b981}
+.tpl-text{padding:16px 18px;font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap;font-family:inherit}
+.tpl-text code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;color:var(--primary)}
+.info-grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.info-grid-2col{grid-template-columns:1fr}}
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
+.info-card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.info-list{list-style:none;padding:0;margin:0}
+.info-list li{font-size:13px;color:var(--text);line-height:1.65;padding:5px 0;border-bottom:1px dashed rgba(0,0,0,.04)}
+.info-list li:last-child{border-bottom:none}
+.info-list li strong{color:var(--primary);font-weight:600}
 .mc-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 32px rgba(91,33,182,.3);z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;display:flex;align-items:center;gap:8px}
 .mc-toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
 .btn-fiche{background:var(--primary-light);color:var(--primary)}
@@ -419,6 +444,12 @@ table.lead-table{width:100%;border-collapse:collapse}
     <div class="sb-section-label" style="margin-top:8px">Outils</div>
     <div class="sb-nav-item" data-page="script" onclick="showPage('script')">
       <span class="sb-nav-icon">📝</span>Script d'appel
+    </div>
+    <div class="sb-nav-item" data-page="templates" onclick="showPage('templates')">
+      <span class="sb-nav-icon">💬</span>Templates messages
+    </div>
+    <div class="sb-nav-item" data-page="infos-denem" onclick="showPage('infos-denem')">
+      <span class="sb-nav-icon">ℹ️</span>Infos DENEM Academy
     </div>
     <div class="sb-section-label" style="margin-top:8px">Landing Page</div>
     <div class="sb-nav-item" data-page="candidatures-lp" onclick="showPage('candidatures-lp')">
@@ -815,6 +846,220 @@ table.lead-table{width:100%;border-collapse:collapse}
             </thead>
             <tbody id="vsl-tbody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: TEMPLATES MESSAGES -->
+    <div id="page-templates" style="display:none">
+      <div class="tpl-header">
+        <div class="tpl-title">💬 Templates de messages</div>
+        <div class="tpl-sub">Messages prêts à copier-coller pour relancer tes leads — WhatsApp, SMS, Instagram DM</div>
+      </div>
+
+      <div class="tpl-cat">📞 Premier contact (lead chaud)</div>
+      <div class="tpl-card">
+        <div class="tpl-card-head">
+          <span class="tpl-badge tpl-badge-hot">🔥 Bouillant · Score 8-10</span>
+          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
+        </div>
+        <div class="tpl-text">Salut {prenom} 👋
+
+C'est Axel de DENEM Academy. J'ai vu que tu avais complété ton quiz d'éligibilité — bravo pour ta démarche.
+
+Tu m'as l'air vraiment aligné·e avec ce qu'on fait, j'aimerais te proposer un échange offert de 15 min pour qu'on parle de ton projet d'Expert IA et voir comment on peut t'aider concrètement à te lancer.
+
+Quand es-tu dispo cette semaine ?
+
+À très vite ✌️</div>
+      </div>
+
+      <div class="tpl-card">
+        <div class="tpl-card-head">
+          <span class="tpl-badge tpl-badge-warm">🌡️ Tiède · Score 5-7</span>
+          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
+        </div>
+        <div class="tpl-text">Hello {prenom} 👋
+
+Axel de DENEM Academy. J'ai vu ta candidature, merci d'avoir pris le temps de répondre 🙏
+
+J'aimerais comprendre où tu en es exactement avant de te proposer la suite. Tu as 10 min cette semaine pour qu'on échange rapidement ?
+
+Pas de pitch commercial, juste qu'on voie ensemble si la méthode DENEM peut vraiment t'aider à atteindre tes objectifs.
+
+Dis-moi 👇</div>
+      </div>
+
+      <div class="tpl-cat">🔄 Relance (no-show RDV)</div>
+      <div class="tpl-card">
+        <div class="tpl-card-head">
+          <span class="tpl-badge tpl-badge-relance">🔄 Relance RDV manqué</span>
+          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
+        </div>
+        <div class="tpl-text">Hey {prenom},
+
+Je crois qu'on s'est manqué pour notre RDV 📅 Pas de souci !
+
+Je te propose 2 nouveaux créneaux :
+🗓️ [DATE 1]
+🗓️ [DATE 2]
+
+Dis-moi celui qui t'arrange et je bloque tout de suite.
+
+Axel</div>
+      </div>
+
+      <div class="tpl-cat">⏳ Relance (lead silencieux)</div>
+      <div class="tpl-card">
+        <div class="tpl-card-head">
+          <span class="tpl-badge tpl-badge-relance">⏳ Lead silencieux (J+3)</span>
+          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
+        </div>
+        <div class="tpl-text">Salut {prenom},
+
+Je reviens vers toi suite à ta candidature DENEM Academy.
+
+Je sais que la vie va vite — tu as eu le temps de réfléchir à ton projet d'Expert IA ?
+
+Si oui, je serais ravi qu'on échange 15 min. Si non, dis-moi simplement ce qui te bloque, je peux peut-être t'aider 🙂
+
+Axel</div>
+      </div>
+
+      <div class="tpl-cat">🎯 Closing (après RDV)</div>
+      <div class="tpl-card">
+        <div class="tpl-card-head">
+          <span class="tpl-badge tpl-badge-hot">🎯 Closing post-RDV</span>
+          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
+        </div>
+        <div class="tpl-text">Hello {prenom},
+
+Super échange tout à l'heure, merci pour ta confiance 🙏
+
+Comme convenu, voici les prochaines étapes :
+1️⃣ [STEP 1]
+2️⃣ [STEP 2]
+3️⃣ [STEP 3]
+
+Je reste dispo pour toute question. À très vite dans la communauté DENEM 🚀
+
+Axel</div>
+      </div>
+
+      <div class="tpl-cat">❌ Refus (clôture propre)</div>
+      <div class="tpl-card">
+        <div class="tpl-card-head">
+          <span class="tpl-badge tpl-badge-cold">❌ Refus / Pas le bon moment</span>
+          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
+        </div>
+        <div class="tpl-text">Salut {prenom},
+
+Pas de souci si ce n'est pas le bon moment pour toi 👌
+
+On garde le contact — tu peux me suivre sur Instagram @axel.denem où je partage des conseils gratuits pour les futurs Experts IA.
+
+Si la situation change, ma porte est toujours ouverte.
+
+Axel</div>
+      </div>
+
+      <p style="font-size:12px;color:var(--muted);margin-top:24px;text-align:center">
+        💡 Astuce : remplace <code>{prenom}</code> par le prénom du lead avant d'envoyer (ou ajoute-le manuellement après le copier-coller).
+      </p>
+    </div>
+
+    <!-- PAGE: INFOS DENEM ACADEMY -->
+    <div id="page-infos-denem" style="display:none">
+      <div class="tpl-header">
+        <div class="tpl-title">ℹ️ Informations DENEM Academy</div>
+        <div class="tpl-sub">Toutes les infos clés à connaître pour répondre aux questions des leads</div>
+      </div>
+
+      <div class="info-grid-2col">
+        <div class="info-card">
+          <div class="info-card-title">🎓 La formation en bref</div>
+          <ul class="info-list">
+            <li><strong>Durée :</strong> 90 jours (12 semaines)</li>
+            <li><strong>Format :</strong> 100% en ligne, à ton rythme</li>
+            <li><strong>Suivi :</strong> Cohortes de 20-30 élèves + accompagnement individuel CSM</li>
+            <li><strong>Objectif :</strong> Devenir Expert IA freelance ou agence, facturer 5K-50K€/mois</li>
+            <li><strong>Prérequis :</strong> Aucun bagage technique requis</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-title">💰 Tarifs & options</div>
+          <ul class="info-list">
+            <li><strong>Prix :</strong> Donné en RDV uniquement (qualification nécessaire)</li>
+            <li><strong>Paiement :</strong> Plusieurs options possibles (mensualisation, OPCO, CPF si éligible)</li>
+            <li><strong>Garantie :</strong> Satisfait ou remboursé sous 14 jours</li>
+            <li><strong>Sélection :</strong> Réservé aux profils qualifiés après quiz + RDV</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-title">📚 Programme — La méthode B.T.D</div>
+          <ul class="info-list">
+            <li><strong>B</strong>usiness : trouver tes 1ers clients, prospection, closing</li>
+            <li><strong>T</strong>echnique : ChatGPT, Claude, n8n, Make, automatisations IA</li>
+            <li><strong>D</strong>elivery : livraison de missions, gestion client, scaling</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-title">🚀 Ce qui est inclus</div>
+          <ul class="info-list">
+            <li>+250 modules vidéo + études de cas réels</li>
+            <li>Templates prêts à l'emploi (prompts, automatisations, propositions)</li>
+            <li>Communauté privée (cohortes + alumni)</li>
+            <li>Coaching de groupe hebdomadaire</li>
+            <li>Suivi CSM individuel</li>
+            <li>Accès à vie à la plateforme + mises à jour</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-title">🏆 Résultats élèves</div>
+          <ul class="info-list">
+            <li><strong>Joseph (PIVOIA) :</strong> 25 000€/mois — refuse des missions</li>
+            <li><strong>Baptiste :</strong> 35 000€/mois — agence IA, équipe de 3</li>
+            <li><strong>Ugo :</strong> 15 000€/mois — consultant IA indépendant</li>
+            <li><strong>Amir :</strong> 12 000€/mois — freelance Expert IA Paris</li>
+            <li><strong>Moyenne :</strong> 5K-10K€ par mission entreprise</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-title">🏢 Écosystème DENEM</div>
+          <ul class="info-list">
+            <li><strong>DENEM Academy :</strong> formation Expert IA</li>
+            <li><strong>DENEM Labs :</strong> agence d'experts en interne</li>
+            <li><strong>+250 projets IA livrés</strong> depuis 2020</li>
+            <li><strong>Clients :</strong> Canal+, EDF, Crédit Agricole, +PME</li>
+            <li><strong>+1M€ CA généré</strong> par l'écosystème</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-title">❓ Objections fréquentes</div>
+          <ul class="info-list">
+            <li><strong>"Je n'ai pas le temps"</strong> → 5h/semaine suffisent, tout est à ton rythme</li>
+            <li><strong>"Je ne suis pas technique"</strong> → 90% des élèves partent de zéro</li>
+            <li><strong>"L'IA c'est saturé"</strong> → Seulement 419 experts IA en France pour 3,8M d'entreprises</li>
+            <li><strong>"C'est cher"</strong> → ROI moyen sur la 1ère mission (5K-10K€)</li>
+            <li><strong>"J'ai peur de ne pas réussir"</strong> → Suivi individuel + garantie 14j</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-title">📞 Contact & Liens</div>
+          <ul class="info-list">
+            <li><strong>Email :</strong> contact@denemacademy.com</li>
+            <li><strong>Site :</strong> denemacademy.com</li>
+            <li><strong>Test éligibilité :</strong> denemacademy.com/eligibilite</li>
+            <li><strong>Instagram :</strong> @axel.denem</li>
+            <li><strong>RDV iClosed :</strong> app.iclosed.io/e/denemacademy/bilan-de-carri-re-ia-denem</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -1442,7 +1687,10 @@ const PAGE_TITLES = {
   'tous-leads': 'Tous les leads',
   'stats': 'Dashboard',
   'script': "Script d'appel",
+  'templates': '💬 Templates messages',
+  'infos-denem': 'ℹ️ Infos DENEM Academy',
   'candidatures-lp': '🎯 Candidatures LP',
+  'candidatures-yt': '▶️ Candidatures LP - Youtube',
   'leads-vsl': '🎬 Leads VSL',
 };
 
@@ -1465,6 +1713,32 @@ function renderCurrentPage() {
   else if (S.currentPage === 'candidatures-lp') renderCandidatures();
   else if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
   else if (S.currentPage === 'leads-vsl') renderLeadsVsl();
+}
+
+function copyTpl(btn) {
+  const card = btn.closest('.tpl-card');
+  const txt = card.querySelector('.tpl-text').textContent;
+  const done = () => {
+    btn.classList.add('copied');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copié !';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = orig; }, 1800);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(done).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch(e) {}
+      document.body.removeChild(ta);
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
 }
 
 function exportContactsCsv() {
