@@ -852,10 +852,22 @@ table.lead-table{width:100%;border-collapse:collapse}
 
     <!-- PAGE: TEMPLATES MESSAGES -->
     <div id="page-templates" style="display:none">
-      <div class="tpl-header">
-        <div class="tpl-title">💬 Templates de messages</div>
-        <div class="tpl-sub">Messages prêts à copier-coller pour relancer tes leads — WhatsApp, SMS, Instagram DM</div>
+      <div class="tpl-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <div>
+          <div class="tpl-title">💬 Templates de messages</div>
+          <div class="tpl-sub">Messages prêts à copier-coller pour relancer tes leads — WhatsApp, SMS, Instagram DM</div>
+        </div>
+        <button class="btn-add-lead" onclick="openCustomTpl()" style="background:var(--primary);flex-shrink:0">＋ Nouveau template</button>
       </div>
+
+      <!-- MES TEMPLATES PERSONNALISÉS -->
+      <div class="tpl-cat">⭐ Mes templates personnalisés</div>
+      <div id="custom-tpls-empty" style="background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;color:var(--muted);margin-bottom:14px">
+        <div style="font-size:32px;margin-bottom:8px">📝</div>
+        <div style="font-weight:600;color:var(--text);margin-bottom:4px">Aucun template personnalisé</div>
+        <div style="font-size:13px">Clique sur "＋ Nouveau template" pour créer le tien</div>
+      </div>
+      <div id="custom-tpls-list"></div>
 
       <div class="tpl-cat">📞 Premier contact (lead chaud)</div>
       <div class="tpl-card">
@@ -1151,6 +1163,55 @@ Axel</div>
       <div class="modal-tab-panel" id="tab-actions"></div>
     </div>
     <div class="modal-footer" id="modal-lead-footer"></div>
+  </div>
+</div>
+
+<!-- MODAL: CUSTOM TEMPLATE -->
+<div class="modal-backdrop" id="modal-custom-tpl">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-lead-name" id="ctpl-modal-title">Nouveau template</div>
+        <div class="modal-lead-sub">Crée ton propre message à copier-coller</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-custom-tpl')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ctpl-id">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div>
+          <label class="form-label">Nom / Badge du template</label>
+          <input type="text" class="form-input" id="ctpl-name" placeholder="Ex: Relance J+7, Closing premium…" maxlength="60">
+        </div>
+        <div>
+          <label class="form-label">Catégorie</label>
+          <select class="form-input" id="ctpl-category">
+            <option value="premier-contact">📞 Premier contact</option>
+            <option value="relance">🔄 Relance</option>
+            <option value="closing">🎯 Closing</option>
+            <option value="refus">❌ Refus / Pas le bon moment</option>
+            <option value="autre">⭐ Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Couleur du badge</label>
+          <select class="form-input" id="ctpl-badge">
+            <option value="hot">🔥 Rouge (chaud / urgent)</option>
+            <option value="warm">🌡️ Orange (tiède)</option>
+            <option value="cold">❄️ Bleu (froid)</option>
+            <option value="relance">🔄 Violet (relance)</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Message <span style="color:var(--muted);font-weight:400">(utilise {prenom} pour personnaliser)</span></label>
+          <textarea class="form-input" id="ctpl-text" rows="10" placeholder="Salut {prenom},&#10;&#10;Ton message ici…&#10;&#10;Axel" style="resize:vertical;font-family:inherit;line-height:1.6"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-custom-tpl')">Annuler</button>
+      <button class="btn-save-note" onclick="saveCustomTpl()" id="ctpl-save-btn">💾 Enregistrer</button>
+    </div>
   </div>
 </div>
 
@@ -1636,6 +1697,9 @@ function initApp() {
   });
 
 
+  // ── Écouter les templates personnalisés ──
+  listenCustomTpls();
+
   // ── Écouter les leads VSL en temps réel ──
   S.leadsVsl = [];
   db.collection('leads_vsl').orderBy('createdAt','desc').onSnapshot(snap => {
@@ -1713,6 +1777,87 @@ function renderCurrentPage() {
   else if (S.currentPage === 'candidatures-lp') renderCandidatures();
   else if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
   else if (S.currentPage === 'leads-vsl') renderLeadsVsl();
+}
+
+// ══════════════════════════════════════════════
+//  CUSTOM TEMPLATES (Firestore)
+// ══════════════════════════════════════════════
+S.customTpls = [];
+let _customTplsUnsub = null;
+function listenCustomTpls() {
+  if (_customTplsUnsub) return;
+  _customTplsUnsub = db.collection('message_templates').orderBy('createdAt','desc').onSnapshot(snap => {
+    S.customTpls = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    renderCustomTpls();
+  }, err => { console.warn('Templates listener error:', err); });
+}
+function renderCustomTpls() {
+  const list = document.getElementById('custom-tpls-list');
+  const empty = document.getElementById('custom-tpls-empty');
+  if (!list || !empty) return;
+  if (!S.customTpls.length) { empty.style.display='block'; list.innerHTML=''; return; }
+  empty.style.display='none';
+  list.innerHTML = S.customTpls.map(t => `
+    <div class="tpl-card" data-id="${t.id}">
+      <div class="tpl-card-head">
+        <span class="tpl-badge tpl-badge-${escHtml(t.badge||'relance')}">${escHtml(t.name||'Template')}</span>
+        <div style="display:flex;gap:6px">
+          <button class="tpl-copy" onclick="copyTpl(this)" style="background:#f1f5f9;color:var(--text)">📋 Copier</button>
+          <button class="tpl-copy" onclick="editCustomTpl('${t.id}')" style="background:#fef3c7;color:#92400e">✏️</button>
+          <button class="tpl-copy" onclick="deleteCustomTpl('${t.id}')" style="background:#fee2e2;color:#991b1b">🗑</button>
+        </div>
+      </div>
+      <div class="tpl-text">${escHtml(t.text||'')}</div>
+    </div>
+  `).join('');
+}
+function openCustomTpl() {
+  document.getElementById('ctpl-id').value = '';
+  document.getElementById('ctpl-name').value = '';
+  document.getElementById('ctpl-category').value = 'premier-contact';
+  document.getElementById('ctpl-badge').value = 'relance';
+  document.getElementById('ctpl-text').value = '';
+  document.getElementById('ctpl-modal-title').textContent = 'Nouveau template';
+  document.getElementById('modal-custom-tpl').classList.add('open');
+}
+function editCustomTpl(id) {
+  const t = S.customTpls.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('ctpl-id').value = id;
+  document.getElementById('ctpl-name').value = t.name || '';
+  document.getElementById('ctpl-category').value = t.category || 'autre';
+  document.getElementById('ctpl-badge').value = t.badge || 'relance';
+  document.getElementById('ctpl-text').value = t.text || '';
+  document.getElementById('ctpl-modal-title').textContent = 'Modifier le template';
+  document.getElementById('modal-custom-tpl').classList.add('open');
+}
+async function saveCustomTpl() {
+  const id = document.getElementById('ctpl-id').value;
+  const name = document.getElementById('ctpl-name').value.trim();
+  const category = document.getElementById('ctpl-category').value;
+  const badge = document.getElementById('ctpl-badge').value;
+  const text = document.getElementById('ctpl-text').value.trim();
+  if (!name || !text) { alert('Merci de remplir le nom et le message.'); return; }
+  const btn = document.getElementById('ctpl-save-btn');
+  btn.disabled = true; btn.textContent = '⏳ Enregistrement…';
+  try {
+    if (id) {
+      await db.collection('message_templates').doc(id).update({name, category, badge, text, updatedAt: TS()});
+    } else {
+      await db.collection('message_templates').add({name, category, badge, text, createdBy: S.user?.uid || '', createdAt: TS(), updatedAt: TS()});
+    }
+    closeModal('modal-custom-tpl');
+  } catch(e) {
+    console.error(e);
+    alert('Erreur lors de l\'enregistrement.');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Enregistrer';
+  }
+}
+async function deleteCustomTpl(id) {
+  if (!confirm('Supprimer ce template ?')) return;
+  try { await db.collection('message_templates').doc(id).delete(); }
+  catch(e) { console.error(e); alert('Erreur lors de la suppression.'); }
 }
 
 function copyTpl(btn) {
