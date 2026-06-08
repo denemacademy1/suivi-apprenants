@@ -869,114 +869,8 @@ table.lead-table{width:100%;border-collapse:collapse}
       </div>
       <div id="custom-tpls-list"></div>
 
-      <div class="tpl-cat">📞 Premier contact (lead chaud)</div>
-      <div class="tpl-card">
-        <div class="tpl-card-head">
-          <span class="tpl-badge tpl-badge-hot">🔥 Bouillant · Score 8-10</span>
-          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
-        </div>
-        <div class="tpl-text">Salut {prenom} 👋
-
-C'est Axel de DENEM Academy. J'ai vu que tu avais complété ton quiz d'éligibilité — bravo pour ta démarche.
-
-Tu m'as l'air vraiment aligné·e avec ce qu'on fait, j'aimerais te proposer un échange offert de 15 min pour qu'on parle de ton projet d'Expert IA et voir comment on peut t'aider concrètement à te lancer.
-
-Quand es-tu dispo cette semaine ?
-
-À très vite ✌️</div>
-      </div>
-
-      <div class="tpl-card">
-        <div class="tpl-card-head">
-          <span class="tpl-badge tpl-badge-warm">🌡️ Tiède · Score 5-7</span>
-          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
-        </div>
-        <div class="tpl-text">Hello {prenom} 👋
-
-Axel de DENEM Academy. J'ai vu ta candidature, merci d'avoir pris le temps de répondre 🙏
-
-J'aimerais comprendre où tu en es exactement avant de te proposer la suite. Tu as 10 min cette semaine pour qu'on échange rapidement ?
-
-Pas de pitch commercial, juste qu'on voie ensemble si la méthode DENEM peut vraiment t'aider à atteindre tes objectifs.
-
-Dis-moi 👇</div>
-      </div>
-
-      <div class="tpl-cat">🔄 Relance (no-show RDV)</div>
-      <div class="tpl-card">
-        <div class="tpl-card-head">
-          <span class="tpl-badge tpl-badge-relance">🔄 Relance RDV manqué</span>
-          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
-        </div>
-        <div class="tpl-text">Hey {prenom},
-
-Je crois qu'on s'est manqué pour notre RDV 📅 Pas de souci !
-
-Je te propose 2 nouveaux créneaux :
-🗓️ [DATE 1]
-🗓️ [DATE 2]
-
-Dis-moi celui qui t'arrange et je bloque tout de suite.
-
-Axel</div>
-      </div>
-
-      <div class="tpl-cat">⏳ Relance (lead silencieux)</div>
-      <div class="tpl-card">
-        <div class="tpl-card-head">
-          <span class="tpl-badge tpl-badge-relance">⏳ Lead silencieux (J+3)</span>
-          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
-        </div>
-        <div class="tpl-text">Salut {prenom},
-
-Je reviens vers toi suite à ta candidature DENEM Academy.
-
-Je sais que la vie va vite — tu as eu le temps de réfléchir à ton projet d'Expert IA ?
-
-Si oui, je serais ravi qu'on échange 15 min. Si non, dis-moi simplement ce qui te bloque, je peux peut-être t'aider 🙂
-
-Axel</div>
-      </div>
-
-      <div class="tpl-cat">🎯 Closing (après RDV)</div>
-      <div class="tpl-card">
-        <div class="tpl-card-head">
-          <span class="tpl-badge tpl-badge-hot">🎯 Closing post-RDV</span>
-          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
-        </div>
-        <div class="tpl-text">Hello {prenom},
-
-Super échange tout à l'heure, merci pour ta confiance 🙏
-
-Comme convenu, voici les prochaines étapes :
-1️⃣ [STEP 1]
-2️⃣ [STEP 2]
-3️⃣ [STEP 3]
-
-Je reste dispo pour toute question. À très vite dans la communauté DENEM 🚀
-
-Axel</div>
-      </div>
-
-      <div class="tpl-cat">❌ Refus (clôture propre)</div>
-      <div class="tpl-card">
-        <div class="tpl-card-head">
-          <span class="tpl-badge tpl-badge-cold">❌ Refus / Pas le bon moment</span>
-          <button class="tpl-copy" onclick="copyTpl(this)">📋 Copier</button>
-        </div>
-        <div class="tpl-text">Salut {prenom},
-
-Pas de souci si ce n'est pas le bon moment pour toi 👌
-
-On garde le contact — tu peux me suivre sur Instagram @axel.denem où je partage des conseils gratuits pour les futurs Experts IA.
-
-Si la situation change, ma porte est toujours ouverte.
-
-Axel</div>
-      </div>
-
       <p style="font-size:12px;color:var(--muted);margin-top:24px;text-align:center">
-        💡 Astuce : remplace <code>{prenom}</code> par le prénom du lead avant d'envoyer (ou ajoute-le manuellement après le copier-coller).
+        💡 Astuce : utilise <code>{prenom}</code> dans tes messages pour personnaliser au moment de l'envoi.
       </p>
     </div>
 
@@ -1184,14 +1078,8 @@ Axel</div>
           <input type="text" class="form-input" id="ctpl-name" placeholder="Ex: Relance J+7, Closing premium…" maxlength="60">
         </div>
         <div>
-          <label class="form-label">Catégorie</label>
-          <select class="form-input" id="ctpl-category">
-            <option value="premier-contact">📞 Premier contact</option>
-            <option value="relance">🔄 Relance</option>
-            <option value="closing">🎯 Closing</option>
-            <option value="refus">❌ Refus / Pas le bon moment</option>
-            <option value="autre">⭐ Autre</option>
-          </select>
+          <label class="form-label">Catégorie <span style="color:var(--muted);font-weight:400">(ex: Premier contact, Relance J+7, Closing…)</span></label>
+          <input type="text" class="form-input" id="ctpl-category" placeholder="Ta catégorie" maxlength="60">
         </div>
         <div>
           <label class="form-label">Couleur du badge</label>
@@ -1797,7 +1685,14 @@ function renderCustomTpls() {
   if (!list || !empty) return;
   if (!S.customTpls.length) { empty.style.display='block'; list.innerHTML=''; return; }
   empty.style.display='none';
-  list.innerHTML = S.customTpls.map(t => `
+  // Groupage par catégorie libre
+  const groups = {};
+  S.customTpls.forEach(t => {
+    const cat = (t.category||'').trim() || 'Sans catégorie';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(t);
+  });
+  const cardHtml = (t) => `
     <div class="tpl-card" data-id="${t.id}">
       <div class="tpl-card-head">
         <span class="tpl-badge tpl-badge-${escHtml(t.badge||'relance')}">${escHtml(t.name||'Template')}</span>
@@ -1808,13 +1703,16 @@ function renderCustomTpls() {
         </div>
       </div>
       <div class="tpl-text">${escHtml(t.text||'')}</div>
-    </div>
+    </div>`;
+  list.innerHTML = Object.entries(groups).map(([cat, items]) => `
+    <div class="tpl-cat">${escHtml(cat)}</div>
+    ${items.map(cardHtml).join('')}
   `).join('');
 }
 function openCustomTpl() {
   document.getElementById('ctpl-id').value = '';
   document.getElementById('ctpl-name').value = '';
-  document.getElementById('ctpl-category').value = 'premier-contact';
+  document.getElementById('ctpl-category').value = '';
   document.getElementById('ctpl-badge').value = 'relance';
   document.getElementById('ctpl-text').value = '';
   document.getElementById('ctpl-modal-title').textContent = 'Nouveau template';
@@ -1825,7 +1723,7 @@ function editCustomTpl(id) {
   if (!t) return;
   document.getElementById('ctpl-id').value = id;
   document.getElementById('ctpl-name').value = t.name || '';
-  document.getElementById('ctpl-category').value = t.category || 'autre';
+  document.getElementById('ctpl-category').value = t.category || '';
   document.getElementById('ctpl-badge').value = t.badge || 'relance';
   document.getElementById('ctpl-text').value = t.text || '';
   document.getElementById('ctpl-modal-title').textContent = 'Modifier le template';
@@ -1834,7 +1732,7 @@ function editCustomTpl(id) {
 async function saveCustomTpl() {
   const id = document.getElementById('ctpl-id').value;
   const name = document.getElementById('ctpl-name').value.trim();
-  const category = document.getElementById('ctpl-category').value;
+  const category = document.getElementById('ctpl-category').value.trim();
   const badge = document.getElementById('ctpl-badge').value;
   const text = document.getElementById('ctpl-text').value.trim();
   if (!name || !text) { alert('Merci de remplir le nom et le message.'); return; }
