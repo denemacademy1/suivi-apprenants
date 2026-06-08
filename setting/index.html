@@ -160,6 +160,32 @@ table.lead-table{width:100%;border-collapse:collapse}
 .info-list li{font-size:13px;color:var(--text);line-height:1.65;padding:5px 0;border-bottom:1px dashed rgba(0,0,0,.04)}
 .info-list li:last-child{border-bottom:none}
 .info-list li strong{color:var(--primary);font-weight:600}
+/* OBJECTIF SETTING */
+.obj-golden-card{background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border:1px solid #fbbf24;border-radius:14px;padding:20px 22px;margin-bottom:20px;box-shadow:0 4px 16px rgba(251,191,36,.15)}
+.obj-golden-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.obj-golden-title{font-size:16px;font-weight:800;color:#92400e;letter-spacing:-.01em}
+.obj-golden-text{font-size:14px;color:#78350f;line-height:1.6;margin-bottom:8px}
+.obj-golden-list{list-style:none;padding:0;margin:0}
+.obj-golden-list li{font-size:14px;color:#78350f;line-height:1.7;padding:4px 0}
+.obj-process-intro{font-size:14px;color:var(--text);line-height:1.7;margin:24px 0 16px;text-align:center}
+.obj-step-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:14px;box-shadow:var(--shadow);transition:.2s}
+.obj-step-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.06);border-color:var(--primary)}
+.obj-step-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.obj-step-num{width:34px;height:34px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;font-size:16px;font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(108,99,255,.3)}
+.obj-step-title{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
+.obj-step-list{list-style:none;padding:0;margin:0}
+.obj-step-list>li{font-size:13.5px;color:var(--text);line-height:1.65;padding:8px 0;border-bottom:1px dashed rgba(0,0,0,.04)}
+.obj-step-list>li:last-child{border-bottom:none}
+.obj-step-list>li strong{color:var(--primary);font-weight:700}
+.obj-step-tag{display:inline-block;font-size:11px;font-weight:500;background:#f1f5f9;color:var(--muted);padding:2px 8px;border-radius:5px;margin-left:6px;font-style:italic}
+.obj-step-sub{font-size:12.5px;color:var(--muted);margin-top:4px;padding-left:8px}
+.obj-tip-card{background:linear-gradient(135deg,#ede9fe 0%,#ddd6fe 100%);border:1px solid #a78bfa;border-radius:14px;padding:20px 22px;margin-top:20px}
+.obj-tip-head{font-size:15px;font-weight:800;color:#5b21b6;margin-bottom:8px}
+.obj-tip-text{font-size:13px;color:#5b21b6;margin-bottom:12px}
+.obj-tip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.obj-tip-grid{grid-template-columns:1fr}}
+.obj-tip-step{background:#fff;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text);line-height:1.4;font-weight:600;box-shadow:0 2px 8px rgba(91,33,182,.08)}
+.obj-tip-step-num{width:24px;height:24px;background:var(--primary);color:#fff;font-size:11px;font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .mc-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 32px rgba(91,33,182,.3);z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;display:flex;align-items:center;gap:8px}
 .mc-toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
 .btn-fiche{background:var(--primary-light);color:var(--primary)}
@@ -442,6 +468,9 @@ table.lead-table{width:100%;border-collapse:collapse}
       <span class="sb-nav-icon">📊</span>Tous les leads
     </div>
     <div class="sb-section-label" style="margin-top:8px">Outils</div>
+    <div class="sb-nav-item" data-page="objectif-setting" onclick="showPage('objectif-setting')">
+      <span class="sb-nav-icon">🎯</span>Objectif du Setting
+    </div>
     <div class="sb-nav-item" data-page="script" onclick="showPage('script')">
       <span class="sb-nav-icon">📝</span>Script d'appel
     </div>
@@ -847,6 +876,112 @@ table.lead-table{width:100%;border-collapse:collapse}
             <tbody id="vsl-tbody"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- PAGE: OBJECTIF DU SETTING -->
+    <div id="page-objectif-setting" style="display:none">
+      <div class="tpl-header">
+        <div class="tpl-title">🎯 Objectif n°1 du Setting – DENEM Academy</div>
+        <div class="tpl-sub">Mission du setter : qualifier précisément le profil et déclencher la prise de RDV</div>
+      </div>
+
+      <!-- Golden Rule -->
+      <div class="obj-golden-card">
+        <div class="obj-golden-head">
+          <span style="font-size:24px">💡</span>
+          <span class="obj-golden-title">Le Golden Rule du Setter</span>
+        </div>
+        <p class="obj-golden-text"><strong>L'état d'esprit est la clé.</strong> Chaque échange doit se faire avec :</p>
+        <ul class="obj-golden-list">
+          <li>😊 Un <strong>sourire sincère</strong> (qui s'entend et se ressent, même à l'écrit ou à l'oral)</li>
+          <li>🚀 Un <strong>enthousiasme débordant</strong></li>
+          <li>🤝 Une <strong>réelle volonté d'aider</strong> le prospect à avancer dans son projet</li>
+        </ul>
+      </div>
+
+      <!-- Process en 3 étapes -->
+      <div class="obj-process-intro">
+        Le rôle principal du setter est ensuite de <strong>qualifier précisément le profil</strong> à travers ce processus en <strong>3 étapes</strong> :
+      </div>
+
+      <div class="obj-step-card">
+        <div class="obj-step-head">
+          <div class="obj-step-num">1</div>
+          <div class="obj-step-title">Qualification du Profil Professionnel</div>
+        </div>
+        <ul class="obj-step-list">
+          <li>
+            <strong>Situation actuelle</strong> — Comprendre la situation pro du prospect
+            <span class="obj-step-tag">salariat · entrepreneuriat · reconversion · etc.</span>
+          </li>
+          <li>
+            <strong>Intérêt pour l'IA</strong> — Identifier sa motivation principale
+            <span class="obj-step-tag">devenir consultant IA · lancer son agence IA · etc.</span>
+            <div class="obj-step-sub">Et depuis combien de temps ce projet mûrit.</div>
+          </li>
+          <li>
+            <strong>Niveau technique</strong> — Évaluer s'il possède déjà des compétences techniques ou s'il part de zéro.
+          </li>
+        </ul>
+      </div>
+
+      <div class="obj-step-card">
+        <div class="obj-step-head">
+          <div class="obj-step-num">2</div>
+          <div class="obj-step-title">Évaluation de l'Intérêt pour la Méthode BTD</div>
+        </div>
+        <ul class="obj-step-list">
+          <li>Vérifier <strong>si la personne connaît déjà la méthode BTD</strong>.</li>
+          <li>
+            <strong>Si oui</strong> → récolter son avis et ses impressions avec enthousiasme
+            <div class="obj-step-sub">→ <em>"Qu'en as-tu pensé ?"</em></div>
+          </li>
+          <li>
+            <strong>Si non</strong> → lui partager le lien de la vidéo (Méthode BTD) avant de continuer la qualification
+            <div class="obj-step-sub"><a href="https://denemacademy.com/methode-vault-r7k4n2x9" target="_blank" rel="noopener" style="color:var(--primary)">denemacademy.com/methode-vault-r7k4n2x9</a></div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="obj-step-card">
+        <div class="obj-step-head">
+          <div class="obj-step-num">3</div>
+          <div class="obj-step-title">Conversion & Prise de Rendez-vous (CTA)</div>
+        </div>
+        <ul class="obj-step-list">
+          <li>
+            <strong>Vérification</strong> — Regarder dans le système si le prospect a <strong>déjà bloqué un créneau</strong> sur iClosed.
+          </li>
+          <li>
+            <strong>Si pas encore booké</strong> → lui proposer un RDV avec les templates de messages.
+          </li>
+          <li>
+            <strong>Action finale</strong> — Si aucun RDV n'est enregistré, l'inviter <strong>chaleureusement</strong> à planifier un appel et fixer le RDV en lui envoyant le lien iClosed :
+            <div class="obj-step-sub"><a href="https://app.iclosed.io/e/denemacademy/bilan-de-carri-re-ia-denem" target="_blank" rel="noopener" style="color:var(--primary);word-break:break-all">app.iclosed.io/e/denemacademy/bilan-de-carri-re-ia-denem</a></div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Bonus : templates -->
+      <div class="obj-tip-card">
+        <div class="obj-tip-head">💬 Toujours s'appuyer sur les templates</div>
+        <p class="obj-tip-text">Selon l'avancement de la conversation :</p>
+        <div class="obj-tip-grid">
+          <div class="obj-tip-step">
+            <div class="obj-tip-step-num">1</div>
+            <div>Qualification du Profil Professionnel</div>
+          </div>
+          <div class="obj-tip-step">
+            <div class="obj-tip-step-num">2</div>
+            <div>Évaluation de l'Intérêt pour la Méthode BTD</div>
+          </div>
+          <div class="obj-tip-step">
+            <div class="obj-tip-step-num">3</div>
+            <div>Conversion & Prise de Rendez-vous (CTA)</div>
+          </div>
+        </div>
+        <button class="btn-add-lead" onclick="showPage('templates')" style="margin-top:14px;background:var(--primary);width:100%">💬 Aller aux Templates messages</button>
       </div>
     </div>
 
@@ -1640,6 +1775,7 @@ const PAGE_TITLES = {
   'tous-leads': 'Tous les leads',
   'stats': 'Dashboard',
   'script': "Script d'appel",
+  'objectif-setting': '🎯 Objectif du Setting',
   'templates': '💬 Templates messages',
   'infos-denem': 'ℹ️ Infos DENEM Academy',
   'candidatures-lp': '🎯 Candidatures LP',
