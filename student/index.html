@@ -198,6 +198,59 @@ nav::-webkit-scrollbar{width:0}
 .mod-item-title{font-size:13px;font-weight:500;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .module-item.active .mod-item-title{color:var(--text);font-weight:600}
 .mod-item-meta{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}
+
+/* ─── PARCOURS — Vue programme améliorée ─── */
+.parcours-overall{padding:16px 16px 14px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(139,92,246,.03))}
+.parcours-overall-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.parcours-overall-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:5px}
+.parcours-overall-stat{font-size:14px;font-weight:800;color:#fff;font-feature-settings:'tnum';font-variant-numeric:tabular-nums}
+.parcours-overall-stat .total{color:rgba(255,255,255,.45);font-weight:600;font-size:12px}
+.parcours-bar-track{height:8px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-bottom:6px}
+.parcours-bar-fill{height:100%;background:linear-gradient(90deg,#6366F1,#8B5CF6 50%,#EC4899);border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(139,92,246,.4)}
+.parcours-overall-sub{font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:6px}
+.parcours-overall-sub .next-badge{background:rgba(99,102,241,.18);color:#A5B4FC;padding:2px 8px;border-radius:5px;font-weight:600;font-size:10px}
+
+.parcours-phase{margin:14px 8px 4px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.04);overflow:hidden;transition:.2s}
+.parcours-phase.expanded{background:rgba(255,255,255,.04)}
+.parcours-phase-head{display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer;user-select:none;transition:.15s}
+.parcours-phase-head:hover{background:rgba(255,255,255,.03)}
+.parcours-phase-chevron{font-size:10px;color:rgba(255,255,255,.4);transition:transform .2s;flex-shrink:0;margin-left:auto}
+.parcours-phase.expanded .parcours-phase-chevron{transform:rotate(90deg)}
+.parcours-phase-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:1px solid;background:rgba(0,0,0,.18)}
+.parcours-phase-info{flex:1;min-width:0}
+.parcours-phase-name{font-size:12px;font-weight:700;color:rgba(255,255,255,.85);line-height:1.25}
+.parcours-phase-meta{font-size:10px;color:rgba(255,255,255,.45);margin-top:1px;display:flex;align-items:center;gap:5px}
+.parcours-cat-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.4px}
+.parcours-cat-tech{background:rgba(99,102,241,.18);color:#A5B4FC}
+.parcours-cat-biz{background:rgba(59,130,246,.18);color:#93C5FD}
+.parcours-cat-del{background:rgba(16,185,129,.18);color:#6EE7B7}
+.parcours-cat-val{background:rgba(245,158,11,.18);color:#FCD34D}
+.parcours-phase-progress{font-size:11px;font-weight:700;color:#fff;font-feature-settings:'tnum';font-variant-numeric:tabular-nums;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:5px;border:1px solid rgba(255,255,255,.08)}
+.parcours-phase-progress.done{background:rgba(16,185,129,.18);color:#6EE7B7;border-color:rgba(16,185,129,.3)}
+.parcours-phase-bar{height:3px;background:rgba(255,255,255,.04)}
+.parcours-phase-bar-fill{height:100%;transition:width .4s ease}
+.parcours-phase-mods{padding:6px 8px 8px}
+.parcours-phase:not(.expanded) .parcours-phase-mods{display:none}
+
+.parcours-mod{display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;border-radius:8px;margin:2px 0;transition:.12s;position:relative}
+.parcours-mod:hover{background:rgba(255,255,255,.045)}
+.parcours-mod.active{background:rgba(99,102,241,.14)}
+.parcours-mod.locked{cursor:not-allowed;opacity:.55}
+.parcours-mod.locked:hover{background:transparent}
+.parcours-mod-status{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;border:1px solid transparent}
+.pms-done{background:rgba(16,185,129,.15);color:#10B981;border-color:rgba(16,185,129,.25)}
+.pms-cur{background:rgba(99,102,241,.2);color:#A5B4FC;border-color:rgba(99,102,241,.35);animation:glow 2s infinite}
+.pms-unlock{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.1)}
+.pms-locked{background:transparent;color:rgba(255,255,255,.3);border-color:rgba(255,255,255,.08)}
+.parcours-mod-info{flex:1;min-width:0}
+.parcours-mod-num{font-size:9px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.4px}
+.parcours-mod-title{font-size:12.5px;font-weight:500;color:rgba(255,255,255,.78);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.parcours-mod.active .parcours-mod-title{color:#fff;font-weight:600}
+.parcours-mod-tag{font-size:9px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+.parcours-mod-score{font-size:10px;font-weight:700;color:#6EE7B7;background:rgba(16,185,129,.12);padding:1px 6px;border-radius:4px;flex-shrink:0}
+.parcours-locked-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 12px 32px rgba(0,0,0,.4);z-index:9999;opacity:0;transition:.25s;pointer-events:none;border:1px solid rgba(99,102,241,.4);display:flex;align-items:center;gap:10px}
+.parcours-locked-toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+
 /* Module content */
 .module-main{flex:1;overflow-y:auto;background:var(--bg)}
 .module-main::-webkit-scrollbar{width:5px}
@@ -921,6 +974,77 @@ const PHASES={
   finalisation:{label:"Finalisation",icon:"🏁",color:"#F59E0B"},
 };
 
+// ─── Programme officiel DENEM Academy — 24 sessions en 6 phases + Validation ───
+const PHASE_PROGRAM = [
+  { key:'p0', label:'Socle technique & outils',         category:'Technique',  catKey:'tech', icon:'🔧', color:'#6366F1', range:[1,5]   },
+  { key:'p1', label:'Positionnement & marque',          category:'Business',   catKey:'biz',  icon:'🎯', color:'#3B82F6', range:[6,7]   },
+  { key:'p2', label:'Vitrine en ligne',                 category:'Business',   catKey:'biz',  icon:'🌐', color:'#3B82F6', range:[8,11]  },
+  { key:'p3', label:'Présence sociale & aimant à leads',category:'Business',   catKey:'biz',  icon:'📡', color:'#3B82F6', range:[12,14] },
+  { key:'p4', label:'Machine à leads & prospection',    category:'Business',   catKey:'biz',  icon:'🧲', color:'#3B82F6', range:[15,19] },
+  { key:'p5', label:'Delivery client',                  category:'Delivery',   catKey:'del',  icon:'📦', color:'#10B981', range:[20,23] },
+  { key:'p6', label:'Validation',                       category:'Validation', catKey:'val',  icon:'🏆', color:'#F59E0B', range:[24,24] },
+];
+
+function getProgramPhase(m){
+  const o = m?.ordre;
+  if(typeof o !== 'number') return null;
+  return PHASE_PROGRAM.find(p => o >= p.range[0] && o <= p.range[1]) || null;
+}
+
+function isModuleDone(m){
+  const p = S.progressions[m.id];
+  return p && (p.statut === 'termine' || p.statut === 'completed');
+}
+
+// Module N+1 débloqué quand N est completé. Le 1er module est toujours débloqué.
+function isModuleUnlocked(m){
+  const sorted = [...S.modules].sort((a,b)=>(a.ordre||0)-(b.ordre||0));
+  const idx = sorted.findIndex(x => x.id === m.id);
+  if(idx <= 0) return true;
+  return isModuleDone(sorted[idx-1]);
+}
+
+function getOverallStats(){
+  const total = S.modules.length || 0;
+  const done = S.modules.filter(isModuleDone).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  // Trouver le prochain module à débloquer/faire
+  const sorted = [...S.modules].sort((a,b)=>(a.ordre||0)-(b.ordre||0));
+  const next = sorted.find(m => !isModuleDone(m) && isModuleUnlocked(m));
+  return { total, done, pct, next };
+}
+
+function getPhaseStats(phaseKey){
+  const phaseCfg = PHASE_PROGRAM.find(p => p.key === phaseKey);
+  if(!phaseCfg) return { total:0, done:0, pct:0 };
+  const mods = S.modules.filter(m => {
+    const ph = getProgramPhase(m);
+    return ph && ph.key === phaseKey;
+  });
+  const done = mods.filter(isModuleDone).length;
+  const total = mods.length;
+  return { total, done, pct: total ? Math.round((done/total)*100) : 0 };
+}
+
+function showLockedToast(msg){
+  let t = document.getElementById('parcours-locked-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'parcours-locked-toast';
+    t.className = 'parcours-locked-toast';
+    document.body.appendChild(t);
+  }
+  t.innerHTML = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function toggleProgramPhase(key){
+  const el = document.getElementById('parcours-phase-'+key);
+  if(el) el.classList.toggle('expanded');
+}
+
 const QUOTES=[
   "La réussite appartient à ceux qui n'abandonnent jamais.",
   "Chaque expert a d'abord été un débutant.",
@@ -1402,31 +1526,131 @@ function renderPhaseMini(){
   }).join('')}</div>`;
 }
 
-// ── MODULES SIDEBAR ──
+// ── MODULES SIDEBAR — Vue programme officielle ──
 function renderModulesSidebar(){
-  let html='';
-  Object.entries(PHASES).forEach(([id,cfg])=>{
-    const mods=S.modules.filter(m=>m.phase_id===id);
-    if(!mods.length)return;
-    html+=`<div class="phase-group">
-      <div class="phase-label"><div class="phase-color-dot" style="background:${cfg.color}"></div>${cfg.icon} ${cfg.label}</div>`;
-    mods.forEach(m=>{
-      const done=["termine","completed"].includes(S.progressions[m.id]?.statut);
-      const isCur=S.currentModule?.id===m.id;
-      const cls=done?"msd-done":isCur?"msd-cur":"msd-lock";
-      const ic=done?"✓":isCur?"▶":"○";
-      html+=`<div class="module-item${isCur?" active":""}" onclick="selectModule('${m.id}')">
-        <div class="mod-status-dot ${cls}">${ic}</div>
-        <div class="mod-item-info">
-          <div class="mod-item-title">${m.titre}</div>
-          <div class="mod-item-meta">${m.duree_estimee||""}${done?" · ✅":""}</div>
+  const target = document.getElementById("module-list");
+  if(!target) return;
+  if(!S.modules.length){
+    target.innerHTML = `<div style="padding:24px;text-align:center;color:rgba(255,255,255,.4);font-size:13px">Aucun module disponible.</div>`;
+    return;
+  }
+
+  const overall = getOverallStats();
+  let html = '';
+
+  // ── Vue d'ensemble globale ──
+  html += `<div class="parcours-overall">
+    <div class="parcours-overall-head">
+      <span class="parcours-overall-title">🎯 Mon parcours</span>
+      <span class="parcours-overall-stat">${overall.done}<span class="total"> / ${overall.total}</span></span>
+    </div>
+    <div class="parcours-bar-track"><div class="parcours-bar-fill" style="width:${overall.pct}%"></div></div>
+    <div class="parcours-overall-sub">
+      <span>${overall.pct}% du parcours complété</span>
+      ${overall.next ? `<span class="next-badge" title="Prochain module à faire">▶ Mod. ${overall.next.ordre||'?'}</span>` : ''}
+    </div>
+  </div>`;
+
+  // ── Phases ──
+  PHASE_PROGRAM.forEach(phase => {
+    const mods = S.modules.filter(m => {
+      const ph = getProgramPhase(m);
+      return ph && ph.key === phase.key;
+    }).sort((a,b)=>(a.ordre||0)-(b.ordre||0));
+    if(!mods.length) return; // skip phase si aucun module mappé
+
+    const stats = getPhaseStats(phase.key);
+    const allDone = stats.total > 0 && stats.done === stats.total;
+    const inProgress = stats.done > 0 && stats.done < stats.total;
+    // Phase auto-expanded si elle contient le module courant OU est en cours OU c'est la 1ère pas finie
+    const containsCurrent = S.currentModule && mods.some(m => m.id === S.currentModule.id);
+    const isFirstActive = !allDone && (inProgress || mods.some(m => isModuleUnlocked(m) && !isModuleDone(m)));
+    const expanded = containsCurrent || isFirstActive;
+
+    html += `<div class="parcours-phase${expanded?' expanded':''}" id="parcours-phase-${phase.key}">
+      <div class="parcours-phase-head" onclick="toggleProgramPhase('${phase.key}')">
+        <div class="parcours-phase-icon" style="border-color:${phase.color}40;color:${phase.color}">${phase.icon}</div>
+        <div class="parcours-phase-info">
+          <div class="parcours-phase-name">${phase.label}</div>
+          <div class="parcours-phase-meta">
+            <span class="parcours-cat-badge parcours-cat-${phase.catKey}">${phase.category}</span>
+            <span>·</span>
+            <span>${mods.length} session${mods.length>1?'s':''}</span>
+          </div>
+        </div>
+        <span class="parcours-phase-progress${allDone?' done':''}">${stats.done}/${stats.total}</span>
+        <span class="parcours-phase-chevron">▶</span>
+      </div>
+      <div class="parcours-phase-bar"><div class="parcours-phase-bar-fill" style="width:${stats.pct}%;background:${phase.color}"></div></div>
+      <div class="parcours-phase-mods">`;
+
+    mods.forEach(m => {
+      const done = isModuleDone(m);
+      const unlocked = isModuleUnlocked(m);
+      const isCur = S.currentModule?.id === m.id;
+      let cls, ic, statusCls = '';
+      if(done){ cls = 'pms-done'; ic = '✓'; }
+      else if(isCur){ cls = 'pms-cur'; ic = '▶'; }
+      else if(unlocked){ cls = 'pms-unlock'; ic = '○'; }
+      else { cls = 'pms-locked'; ic = '🔒'; statusCls = ' locked'; }
+      const score = done ? S.progressions[m.id]?.score_quiz : null;
+      const num = m.ordre ? String(m.ordre).padStart(2,'0') : '—';
+      html += `<div class="parcours-mod${isCur?' active':''}${statusCls}" onclick="tryselectModule('${m.id}')">
+        <div class="parcours-mod-status ${cls}">${ic}</div>
+        <div class="parcours-mod-info">
+          <div class="parcours-mod-num">SESSION ${num}</div>
+          <div class="parcours-mod-title">${escHtml(m.titre||'')}</div>
+          ${m.duree_estimee?`<div class="parcours-mod-tag">⏱ ${escHtml(m.duree_estimee)}</div>`:''}
+        </div>
+        ${score!=null?`<span class="parcours-mod-score">${score}%</span>`:''}
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  // ── Modules sans phase mappée (fallback, si ordre incohérent) ──
+  const orphans = S.modules.filter(m => !getProgramPhase(m));
+  if(orphans.length){
+    html += `<div class="parcours-phase expanded" style="margin-top:14px">
+      <div class="parcours-phase-head" style="cursor:default">
+        <div class="parcours-phase-icon" style="border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.5)">📋</div>
+        <div class="parcours-phase-info">
+          <div class="parcours-phase-name">Autres modules</div>
+          <div class="parcours-phase-meta"><span>${orphans.length} module${orphans.length>1?'s':''} non classés</span></div>
+        </div>
+      </div>
+      <div class="parcours-phase-mods">`;
+    orphans.forEach(m => {
+      const done = isModuleDone(m);
+      const isCur = S.currentModule?.id === m.id;
+      const cls = done?'pms-done':isCur?'pms-cur':'pms-unlock';
+      const ic = done?'✓':isCur?'▶':'○';
+      html += `<div class="parcours-mod${isCur?' active':''}" onclick="selectModule('${m.id}')">
+        <div class="parcours-mod-status ${cls}">${ic}</div>
+        <div class="parcours-mod-info">
+          <div class="parcours-mod-title">${escHtml(m.titre||'')}</div>
+          ${m.duree_estimee?`<div class="parcours-mod-tag">⏱ ${escHtml(m.duree_estimee)}</div>`:''}
         </div>
       </div>`;
     });
-    html+='</div>';
-  });
-  if(!html)html=`<div style="padding:24px;text-align:center;color:rgba(255,255,255,.4);font-size:13px">Aucun module disponible.</div>`;
-  document.getElementById("module-list").innerHTML=html;
+    html += `</div></div>`;
+  }
+
+  target.innerHTML = html;
+}
+
+// Wrapper qui bloque les modules verrouillés
+function tryselectModule(id){
+  const m = S.modules.find(x => x.id === id);
+  if(!m) return;
+  if(isModuleUnlocked(m)){ selectModule(id); return; }
+  // Trouver le module précédent à terminer
+  const sorted = [...S.modules].sort((a,b)=>(a.ordre||0)-(b.ordre||0));
+  const idx = sorted.findIndex(x => x.id === m.id);
+  const prev = sorted[idx-1];
+  const prevTitle = prev ? escHtml(prev.titre||`Session ${prev.ordre||''}`) : 'le module précédent';
+  showLockedToast(`🔒 Module verrouillé — termine d'abord <strong style="color:#A5B4FC">${prevTitle}</strong> et valide son quiz.`);
 }
 
 // ── NAVIGATION ──
