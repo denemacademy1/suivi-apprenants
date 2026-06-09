@@ -1918,6 +1918,7 @@ function openStudentModal(student){
       <div class="form-group"><label>Nom *</label><input id="f-nom" value="${a.nom||""}" placeholder="Dupont"></div>
       <div class="form-group"><label>Email *</label><input id="f-email" type="email" value="${a.email||""}" placeholder="c.dupont@email.fr"></div>
       <div class="form-group"><label>Téléphone</label><input id="f-tel" value="${a.telephone||""}" placeholder="+33 6 00 00 00 00"></div>
+      <div class="form-group form-full"><label>💬 Lien WhatsApp <span style="color:#94A3B8;font-weight:400;font-size:12px">(conversation privée ou groupe avec l'apprenant — visible en direct côté apprenant)</span></label><input id="f-whatsapp" value="${a.whatsapp_link||""}" placeholder="https://chat.whatsapp.com/... ou https://wa.me/33600000000"></div>
       <div class="form-group"><label>Cohorte</label><select id="f-cohorte" id="f-cohorte-sel">
         <option value="">— Aucune cohorte —</option>
         ${(()=>{const cur=S.cohorts.find(c=>(c.membres||[]).includes(a.id));return S.cohorts.map(c=>{const count=(c.membres||[]).length;const isMember=(c.membres||[]).includes(a.id);const full=count>=COHORT_MAX&&!isMember;const sel=cur?.id===c.id?"selected":"";return`<option value="${c.id}" data-nom="${c.nom||''}" ${sel} ${full?"disabled":""} style="color:${c.couleur||'inherit'}">${c.nom||'Cohorte'} (${count}/${COHORT_MAX})${full?" — Pleine":""}</option>`;}).join("");})()}
@@ -1961,6 +1962,7 @@ async function saveStudent(){
   const data={
     prenom,nom,email,
     telephone:document.getElementById("f-tel").value.trim(),
+    whatsapp_link:document.getElementById("f-whatsapp")?.value.trim()||"",
     cohorte,          // nom lisible de la cohorte
     cohort_id:newCohortId, // ID du doc cohorts
     charge,csm_id,

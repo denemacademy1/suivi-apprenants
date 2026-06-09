@@ -525,6 +525,21 @@ nav::-webkit-scrollbar{width:0}
 /* Main chat area */
 .chat-right{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .chat-header{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:12px;flex-shrink:0}
+/* WhatsApp card */
+.wa-card-wrap{display:flex;align-items:center;justify-content:center;flex:1;padding:24px;min-height:100%}
+.wa-card{background:linear-gradient(160deg,rgba(37,211,102,.08),rgba(18,140,126,.04));border:1px solid rgba(37,211,102,.25);border-radius:24px;padding:36px 32px 32px;max-width:440px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.35),0 0 0 1px rgba(37,211,102,.05) inset;animation:waCardIn .4s cubic-bezier(.4,0,.2,1)}
+@keyframes waCardIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.wa-illu{position:relative;width:88px;height:88px;margin:0 auto 18px;border-radius:50%;background:linear-gradient(135deg,#25D366,#128C7E);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(37,211,102,.35),0 0 0 6px rgba(37,211,102,.08)}
+.wa-illu-bg{position:absolute;inset:-12px;border-radius:50%;background:radial-gradient(circle,rgba(37,211,102,.22),transparent 70%);animation:waPulse 2.4s ease-in-out infinite}
+@keyframes waPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.12);opacity:.95}}
+.wa-illu-icon{position:relative;z-index:1;width:42px;height:42px}
+.wa-card-title{font-family:'Manrope','DM Sans',sans-serif;font-weight:800;font-size:1.15rem;color:#fff;letter-spacing:-.01em;margin-bottom:8px}
+.wa-card-sub{font-size:.9rem;color:rgba(255,255,255,.65);line-height:1.55;margin-bottom:24px}
+.wa-card-sub strong{color:#25D366;font-weight:700}
+.wa-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;font-family:inherit;font-weight:700;font-size:1rem;padding:14px 28px;border-radius:14px;border:none;text-decoration:none;box-shadow:0 12px 28px rgba(37,211,102,.4),0 0 0 1px rgba(255,255,255,.06) inset;cursor:pointer;transition:transform .15s,box-shadow .2s,opacity .15s;letter-spacing:-.01em}
+.wa-btn:hover{transform:translateY(-2px);box-shadow:0 18px 36px rgba(37,211,102,.5),0 0 0 1px rgba(255,255,255,.08) inset}
+.wa-btn:active{transform:translateY(0)}
+.wa-card-tip{font-size:.74rem;color:rgba(255,255,255,.4);margin-top:18px;line-height:1.5}
 .chat-header-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;position:relative;overflow:hidden}
 .chat-header-name{font-size:14px;font-weight:700;color:var(--text)}
 .chat-header-sub{font-size:11px;color:var(--muted);margin-top:1px}
@@ -2149,6 +2164,19 @@ function renderChatLeft(){
     const csm=S.csmData;
     const name=csm?(csm.prenom&&csm.nom?`${csm.prenom} ${csm.nom}`:csm.prenom||csm.nom||csm.email||'Coach'):'Votre coach';
     const initial=name.charAt(0).toUpperCase();
+    // Mode WhatsApp
+    const waLink=S.apprenant?.whatsapp_link?.trim();
+    if(waLink){
+      el.innerHTML=`<div class="chat-info-card" style="background:linear-gradient(135deg,rgba(37,211,102,.12),rgba(18,140,126,.06));border:1px solid rgba(37,211,102,.25)">
+        <div class="chat-info-avatar" style="background:linear-gradient(135deg,#25D366,#128C7E)">💬</div>
+        <div class="chat-info-label" style="color:#25D366">Suivi WhatsApp</div>
+        <div class="chat-info-name">${name}</div>
+      </div>
+      <div style="padding:12px;font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Ton coach te répond directement sur <strong style="color:#25D366">WhatsApp</strong>. Clique sur le bouton à droite pour ouvrir la conversation.</div>`;
+      // Header géré par renderWhatsAppCard()
+      document.getElementById("btn-victory-chat").style.display="none";
+      return;
+    }
     el.innerHTML=`<div class="chat-info-card">
       <div class="chat-info-avatar" style="background:linear-gradient(135deg,#10B981,#059669)">${initial}</div>
       <div class="chat-info-label">Votre coach</div>
@@ -2197,6 +2225,56 @@ function renderChatLeft(){
   }
 }
 
+function renderWhatsAppCard(link){
+  // Coupe l'écoute du chat privé Firestore si elle existe
+  if(S._chatPrivateUnsub){S._chatPrivateUnsub();S._chatPrivateUnsub=null;}
+  // Cache la zone d'input + bouton victoire
+  const inputArea=document.getElementById("chat-input-area");
+  if(inputArea) inputArea.style.display='none';
+  const btnVic=document.getElementById("btn-victory-chat");
+  if(btnVic) btnVic.style.display='none';
+  // Header
+  const csm=S.csmData;
+  const csmName=csm?(csm.prenom&&csm.nom?`${csm.prenom} ${csm.nom}`:csm.prenom||csm.nom||csm.email||'Votre coach'):'Votre coach';
+  const csmInitial=csmName.charAt(0).toUpperCase();
+  document.getElementById("chat-header-avatar").style.background="linear-gradient(135deg,#25D366,#128C7E)";
+  document.getElementById("chat-header-avatar").innerHTML='<span style="font-size:18px">💬</span>';
+  applyAvatarPhoto('chat-header-avatar', csm?.photoURL, '');
+  document.getElementById("chat-header-name").textContent=csmName;
+  document.getElementById("chat-header-sub").textContent="Conversation WhatsApp directe";
+  // Contenu central
+  const msgEl=document.getElementById("chat-messages");
+  msgEl.innerHTML=`<div class="wa-card-wrap">
+    <div class="wa-card">
+      <div class="wa-illu">
+        <div class="wa-illu-bg"></div>
+        <svg class="wa-illu-icon" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zm-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884zm8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.464 3.488"/>
+        </svg>
+      </div>
+      <div class="wa-card-title">Discute en direct avec ton coach</div>
+      <div class="wa-card-sub">Ton suivi se fait sur <strong>WhatsApp</strong> — réponse personnalisée et rapide.</div>
+      <a href="${escAttr(link)}" target="_blank" rel="noopener" class="wa-btn" onclick="trackWaOpen()">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12.05 22.5C5.745 22.5.55 17.305.55 11s5.195-11.5 11.5-11.5S23.55 4.695 23.55 11s-5.195 11.5-11.5 11.5z"/></svg>
+        <span>Ouvrir WhatsApp</span>
+      </a>
+      <div class="wa-card-tip">📲 Si rien ne se passe, ouvre WhatsApp manuellement et cherche le coach.</div>
+    </div>
+  </div>`;
+}
+
+function trackWaOpen(){
+  try{
+    if(S.apprenant?.id){
+      db.collection("apprenants").doc(S.apprenant.id).update({
+        last_whatsapp_open: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(()=>{});
+    }
+  }catch(e){}
+}
+
+function escAttr(s){return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 function setupPrivateChat(){
   // Unsubscribe previous cohort listener
   if(S._chatCohortUnsub){S._chatCohortUnsub();S._chatCohortUnsub=null;}
@@ -2204,6 +2282,15 @@ function setupPrivateChat(){
     showChatEmpty("Dossier non lié","Contactez votre chargé de suivi pour accéder aux messages.");
     return;
   }
+  // ── Mode WhatsApp : si l'apprenant a un lien WhatsApp défini par le coach,
+  //    on remplace le chat par une carte avec bouton "Ouvrir WhatsApp"
+  if(S.apprenant.whatsapp_link && S.apprenant.whatsapp_link.trim()){
+    renderWhatsAppCard(S.apprenant.whatsapp_link.trim());
+    return;
+  }
+  // Réaffiche l'input area si on revient au mode chat normal
+  const inputArea=document.getElementById("chat-input-area");
+  if(inputArea) inputArea.style.display='';
   const msgEl=document.getElementById("chat-messages");
   msgEl.innerHTML=`<div class="chat-empty"><div class="chat-empty-icon">🔒</div><div class="chat-empty-title">Chargement…</div></div>`;
   // If already subscribed, keep it
@@ -2239,6 +2326,9 @@ function setupPrivateChat(){
 
 function setupCohortChat(){
   if(S._chatPrivateUnsub){S._chatPrivateUnsub();S._chatPrivateUnsub=null;}
+  // Réaffiche la zone d'input (peut avoir été cachée par le mode WhatsApp)
+  const inputArea=document.getElementById("chat-input-area");
+  if(inputArea) inputArea.style.display='';
   if(!S.cohort){
     document.getElementById("chat-messages").innerHTML=`<div class="chat-empty"><div class="chat-empty-icon">👥</div><div class="chat-empty-title">Aucune cohorte</div><div class="chat-empty-sub">Votre chargé de suivi vous ajoutera à une cohorte prochainement.</div></div>`;
     return;
