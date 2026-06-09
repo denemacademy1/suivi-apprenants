@@ -1300,8 +1300,11 @@ function loadData(){
       renderNotesList();
       renderHomeQuick();
     });
-    // Todos stored in apprenants doc
-    S.todos=S.apprenant.todos||[];
+    // Todos stockées dans users/{uid} (l'apprenant peut écrire son propre doc user)
+    // Migration douce : si users.todos vide mais apprenants.todos existe, on récupère.
+    S.todos = Array.isArray(S.userData?.todos)
+      ? S.userData.todos
+      : (Array.isArray(S.apprenant?.todos) ? S.apprenant.todos : []);
     renderTodos();
     // RDVs — all non-cancelled RDVs for this student (including Réalisé for history)
     const rdvHandler=snap=>{
@@ -2051,36 +2054,55 @@ function renderTodos(){
 async function addTodo(){
   const input=document.getElementById("todo-input");
   const texte=input?.value.trim();
-  if(!texte||!S.apprenant)return;
+  if(!texte) return;
+  if(!S.user){ showToast('⚠️','Pas connecté','Reconnecte-toi pour ajouter des tâches.',true); return; }
   S.todos.push({id:Date.now(),texte,done:false,createdAt:new Date().toISOString()});
-  input.value='';
-  await saveTodos();
-  renderTodos();
+  if(input) input.value='';
+  renderTodos();              // UI optimiste
+  saveTodos();
 }
 
 async function toggleTodo(i){
+  if(!S.todos[i]) return;
   S.todos[i].done=!S.todos[i].done;
-  await saveTodos();
   renderTodos();
+  saveTodos();
 }
 
 async function deleteTodo(i){
+  if(!S.todos[i]) return;
   S.todos.splice(i,1);
-  await saveTodos();
   renderTodos();
+  saveTodos();
 }
 
 function editTodo(i){
+  if(!S.todos[i]) return;
   const texte=prompt("Modifier la tâche :",S.todos[i].texte);
   if(texte===null)return;
   S.todos[i].texte=texte.trim()||S.todos[i].texte;
-  saveTodos().then(()=>renderTodos());
+  renderTodos();
+  saveTodos();
 }
 
 async function saveTodos(){
-  if(!S.apprenant)return;
-  await db.collection("apprenants").doc(S.apprenant.id).update({todos:S.todos,updatedAt:TS()});
-  if(S.apprenant)S.apprenant.todos=S.todos;
+  if(!S.user){ console.warn('saveTodos: no user'); return; }
+  try{
+    await db.collection("users").doc(S.user.uid).set(
+      { todos: S.todos, updatedAt: TS() },
+      { merge: true }
+    );
+    if(S.userData) S.userData.todos = S.todos;
+    // Best-effort : tentative de sync vers le doc apprenant (peut échouer si rules)
+    if(S.apprenant?.id){
+      db.collection("apprenants").doc(S.apprenant.id)
+        .update({todos:S.todos,updatedAt:TS()})
+        .catch(()=>{}); // silencieux : c'est juste un nice-to-have
+    }
+  }catch(e){
+    console.error('saveTodos failed:', e);
+    showToast('❌','Erreur','Impossible d\'enregistrer la tâche. Réessaie.',true);
+  }
 }
 
 // ── CHAT ──
