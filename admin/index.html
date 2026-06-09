@@ -390,6 +390,16 @@ tr:hover td{background:#FAFBFF}
       <div class="stat-card"><div class="val" id="stat-phases">7</div><div class="lbl">Phases programme</div></div>
     </div>
 
+    <div class="panel" id="program-init-panel" style="display:none;background:linear-gradient(135deg,#EEF2FF,#FCE7F3);border:1.5px dashed #C7D2FE;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;flex-wrap:wrap">
+        <div style="flex:1;min-width:280px">
+          <div style="font-size:14px;font-weight:700;color:#1E1B4B;margin-bottom:4px">📖 Programme officiel DENEM Academy non initialisé</div>
+          <div style="font-size:12px;color:#4F46E5;line-height:1.5">Crée d'un coup les <strong>24 sessions officielles</strong> (Phase 0 à 6) en brouillon. Tu pourras ensuite les remplir et publier individuellement.</div>
+        </div>
+        <button class="btn btn-primary" onclick="initProgramOfficiel()" id="btn-init-program">🚀 Initialiser le programme (24 sessions)</button>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">Liste des modules</div>
@@ -877,6 +887,7 @@ function initListeners(){
     renderModules();
     updateModuleStats();
     renderStatsPage();
+    updateProgramInitVisibility();
   });
   db.collection("users").orderBy("createdAt","desc").onSnapshot(snap=>{
     users=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -938,6 +949,112 @@ PHASES.finalisation={label:'Finalisation (legacy)',color:'badge-gray',icon:'🏁
 function getPhaseByOrdre(ordre){
   if(typeof ordre!=='number') return null;
   return PROGRAM.find(p=>ordre>=p.range[0]&&ordre<=p.range[1]) || null;
+}
+
+// ─── Programme officiel DENEM Academy — 24 sessions ───
+const SESSIONS_OFFICIELLES=[
+  // Phase 0 — Socle technique & outils (Technique)
+  {ordre:1, phase:'p0', titre:'Claude Code : agents IA & automatisations'},
+  {ordre:2, phase:'p0', titre:'Codex : agents IA & automatisations'},
+  {ordre:3, phase:'p0', titre:'Découverte et prise en main de n8n'},
+  {ordre:4, phase:'p0', titre:'Maîtriser Claude Cowork'},
+  {ordre:5, phase:'p0', titre:'Créer son QG de travail Cowork'},
+  // Phase 1 — Positionnement & marque (Business)
+  {ordre:6, phase:'p1', titre:'Réaliser une étude de marché complète'},
+  {ordre:7, phase:'p1', titre:'Créer son identité de marque'},
+  // Phase 2 — Vitrine en ligne (Business)
+  {ordre:8, phase:'p2', titre:'Créer et déployer son site web WordPress'},
+  {ordre:9, phase:'p2', titre:'Audit et stratégie SEO/GEO automatisé'},
+  {ordre:10,phase:'p2', titre:'Créer son blog pour attirer des leads qualifiés'},
+  {ordre:11,phase:'p2', titre:"Automatiser la publication d'articles de blog"},
+  // Phase 3 — Présence sociale & aimant à leads (Business)
+  {ordre:12,phase:'p3', titre:'Créer son profil LinkedIn optimisé'},
+  {ordre:13,phase:'p3', titre:'Créer son lead magnet'},
+  {ordre:14,phase:'p3', titre:'Automatiser ses posts LinkedIn'},
+  // Phase 4 — Machine à leads & prospection (Business)
+  {ordre:15,phase:'p4', titre:'Obtenir des leads gratuits'},
+  {ordre:16,phase:'p4', titre:'Enrichir ses leads avec data.gouv'},
+  {ordre:17,phase:'p4', titre:'Enrichir ses leads avec Apify'},
+  {ordre:18,phase:'p4', titre:'Nettoyer / scorer sa base de données'},
+  {ordre:19,phase:'p4', titre:'Créer une stratégie de prospection automatisée'},
+  // Phase 5 — Delivery client (Delivery)
+  {ordre:20,phase:'p5', titre:'Premier rendez-vous commercial et audit client'},
+  {ordre:21,phase:'p5', titre:'Organiser son projet client'},
+  {ordre:22,phase:'p5', titre:'Créer un RAG sur mesure'},
+  {ordre:23,phase:'p5', titre:'Créer un chatbot IA vocal/texte pour ses clients'},
+  // Phase 6 — Validation
+  {ordre:24,phase:'p6', titre:'Évaluation finale'},
+];
+
+async function initProgramOfficiel(){
+  const existingOrdres=new Set(modules.filter(m=>typeof m.ordre==='number').map(m=>m.ordre));
+  const toCreate=SESSIONS_OFFICIELLES.filter(s=>!existingOrdres.has(s.ordre));
+  if(!toCreate.length){
+    showAlert('Toutes les sessions officielles existent déjà ✓');
+    updateProgramInitVisibility();
+    return;
+  }
+  const msg=`Créer ${toCreate.length} session${toCreate.length>1?'s':''} officielle${toCreate.length>1?'s':''} (en brouillon) ?\n\nLes ordres déjà occupés ne seront pas dupliqués.`;
+  if(!confirm(msg)) return;
+  const btn=document.getElementById('btn-init-program');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Création…';}
+  let created=0;
+  try{
+    const batch=db.batch();
+    toCreate.forEach(s=>{
+      const phCfg=PROGRAM.find(p=>p.key===s.phase);
+      const ref=db.collection('modules').doc();
+      batch.set(ref,{
+        titre:s.titre,
+        description:'',
+        duree_estimee:'',
+        phase_id:s.phase,
+        categorie:phCfg?phCfg.cat:null,
+        bloc:phCfg?phCfg.catKey:null,
+        ordre:s.ordre,
+        type:'session',
+        jour_debut:null,
+        jour_fin:null,
+        published:false,
+        video_url:'',
+        pdf_url:'',
+        pdf_nom:'',
+        contenu:'',
+        quiz:[],
+        score_minimum:70,
+        seed:'programme-officiel',
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      created++;
+    });
+    await batch.commit();
+    showAlert(`✓ ${created} session${created>1?'s':''} officielle${created>1?'s':''} créée${created>1?'s':''} en brouillon — édite-les et publie quand prêt.`);
+  }catch(e){
+    console.error(e);
+    showError('Erreur lors de l\'initialisation : '+(e.message||e.code));
+  }finally{
+    if(btn){btn.disabled=false;btn.innerHTML='🚀 Initialiser le programme (24 sessions)';}
+    updateProgramInitVisibility();
+  }
+}
+
+function updateProgramInitVisibility(){
+  const panel=document.getElementById('program-init-panel');
+  if(!panel) return;
+  const existing=new Set(modules.filter(m=>typeof m.ordre==='number').map(m=>m.ordre));
+  const missing=SESSIONS_OFFICIELLES.filter(s=>!existing.has(s.ordre));
+  if(missing.length){
+    panel.style.display='';
+    const info=panel.querySelector('div > div > div:first-child');
+    if(info) info.textContent=missing.length===24?'📖 Programme officiel DENEM Academy non initialisé':`📖 Programme officiel partiel (${24-missing.length}/24 créées)`;
+    const sub=panel.querySelector('div > div > div:last-child');
+    if(sub) sub.innerHTML=missing.length===24
+      ? `Crée d'un coup les <strong>24 sessions officielles</strong> (Phase 0 à 6) en brouillon. Tu pourras ensuite les remplir et publier individuellement.`
+      : `Il manque <strong>${missing.length} session${missing.length>1?'s':''}</strong> du programme officiel. Clique pour les créer en brouillon.`;
+  } else {
+    panel.style.display='none';
+  }
 }
 function nextAvailableOrdre(phaseKey){
   const cfg=PROGRAM.find(p=>p.key===phaseKey);
