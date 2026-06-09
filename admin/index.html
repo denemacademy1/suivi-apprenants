@@ -115,8 +115,32 @@ tr:hover td{background:#FAFBFF}
 .upload-progress-bar{height:100%;background:linear-gradient(90deg,#4F46E5,#7C3AED);border-radius:2px;transition:width .3s}
 /* Phase selector */
 .phase-selector{display:flex;gap:8px;flex-wrap:wrap}
-.phase-chip{padding:6px 14px;border:1.5px solid #E2E8F0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:#fff;color:#64748B}
+.phase-chip{padding:6px 14px;border:1.5px solid #E2E8F0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:#fff;color:#64748B;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .phase-chip.selected{border-color:#4F46E5;background:#EEF2FF;color:#4F46E5}
+.phase-chip .chip-range{font-size:10px;font-weight:600;background:rgba(0,0,0,.04);padding:2px 6px;border-radius:4px;color:#64748B}
+.phase-chip.selected .chip-range{background:rgba(79,70,229,.15);color:#4F46E5}
+/* Sélecteur Programme — groupé par catégorie */
+.program-selector{display:flex;flex-direction:column;gap:14px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:14px}
+.program-cat{display:flex;flex-direction:column;gap:8px}
+.program-cat-head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.program-cat-tech .program-cat-head{color:#6366F1}
+.program-cat-biz .program-cat-head{color:#3B82F6}
+.program-cat-del .program-cat-head{color:#10B981}
+.program-cat-val .program-cat-head{color:#F59E0B}
+.program-cat-chips{display:flex;flex-wrap:wrap;gap:6px}
+.program-cat-tech .phase-chip.selected{border-color:#6366F1;background:#EEF2FF;color:#6366F1}
+.program-cat-biz .phase-chip.selected{border-color:#3B82F6;background:#EFF6FF;color:#3B82F6}
+.program-cat-del .phase-chip.selected{border-color:#10B981;background:#ECFDF5;color:#10B981}
+.program-cat-val .phase-chip.selected{border-color:#F59E0B;background:#FFFBEB;color:#F59E0B}
+/* Badges catégorie dans la liste modules */
+.cat-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:3px}
+.cat-tech{background:#EEF2FF;color:#6366F1}
+.cat-biz{background:#EFF6FF;color:#3B82F6}
+.cat-del{background:#ECFDF5;color:#10B981}
+.cat-val{background:#FFFBEB;color:#F59E0B}
+/* Bloc programme officiel rappel */
+.program-reference{background:linear-gradient(135deg,#EEF2FF,#FCE7F3);border:1px solid #C7D2FE;border-radius:10px;padding:12px 14px;font-size:12px;color:#4F46E5;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.program-reference strong{color:#1E1B4B}
 /* Alert */
 .alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
 .alert.show{display:flex;align-items:center;gap:10px}
@@ -363,7 +387,7 @@ tr:hover td{background:#FAFBFF}
       <div class="stat-card"><div class="val" id="stat-total">—</div><div class="lbl">Modules au total</div></div>
       <div class="stat-card"><div class="val" id="stat-pub">—</div><div class="lbl">Publiés</div></div>
       <div class="stat-card"><div class="val" id="stat-draft">—</div><div class="lbl">Brouillons</div></div>
-      <div class="stat-card"><div class="val" id="stat-phases">4</div><div class="lbl">Phases</div></div>
+      <div class="stat-card"><div class="val" id="stat-phases">7</div><div class="lbl">Phases programme</div></div>
     </div>
 
     <div class="panel">
@@ -372,10 +396,27 @@ tr:hover td{background:#FAFBFF}
         <div style="display:flex;gap:8px;align-items:center">
           <select id="filter-phase" onchange="renderModules()" style="padding:7px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;outline:none">
             <option value="">Toutes les phases</option>
-            <option value="onboarding">Onboarding</option>
-            <option value="formation">Formation</option>
-            <option value="pratique">Mise en pratique</option>
-            <option value="finalisation">Finalisation</option>
+            <optgroup label="⚙️ Technique">
+              <option value="p0">🔧 Phase 0 — Socle technique &amp; outils (1-5)</option>
+            </optgroup>
+            <optgroup label="💼 Business">
+              <option value="p1">🎯 Phase 1 — Positionnement &amp; marque (6-7)</option>
+              <option value="p2">🌐 Phase 2 — Vitrine en ligne (8-11)</option>
+              <option value="p3">📡 Phase 3 — Présence sociale (12-14)</option>
+              <option value="p4">🧲 Phase 4 — Machine à leads &amp; prospection (15-19)</option>
+            </optgroup>
+            <optgroup label="🚚 Delivery">
+              <option value="p5">📦 Phase 5 — Delivery client (20-23)</option>
+            </optgroup>
+            <optgroup label="✅ Validation">
+              <option value="p6">🏆 Phase 6 — Validation (24)</option>
+            </optgroup>
+            <optgroup label="⚠️ Anciennes phases">
+              <option value="onboarding">Onboarding (legacy)</option>
+              <option value="formation">Formation (legacy)</option>
+              <option value="pratique">Mise en pratique (legacy)</option>
+              <option value="finalisation">Finalisation (legacy)</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -567,19 +608,57 @@ tr:hover td{background:#FAFBFF}
           <label>Description</label>
           <textarea id="m-description" placeholder="Courte description du module…" rows="2"></textarea>
         </div>
-        <div class="form-row cols-2">
-          <div class="form-group">
-            <label>Phase</label>
-            <div class="phase-selector" id="phase-selector">
-              <div class="phase-chip selected" onclick="selectPhase('onboarding',this)">🚀 Onboarding</div>
-              <div class="phase-chip" onclick="selectPhase('formation',this)">📚 Formation</div>
-              <div class="phase-chip" onclick="selectPhase('pratique',this)">🛠 Pratique</div>
-              <div class="phase-chip" onclick="selectPhase('finalisation',this)">🏁 Finalisation</div>
+        <div class="program-reference">
+          📖 <div><strong>Programme officiel DENEM Academy</strong> — 24 sessions, 6 phases + Validation. Sélectionne la phase puis l'ordre de la session.</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Phase du programme</label>
+          <div class="program-selector" id="phase-selector">
+            <div class="program-cat program-cat-tech">
+              <div class="program-cat-head">⚙️ Technique</div>
+              <div class="program-cat-chips">
+                <div class="phase-chip selected" data-phase="p0" data-range="1-5" onclick="selectPhase('p0',this)">🔧 Phase 0 — Socle technique &amp; outils <span class="chip-range">1-5</span></div>
+              </div>
+            </div>
+            <div class="program-cat program-cat-biz">
+              <div class="program-cat-head">💼 Business</div>
+              <div class="program-cat-chips">
+                <div class="phase-chip" data-phase="p1" data-range="6-7" onclick="selectPhase('p1',this)">🎯 Phase 1 — Positionnement &amp; marque <span class="chip-range">6-7</span></div>
+                <div class="phase-chip" data-phase="p2" data-range="8-11" onclick="selectPhase('p2',this)">🌐 Phase 2 — Vitrine en ligne <span class="chip-range">8-11</span></div>
+                <div class="phase-chip" data-phase="p3" data-range="12-14" onclick="selectPhase('p3',this)">📡 Phase 3 — Présence sociale &amp; aimant à leads <span class="chip-range">12-14</span></div>
+                <div class="phase-chip" data-phase="p4" data-range="15-19" onclick="selectPhase('p4',this)">🧲 Phase 4 — Machine à leads &amp; prospection <span class="chip-range">15-19</span></div>
+              </div>
+            </div>
+            <div class="program-cat program-cat-del">
+              <div class="program-cat-head">🚚 Delivery</div>
+              <div class="program-cat-chips">
+                <div class="phase-chip" data-phase="p5" data-range="20-23" onclick="selectPhase('p5',this)">📦 Phase 5 — Delivery client <span class="chip-range">20-23</span></div>
+              </div>
+            </div>
+            <div class="program-cat program-cat-val">
+              <div class="program-cat-head">✅ Validation</div>
+              <div class="program-cat-chips">
+                <div class="phase-chip" data-phase="p6" data-range="24-24" onclick="selectPhase('p6',this)">🏆 Phase 6 — Évaluation finale <span class="chip-range">24</span></div>
+              </div>
             </div>
           </div>
+        </div>
+
+        <div class="form-row cols-2">
           <div class="form-group">
-            <label>Ordre d'affichage</label>
-            <input type="number" id="m-ordre" placeholder="1" min="1">
+            <label>Ordre d'affichage <span style="color:#94A3B8;font-weight:400;font-size:11px">(session du programme)</span></label>
+            <input type="number" id="m-ordre" placeholder="1" min="1" max="100" oninput="onOrdreChange()">
+            <div id="m-ordre-hint" style="font-size:11px;color:#94A3B8;margin-top:6px"></div>
+          </div>
+          <div class="form-group">
+            <label>Type de contenu <span style="color:#94A3B8;font-weight:400;font-size:11px">(optionnel)</span></label>
+            <select id="m-type">
+              <option value="session">📚 Session de formation</option>
+              <option value="video">🎬 Vidéo additionnelle</option>
+              <option value="module-bonus">⭐ Module bonus</option>
+              <option value="ressource">📁 Ressource / Doc</option>
+            </select>
           </div>
         </div>
         <div class="form-row cols-2">
@@ -838,25 +917,82 @@ function showPage(p){
 }
 
 // ─── Modules ──────────────────────────────────────────────
-const PHASES={onboarding:{label:'Onboarding',color:'badge-purple',icon:'🚀'},formation:{label:'Formation',color:'badge-blue',icon:'📚'},pratique:{label:'Pratique',color:'badge-green',icon:'🛠'},finalisation:{label:'Finalisation',color:'badge-yellow',icon:'🏁'}};
+// ─── Programme officiel DENEM Academy ───
+const PROGRAM=[
+  {key:'p0',label:'Socle technique & outils',     cat:'Technique', catKey:'tech',icon:'🔧',color:'badge-purple',range:[1,5]  },
+  {key:'p1',label:'Positionnement & marque',      cat:'Business',  catKey:'biz', icon:'🎯',color:'badge-blue',  range:[6,7]  },
+  {key:'p2',label:'Vitrine en ligne',             cat:'Business',  catKey:'biz', icon:'🌐',color:'badge-blue',  range:[8,11] },
+  {key:'p3',label:'Présence sociale & aimant à leads',cat:'Business',catKey:'biz',icon:'📡',color:'badge-blue', range:[12,14]},
+  {key:'p4',label:'Machine à leads & prospection',cat:'Business',  catKey:'biz', icon:'🧲',color:'badge-blue',  range:[15,19]},
+  {key:'p5',label:'Delivery client',              cat:'Delivery',  catKey:'del', icon:'📦',color:'badge-green', range:[20,23]},
+  {key:'p6',label:'Validation',                   cat:'Validation',catKey:'val', icon:'🏆',color:'badge-yellow',range:[24,24]},
+];
+const PHASES={};
+PROGRAM.forEach(p=>{PHASES[p.key]={label:p.label,color:p.color,icon:p.icon,cat:p.cat,catKey:p.catKey,range:p.range};});
+// Anciennes phases pour rétrocompatibilité
+PHASES.onboarding={label:'Onboarding (legacy)',color:'badge-gray',icon:'🚀'};
+PHASES.formation={label:'Formation (legacy)',color:'badge-gray',icon:'📚'};
+PHASES.pratique={label:'Pratique (legacy)',color:'badge-gray',icon:'🛠'};
+PHASES.finalisation={label:'Finalisation (legacy)',color:'badge-gray',icon:'🏁'};
+
+function getPhaseByOrdre(ordre){
+  if(typeof ordre!=='number') return null;
+  return PROGRAM.find(p=>ordre>=p.range[0]&&ordre<=p.range[1]) || null;
+}
+function nextAvailableOrdre(phaseKey){
+  const cfg=PROGRAM.find(p=>p.key===phaseKey);
+  if(!cfg) return null;
+  const used=new Set(modules.filter(m=>typeof m.ordre==='number').map(m=>m.ordre));
+  for(let i=cfg.range[0];i<=cfg.range[1];i++) if(!used.has(i)) return i;
+  return cfg.range[0]; // si tous occupés, retourne le 1er
+}
+function onOrdreChange(){
+  const v=parseInt(document.getElementById('m-ordre').value,10);
+  const hint=document.getElementById('m-ordre-hint');
+  if(isNaN(v)||v<1){hint.textContent='';return;}
+  const ph=getPhaseByOrdre(v);
+  if(ph){
+    hint.innerHTML=`✓ Session ${v} → <strong>${ph.icon} ${ph.label}</strong> <span style="color:#64748B">(${ph.cat})</span>`;
+    hint.style.color='#10B981';
+    selectedPhase=ph.key;
+    document.querySelectorAll('.phase-chip').forEach(c=>c.classList.toggle('selected',c.dataset.phase===ph.key));
+  } else {
+    hint.innerHTML=`⚠️ Ordre ${v} hors du programme officiel (1-24) — sera affiché dans "Autres modules"`;
+    hint.style.color='#F59E0B';
+  }
+}
 
 function renderModules(){
   const filter=document.getElementById('filter-phase').value;
-  const list=filter?modules.filter(m=>m.phase_id===filter):modules;
+  // Filtrage : par phase_id direct OU par ordre dans la phase
+  const list=filter?modules.filter(m=>{
+    if(m.phase_id===filter) return true;
+    const ph=getPhaseByOrdre(m.ordre);
+    return ph && ph.key===filter;
+  }):modules;
+  // Tri par ordre
+  list.sort((a,b)=>(a.ordre||999)-(b.ordre||999));
   const el=document.getElementById('modules-list');
   if(!list.length){el.innerHTML='<div class="empty"><div class="e-icon">📚</div><div class="e-text">Aucun module</div><div class="e-sub">Créez votre premier module de formation</div></div>';return;}
   el.innerHTML=list.map((m,i)=>{
-    const ph=PHASES[m.phase_id]||{label:m.phase_id||'—',color:'badge-gray',icon:'📋'};
+    // Priorité : phase_id si valide, sinon dérive de l'ordre
+    let ph=PROGRAM.find(p=>p.key===m.phase_id);
+    if(!ph) ph=getPhaseByOrdre(m.ordre);
+    const phInfo=ph?{label:ph.label,color:ph.color,icon:ph.icon,cat:ph.cat,catKey:ph.catKey}:(PHASES[m.phase_id]||{label:'Non classé',color:'badge-gray',icon:'📋',cat:'—',catKey:'gray'});
     const pub=m.published?'<span class="badge badge-green">Publié</span>':'<span class="badge badge-gray">Brouillon</span>';
     const hasVideo=m.video_url?'🎬':'';
     const hasPDF=m.pdf_url?'📄':'';
     const hasQuiz=m.quiz&&m.quiz.length?`✅ ${m.quiz.length}Q`:'';
+    const catBadge=phInfo.catKey?`<span class="cat-badge cat-${phInfo.catKey}">${phInfo.cat}</span>`:'';
+    const typeLabel={session:'📚 Session',video:'🎬 Vidéo',['module-bonus']:'⭐ Bonus',ressource:'📁 Ressource'}[m.type||'session']||'📚 Session';
     return `<div class="module-item">
-      <div class="module-num">${m.ordre||i+1}</div>
+      <div class="module-num">${m.ordre||'—'}</div>
       <div class="module-info">
         <div class="module-title">${m.titre}</div>
         <div class="module-meta">
-          <span class="badge ${ph.color}">${ph.icon} ${ph.label}</span>
+          ${catBadge}
+          <span class="badge ${phInfo.color}">${phInfo.icon} ${phInfo.label}</span>
+          <span style="font-size:11px;color:#94A3B8">${typeLabel}</span>
           ${pub}
           ${hasVideo?`<span style="font-size:11px">${hasVideo} Vidéo</span>`:''}
           ${hasPDF?`<span style="font-size:11px">${hasPDF} PDF</span>`:''}
@@ -887,12 +1023,21 @@ async function deleteModule(id,titre){
 
 // ─── Module Modal ─────────────────────────────────────────
 function openModuleModal(id){
-  editingModuleId=null;quizQuestions=[];selectedPhase='onboarding';
+  editingModuleId=null;quizQuestions=[];
+  // Phase par défaut : 1ère phase avec un slot libre
+  let defaultPhase='p0';
+  for(const p of PROGRAM){
+    if(nextAvailableOrdre(p.key)) { defaultPhase=p.key; break; }
+  }
+  selectedPhase=defaultPhase;
   document.getElementById('module-modal-title').textContent='Nouveau module';
   document.getElementById('m-titre').value='';
   document.getElementById('m-description').value='';
   document.getElementById('m-duree').value='';
-  document.getElementById('m-ordre').value=modules.length+1;
+  // Auto-suggère le 1er ordre libre dans la phase par défaut
+  const suggested=nextAvailableOrdre(defaultPhase);
+  document.getElementById('m-ordre').value=suggested||modules.length+1;
+  if(document.getElementById('m-type')) document.getElementById('m-type').value='session';
   document.getElementById('m-jour-debut').value='';
   document.getElementById('m-jour-fin').value='';
   document.getElementById('m-statut').value='draft';
@@ -901,7 +1046,8 @@ function openModuleModal(id){
   document.getElementById('m-pdf-url').value='';
   document.getElementById('m-pdf-nom').value='';
   document.getElementById('pdf-zone-text').textContent='Cliquez ou glissez un fichier PDF';
-  selectPhase('onboarding',document.querySelector('.phase-chip'));
+  selectPhase(defaultPhase,document.querySelector(`.phase-chip[data-phase="${defaultPhase}"]`));
+  onOrdreChange();
   renderQuizQuestions();
   showMTab('infos');
   document.getElementById('module-modal').classList.add('open');
@@ -912,12 +1058,17 @@ function editModule(id){
   if(!m)return;
   editingModuleId=id;
   quizQuestions=m.quiz?JSON.parse(JSON.stringify(m.quiz)):[];
-  selectedPhase=m.phase_id||'onboarding';
+  // Détermine la phase : utilise phase_id si valide (p0-p6), sinon dérive de l'ordre
+  const phaseFromOrdre=getPhaseByOrdre(m.ordre);
+  if(m.phase_id && PROGRAM.find(p=>p.key===m.phase_id)) selectedPhase=m.phase_id;
+  else if(phaseFromOrdre) selectedPhase=phaseFromOrdre.key;
+  else selectedPhase=m.phase_id||'p0';
   document.getElementById('module-modal-title').textContent='Modifier le module';
   document.getElementById('m-titre').value=m.titre||'';
   document.getElementById('m-description').value=m.description||'';
   document.getElementById('m-duree').value=m.duree_estimee||'';
   document.getElementById('m-ordre').value=m.ordre||1;
+  if(document.getElementById('m-type')) document.getElementById('m-type').value=m.type||'session';
   document.getElementById('m-jour-debut').value=m.jour_debut||'';
   document.getElementById('m-jour-fin').value=m.jour_fin||'';
   document.getElementById('m-statut').value=m.published?'published':'draft';
@@ -927,11 +1078,11 @@ function editModule(id){
   document.getElementById('m-pdf-nom').value=m.pdf_nom||'';
   document.getElementById('pdf-zone-text').textContent=m.pdf_nom||'Cliquez ou glissez un fichier PDF';
   document.getElementById('m-score-min').value=m.score_minimum||70;
-  // Phase chips
+  // Phase chips — sélectionne le bon
   document.querySelectorAll('.phase-chip').forEach(c=>{
-    const ph=c.textContent.includes('Onboarding')?'onboarding':c.textContent.includes('Formation')?'formation':c.textContent.includes('Pratique')?'pratique':'finalisation';
-    c.classList.toggle('selected',ph===selectedPhase);
+    c.classList.toggle('selected',c.dataset.phase===selectedPhase);
   });
+  onOrdreChange();
   renderQuizQuestions();
   showMTab('infos');
   document.getElementById('module-modal').classList.add('open');
@@ -948,7 +1099,15 @@ function showMTab(tab){
 function selectPhase(phase,el){
   selectedPhase=phase;
   document.querySelectorAll('.phase-chip').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
+  if(el) el.classList.add('selected');
+  else { const target=document.querySelector(`.phase-chip[data-phase="${phase}"]`); if(target) target.classList.add('selected'); }
+  // Auto-suggère le prochain ordre disponible si l'ordre actuel n'est pas dans la phase
+  const cur=parseInt(document.getElementById('m-ordre').value,10);
+  const phCfg=PROGRAM.find(p=>p.key===phase);
+  if(phCfg && (!cur || cur<phCfg.range[0] || cur>phCfg.range[1])) {
+    const next=nextAvailableOrdre(phase);
+    if(next) { document.getElementById('m-ordre').value=next; onOrdreChange(); }
+  }
 }
 
 async function saveModule(){
@@ -956,12 +1115,18 @@ async function saveModule(){
   if(!titre){alert('Le titre est obligatoire.');return;}
   const btn=document.getElementById('btn-save-module');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Enregistrement…';
+  const ordreVal=parseInt(document.getElementById('m-ordre').value)||1;
+  // Catégorie déduite de la phase
+  const phCfg=PROGRAM.find(p=>p.key===selectedPhase);
   const data={
     titre,
     description:document.getElementById('m-description').value.trim(),
     duree_estimee:document.getElementById('m-duree').value.trim(),
     phase_id:selectedPhase,
-    ordre:parseInt(document.getElementById('m-ordre').value)||1,
+    categorie:phCfg?phCfg.cat:null,           // Technique / Business / Delivery / Validation
+    bloc:phCfg?phCfg.catKey:null,             // tech / biz / del / val
+    ordre:ordreVal,
+    type:document.getElementById('m-type')?.value||'session',
     jour_debut:parseInt(document.getElementById('m-jour-debut').value)||null,
     jour_fin:parseInt(document.getElementById('m-jour-fin').value)||null,
     published:document.getElementById('m-statut').value==='published',

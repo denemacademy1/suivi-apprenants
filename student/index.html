@@ -986,6 +986,12 @@ const PHASE_PROGRAM = [
 ];
 
 function getProgramPhase(m){
+  // 1. Priorité au champ phase_id si c'est l'une des nouvelles clés (p0-p6)
+  if(m?.phase_id){
+    const direct = PHASE_PROGRAM.find(p => p.key === m.phase_id);
+    if(direct) return direct;
+  }
+  // 2. Fallback : dériver de l'ordre (1-24)
   const o = m?.ordre;
   if(typeof o !== 'number') return null;
   return PHASE_PROGRAM.find(p => o >= p.range[0] && o <= p.range[1]) || null;
