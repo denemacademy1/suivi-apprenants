@@ -152,6 +152,28 @@ table.lead-table{width:100%;border-collapse:collapse}
 .tpl-badge-qualif{background:#dbeafe;color:#1e40af;border:1px solid rgba(59,130,246,.18)}
 .tpl-badge-btd{background:#fef3c7;color:#92400e;border:1px solid rgba(245,158,11,.2)}
 .tpl-badge-cta{background:#dcfce7;color:#166534;border:1px solid rgba(16,185,129,.22)}
+/* Layout 2 colonnes — À envoyer / En réponse */
+.tpl-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.tpl-two-col{grid-template-columns:1fr}}
+.tpl-col{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+.tpl-col-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.tpl-col-head-envoi{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.04));border-bottom-color:rgba(99,102,241,.18)}
+.tpl-col-head-reponse{background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(34,197,94,.04));border-bottom-color:rgba(16,185,129,.2)}
+.tpl-col-icon{font-size:20px;flex-shrink:0;width:36px;height:36px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.tpl-col-title{font-size:14px;font-weight:700;color:var(--text);line-height:1.2}
+.tpl-col-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.tpl-col-count{margin-left:auto;background:rgba(0,0,0,.05);color:var(--muted);font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;min-width:28px;text-align:center}
+.tpl-col-empty{padding:28px 18px;text-align:center;color:var(--muted)}
+.tpl-col .tpl-card{margin:10px 12px;box-shadow:none;border:1px solid var(--border)}
+.tpl-col .tpl-card:last-child{margin-bottom:14px}
+.tpl-col .tpl-cat{margin:12px 12px 4px;padding:0;background:none;border:none;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+/* Chips type de template (modale) */
+.tpl-kind-row{display:flex;gap:8px;flex-wrap:wrap}
+.tpl-kind-chip{flex:1;min-width:180px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);transition:.15s;text-align:left}
+.tpl-kind-chip:hover{border-color:var(--primary);background:#fafbff}
+.tpl-kind-chip.selected{border-color:var(--primary);background:rgba(99,102,241,.08);color:var(--primary)}
+.tpl-kind-hint{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:1px}
+.tpl-kind-chip.selected .tpl-kind-hint{color:rgba(99,102,241,.7)}
 .tpl-copy{background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
 .tpl-copy:hover{background:var(--primary-dark);transform:translateY(-1px)}
 .tpl-copy.copied{background:#10b981}
@@ -1000,14 +1022,42 @@ table.lead-table{width:100%;border-collapse:collapse}
         <button class="btn-add-lead" onclick="openCustomTpl()" style="background:var(--primary);flex-shrink:0">＋ Nouveau template</button>
       </div>
 
-      <!-- MES TEMPLATES PERSONNALISÉS -->
-      <div class="tpl-cat">⭐ Mes templates personnalisés</div>
-      <div id="custom-tpls-empty" style="background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;color:var(--muted);margin-bottom:14px">
-        <div style="font-size:32px;margin-bottom:8px">📝</div>
-        <div style="font-weight:600;color:var(--text);margin-bottom:4px">Aucun template personnalisé</div>
-        <div style="font-size:13px">Clique sur "＋ Nouveau template" pour créer le tien</div>
+      <!-- 2 colonnes : À envoyer (gauche) / Réponses (droite) -->
+      <div class="tpl-two-col">
+        <div class="tpl-col">
+          <div class="tpl-col-head tpl-col-head-envoi">
+            <span class="tpl-col-icon">📤</span>
+            <div>
+              <div class="tpl-col-title">Messages à envoyer</div>
+              <div class="tpl-col-sub">Pour initier la conversation</div>
+            </div>
+            <span class="tpl-col-count" id="tpl-count-envoi">0</span>
+          </div>
+          <div id="custom-tpls-empty-envoi" class="tpl-col-empty">
+            <div style="font-size:28px;margin-bottom:6px">📤</div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:2px">Aucun template d'envoi</div>
+            <div style="font-size:12px">Crée tes messages pour démarrer une conversation</div>
+          </div>
+          <div id="custom-tpls-list-envoi"></div>
+        </div>
+
+        <div class="tpl-col">
+          <div class="tpl-col-head tpl-col-head-reponse">
+            <span class="tpl-col-icon">↩️</span>
+            <div>
+              <div class="tpl-col-title">Réponses à envoyer</div>
+              <div class="tpl-col-sub">Pour répondre à un message reçu</div>
+            </div>
+            <span class="tpl-col-count" id="tpl-count-reponse">0</span>
+          </div>
+          <div id="custom-tpls-empty-reponse" class="tpl-col-empty">
+            <div style="font-size:28px;margin-bottom:6px">↩️</div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:2px">Aucun template de réponse</div>
+            <div style="font-size:12px">Crée tes réponses aux objections, questions, etc.</div>
+          </div>
+          <div id="custom-tpls-list-reponse"></div>
+        </div>
       </div>
-      <div id="custom-tpls-list"></div>
 
       <p style="font-size:12px;color:var(--muted);margin-top:24px;text-align:center">
         💡 Astuce : utilise <code>{prenom}</code> dans tes messages pour personnaliser au moment de l'envoi.
@@ -1215,12 +1265,20 @@ table.lead-table{width:100%;border-collapse:collapse}
       <input type="hidden" id="ctpl-id">
       <div class="form-grid" style="grid-template-columns:1fr">
         <div>
-          <label class="form-label">Nom / Badge du template</label>
-          <input type="text" class="form-input" id="ctpl-name" placeholder="Ex: Relance J+7, Closing premium…" maxlength="60">
+          <label class="form-label">Type de template</label>
+          <div class="tpl-kind-row">
+            <button type="button" class="tpl-kind-chip selected" data-kind="envoi" onclick="selectTplKind('envoi')">📤 Message à envoyer <span class="tpl-kind-hint">(initier la conversation)</span></button>
+            <button type="button" class="tpl-kind-chip" data-kind="reponse" onclick="selectTplKind('reponse')">↩️ Réponse à envoyer <span class="tpl-kind-hint">(répondre à un message)</span></button>
+          </div>
+          <input type="hidden" id="ctpl-kind" value="envoi">
         </div>
         <div>
-          <label class="form-label">Catégorie <span style="color:var(--muted);font-weight:400">(ex: Premier contact, Relance J+7, Closing…)</span></label>
-          <input type="text" class="form-input" id="ctpl-category" placeholder="Ta catégorie" maxlength="60">
+          <label class="form-label">Nom du template</label>
+          <input type="text" class="form-input" id="ctpl-name" placeholder="Ex: Premier contact, Relance J+7…" maxlength="60">
+        </div>
+        <div>
+          <label class="form-label">Catégorie <span style="color:var(--muted);font-weight:400">(libre)</span></label>
+          <input type="text" class="form-input" id="ctpl-category" placeholder="Ex: Premier contact, Closing…" maxlength="60">
         </div>
         <div>
           <label class="form-label">Étape du process Setter</label>
@@ -1826,12 +1884,27 @@ function listenCustomTpls() {
   }, err => { console.warn('Templates listener error:', err); });
 }
 function renderCustomTpls() {
-  const list = document.getElementById('custom-tpls-list');
-  const empty = document.getElementById('custom-tpls-empty');
-  if (!list || !empty) return;
-  if (!S.customTpls.length) { empty.style.display='block'; list.innerHTML=''; return; }
-  empty.style.display='none';
-  // Groupage par catégorie libre
+  const listEnvoi = document.getElementById('custom-tpls-list-envoi');
+  const listRep = document.getElementById('custom-tpls-list-reponse');
+  const emptyEnvoi = document.getElementById('custom-tpls-empty-envoi');
+  const emptyRep = document.getElementById('custom-tpls-empty-reponse');
+  if (!listEnvoi || !listRep) return;
+
+  // Séparation par type
+  const envoi = S.customTpls.filter(t => (t.kind||'envoi') === 'envoi');
+  const reponse = S.customTpls.filter(t => t.kind === 'reponse');
+
+  // Compteurs
+  const cEnv = document.getElementById('tpl-count-envoi');
+  const cRep = document.getElementById('tpl-count-reponse');
+  if (cEnv) cEnv.textContent = envoi.length;
+  if (cRep) cRep.textContent = reponse.length;
+
+  // États vides
+  if (emptyEnvoi) emptyEnvoi.style.display = envoi.length ? 'none' : 'block';
+  if (emptyRep)   emptyRep.style.display   = reponse.length ? 'none' : 'block';
+
+  // Groupage par catégorie libre, dans chaque colonne
   const groups = {};
   S.customTpls.forEach(t => {
     const cat = (t.category||'').trim() || 'Sans catégorie';
@@ -1867,17 +1940,35 @@ function renderCustomTpls() {
       <div class="tpl-text">${escHtml(t.text||'')}</div>
     </div>`;
   };
-  list.innerHTML = Object.entries(groups).map(([cat, items]) => `
-    <div class="tpl-cat">${escHtml(cat)}</div>
-    ${items.map(cardHtml).join('')}
-  `).join('');
+  // Rendu groupé par catégorie, dans chaque colonne
+  const renderCol = (items) => {
+    const colGroups = {};
+    items.forEach(t => {
+      const cat = (t.category||'').trim() || 'Sans catégorie';
+      if (!colGroups[cat]) colGroups[cat] = [];
+      colGroups[cat].push(t);
+    });
+    return Object.entries(colGroups).map(([cat, arr]) => `
+      <div class="tpl-cat">${escHtml(cat)}</div>
+      ${arr.map(cardHtml).join('')}
+    `).join('');
+  };
+  listEnvoi.innerHTML = renderCol(envoi);
+  listRep.innerHTML   = renderCol(reponse);
 }
+
+function selectTplKind(kind){
+  document.getElementById('ctpl-kind').value = kind;
+  document.querySelectorAll('.tpl-kind-chip').forEach(c => c.classList.toggle('selected', c.dataset.kind === kind));
+}
+
 function openCustomTpl() {
   document.getElementById('ctpl-id').value = '';
   document.getElementById('ctpl-name').value = '';
   document.getElementById('ctpl-category').value = '';
   document.getElementById('ctpl-badge').value = 'qualif';
   document.getElementById('ctpl-text').value = '';
+  selectTplKind('envoi');
   document.getElementById('ctpl-modal-title').textContent = 'Nouveau template';
   document.getElementById('modal-custom-tpl').classList.add('open');
 }
@@ -1891,6 +1982,7 @@ function editCustomTpl(id) {
   const legacyMap = { hot:'cta', warm:'btd', cold:'qualif', relance:'qualif' };
   document.getElementById('ctpl-badge').value = legacyMap[t.badge] || t.badge || 'qualif';
   document.getElementById('ctpl-text').value = t.text || '';
+  selectTplKind(t.kind === 'reponse' ? 'reponse' : 'envoi');
   document.getElementById('ctpl-modal-title').textContent = 'Modifier le template';
   document.getElementById('modal-custom-tpl').classList.add('open');
 }
@@ -1908,6 +2000,7 @@ async function saveCustomTpl() {
   const category = document.getElementById('ctpl-category').value.trim();
   const badge = document.getElementById('ctpl-badge').value;
   const text = document.getElementById('ctpl-text').value.trim();
+  const kind = document.getElementById('ctpl-kind')?.value === 'reponse' ? 'reponse' : 'envoi';
   if (!name || !text) { alert('Merci de remplir le nom et le message.'); return; }
   if (!S.user) { alert('Pas connecté — reconnecte-toi.'); return; }
   const btn = document.getElementById('ctpl-save-btn');
@@ -1917,12 +2010,12 @@ async function saveCustomTpl() {
     if (id) {
       const idx = S.customTpls.findIndex(t => t.id === id);
       if (idx >= 0) {
-        S.customTpls[idx] = { ...S.customTpls[idx], name, category, badge, text, updatedAt: now };
+        S.customTpls[idx] = { ...S.customTpls[idx], name, category, badge, text, kind, updatedAt: now };
       }
     } else {
       S.customTpls.unshift({
         id: 'tpl_' + now + '_' + Math.random().toString(36).slice(2,7),
-        name, category, badge, text,
+        name, category, badge, text, kind,
         createdAt: now, updatedAt: now
       });
     }
