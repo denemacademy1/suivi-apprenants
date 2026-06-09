@@ -1810,9 +1810,13 @@ function renderCurrentPage() {
 S.customTpls = [];
 let _customTplsUnsub = null;
 function listenCustomTpls() {
-  if (_customTplsUnsub) return;
-  _customTplsUnsub = db.collection('message_templates').orderBy('createdAt','desc').onSnapshot(snap => {
-    S.customTpls = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  if (_customTplsUnsub || !S.user) return;
+  // Stockage dans users/{uid}.message_templates (rules ouvertes pour self-write)
+  _customTplsUnsub = db.collection('users').doc(S.user.uid).onSnapshot(snap => {
+    const d = snap.data() || {};
+    S.customTpls = Array.isArray(d.message_templates) ? [...d.message_templates] : [];
+    // Tri par createdAt desc
+    S.customTpls.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
     renderCustomTpls();
   }, err => { console.warn('Templates listener error:', err); });
 }
@@ -1866,6 +1870,14 @@ function editCustomTpl(id) {
   document.getElementById('ctpl-modal-title').textContent = 'Modifier le template';
   document.getElementById('modal-custom-tpl').classList.add('open');
 }
+async function _persistTemplates() {
+  if (!S.user) throw new Error('Pas connecté');
+  await db.collection('users').doc(S.user.uid).set(
+    { message_templates: S.customTpls, updatedAt: TS() },
+    { merge: true }
+  );
+}
+
 async function saveCustomTpl() {
   const id = document.getElementById('ctpl-id').value;
   const name = document.getElementById('ctpl-name').value.trim();
@@ -1873,26 +1885,44 @@ async function saveCustomTpl() {
   const badge = document.getElementById('ctpl-badge').value;
   const text = document.getElementById('ctpl-text').value.trim();
   if (!name || !text) { alert('Merci de remplir le nom et le message.'); return; }
+  if (!S.user) { alert('Pas connecté — reconnecte-toi.'); return; }
   const btn = document.getElementById('ctpl-save-btn');
   btn.disabled = true; btn.textContent = '⏳ Enregistrement…';
   try {
+    const now = Date.now();
     if (id) {
-      await db.collection('message_templates').doc(id).update({name, category, badge, text, updatedAt: TS()});
+      const idx = S.customTpls.findIndex(t => t.id === id);
+      if (idx >= 0) {
+        S.customTpls[idx] = { ...S.customTpls[idx], name, category, badge, text, updatedAt: now };
+      }
     } else {
-      await db.collection('message_templates').add({name, category, badge, text, createdBy: S.user?.uid || '', createdAt: TS(), updatedAt: TS()});
+      S.customTpls.unshift({
+        id: 'tpl_' + now + '_' + Math.random().toString(36).slice(2,7),
+        name, category, badge, text,
+        createdAt: now, updatedAt: now
+      });
     }
+    await _persistTemplates();
+    renderCustomTpls();
     closeModal('modal-custom-tpl');
   } catch(e) {
-    console.error(e);
-    alert('Erreur lors de l\'enregistrement.');
+    console.error('saveCustomTpl error:', e);
+    alert('Erreur lors de l\'enregistrement : ' + (e.message || e.code || 'inconnue'));
   } finally {
     btn.disabled = false; btn.textContent = '💾 Enregistrer';
   }
 }
+
 async function deleteCustomTpl(id) {
   if (!confirm('Supprimer ce template ?')) return;
-  try { await db.collection('message_templates').doc(id).delete(); }
-  catch(e) { console.error(e); alert('Erreur lors de la suppression.'); }
+  try {
+    S.customTpls = S.customTpls.filter(t => t.id !== id);
+    await _persistTemplates();
+    renderCustomTpls();
+  } catch(e) {
+    console.error('deleteCustomTpl error:', e);
+    alert('Erreur lors de la suppression : ' + (e.message || e.code || 'inconnue'));
+  }
 }
 
 function copyTpl(btn) {
