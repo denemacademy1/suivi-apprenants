@@ -2922,11 +2922,34 @@ function renderRdvSuivi(){
 
 // ── HELPERS ──
 function getVideoEmbed(url){
-  if(!url)return null;
-  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
-  if(yt)return`https://www.youtube.com/embed/${yt[1]}?rel=0`;
-  const vi=url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if(vi)return`https://player.vimeo.com/video/${vi[1]}?badge=0&autopause=0`;
+  if(!url) return null;
+  const clean = String(url).trim();
+  if(!clean) return null;
+
+  // ─── YouTube ───
+  // youtu.be/ID · youtube.com/watch?v=ID · youtube.com/embed/ID · youtube.com/shorts/ID
+  const yt = clean.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  if(yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1`;
+
+  // ─── Vimeo ───
+  // Cas 1 : URL classique avec hash dans le path → vimeo.com/123456789/abcdef0123
+  let vi = clean.match(/vimeo\.com\/(?:video\/)?(\d+)\/([A-Za-z0-9]+)(?:[/?#]|$)/);
+  if(vi) return `https://player.vimeo.com/video/${vi[1]}?h=${vi[2]}&badge=0&autopause=0&player_id=0&app_id=58479`;
+
+  // Cas 2 : ID seul + hash en query string → vimeo.com/123456789?h=abcdef0123
+  vi = clean.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if(vi){
+    const id = vi[1];
+    const hashMatch = clean.match(/[?&]h=([A-Za-z0-9]+)/);
+    const h = hashMatch ? `&h=${hashMatch[1]}` : '';
+    return `https://player.vimeo.com/video/${id}?badge=0&autopause=0&player_id=0&app_id=58479${h}`;
+  }
+
+  // ─── player.vimeo.com déjà formaté ───
+  if(/^https?:\/\/player\.vimeo\.com\/video\/\d+/.test(clean)){
+    return clean; // l'utilisateur a déjà collé l'URL embed complète
+  }
+
   return null;
 }
 function toggleSidebar(){
