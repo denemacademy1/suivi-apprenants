@@ -143,10 +143,15 @@ table.lead-table{width:100%;border-collapse:collapse}
 .tpl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
 .tpl-card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#fafbff;border-bottom:1px solid var(--border)}
 .tpl-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px}
+/* Badges legacy (rétrocompat avec anciens templates) */
 .tpl-badge-hot{background:#fee2e2;color:#991b1b}
 .tpl-badge-warm{background:#fef3c7;color:#92400e}
 .tpl-badge-cold{background:#dbeafe;color:#1e40af}
 .tpl-badge-relance{background:#f3e8ff;color:#6b21a8}
+/* Badges process Setter (3 étapes Objectif du Setting) */
+.tpl-badge-qualif{background:#dbeafe;color:#1e40af;border:1px solid rgba(59,130,246,.18)}
+.tpl-badge-btd{background:#fef3c7;color:#92400e;border:1px solid rgba(245,158,11,.2)}
+.tpl-badge-cta{background:#dcfce7;color:#166534;border:1px solid rgba(16,185,129,.22)}
 .tpl-copy{background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
 .tpl-copy:hover{background:var(--primary-dark);transform:translateY(-1px)}
 .tpl-copy.copied{background:#10b981}
@@ -1218,13 +1223,13 @@ table.lead-table{width:100%;border-collapse:collapse}
           <input type="text" class="form-input" id="ctpl-category" placeholder="Ta catégorie" maxlength="60">
         </div>
         <div>
-          <label class="form-label">Couleur du badge</label>
+          <label class="form-label">Étape du process Setter</label>
           <select class="form-input" id="ctpl-badge">
-            <option value="hot">🔥 Rouge (chaud / urgent)</option>
-            <option value="warm">🌡️ Orange (tiède)</option>
-            <option value="cold">❄️ Bleu (froid)</option>
-            <option value="relance">🔄 Violet (relance)</option>
+            <option value="qualif">🎯 Étape 1 — Qualification du profil</option>
+            <option value="btd">🔍 Étape 2 — Évaluation Méthode BTD</option>
+            <option value="cta">📅 Étape 3 — Conversion / Prise de RDV</option>
           </select>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Couleur du badge selon l'étape du process Setter (cf. <a href="#" onclick="event.preventDefault();showPage('objectif-setting')" style="color:var(--primary);text-decoration:none">🎯 Objectif du Setting</a>)</div>
         </div>
         <div>
           <label class="form-label">Message <span style="color:var(--muted);font-weight:400">(utilise {prenom} pour personnaliser)</span></label>
@@ -1833,10 +1838,26 @@ function renderCustomTpls() {
     if (!groups[cat]) groups[cat] = [];
     groups[cat].push(t);
   });
-  const cardHtml = (t) => `
+  const STEP_LABEL = {
+    qualif:'🎯 Étape 1 · Qualification',
+    btd:'🔍 Étape 2 · Méthode BTD',
+    cta:'📅 Étape 3 · Prise de RDV',
+    // Legacy
+    hot:'📅 Étape 3 · Prise de RDV',
+    warm:'🔍 Étape 2 · Méthode BTD',
+    cold:'🎯 Étape 1 · Qualification',
+    relance:'🎯 Étape 1 · Qualification'
+  };
+  const cardHtml = (t) => {
+    const badge = t.badge || 'qualif';
+    const stepLabel = STEP_LABEL[badge] || '';
+    return `
     <div class="tpl-card" data-id="${t.id}">
       <div class="tpl-card-head">
-        <span class="tpl-badge tpl-badge-${escHtml(t.badge||'relance')}">${escHtml(t.name||'Template')}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="tpl-badge tpl-badge-${escHtml(badge)}">${escHtml(stepLabel)}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text)">${escHtml(t.name||'Template')}</span>
+        </div>
         <div style="display:flex;gap:6px">
           <button class="tpl-copy" onclick="copyTpl(this)" style="background:#f1f5f9;color:var(--text)">📋 Copier</button>
           <button class="tpl-copy" onclick="editCustomTpl('${t.id}')" style="background:#fef3c7;color:#92400e">✏️</button>
@@ -1845,6 +1866,7 @@ function renderCustomTpls() {
       </div>
       <div class="tpl-text">${escHtml(t.text||'')}</div>
     </div>`;
+  };
   list.innerHTML = Object.entries(groups).map(([cat, items]) => `
     <div class="tpl-cat">${escHtml(cat)}</div>
     ${items.map(cardHtml).join('')}
@@ -1854,7 +1876,7 @@ function openCustomTpl() {
   document.getElementById('ctpl-id').value = '';
   document.getElementById('ctpl-name').value = '';
   document.getElementById('ctpl-category').value = '';
-  document.getElementById('ctpl-badge').value = 'relance';
+  document.getElementById('ctpl-badge').value = 'qualif';
   document.getElementById('ctpl-text').value = '';
   document.getElementById('ctpl-modal-title').textContent = 'Nouveau template';
   document.getElementById('modal-custom-tpl').classList.add('open');
@@ -1865,7 +1887,9 @@ function editCustomTpl(id) {
   document.getElementById('ctpl-id').value = id;
   document.getElementById('ctpl-name').value = t.name || '';
   document.getElementById('ctpl-category').value = t.category || '';
-  document.getElementById('ctpl-badge').value = t.badge || 'relance';
+  // Mapping legacy → nouveau process Setter
+  const legacyMap = { hot:'cta', warm:'btd', cold:'qualif', relance:'qualif' };
+  document.getElementById('ctpl-badge').value = legacyMap[t.badge] || t.badge || 'qualif';
   document.getElementById('ctpl-text').value = t.text || '';
   document.getElementById('ctpl-modal-title').textContent = 'Modifier le template';
   document.getElementById('modal-custom-tpl').classList.add('open');
