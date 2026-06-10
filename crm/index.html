@@ -596,6 +596,32 @@ tbody tr:last-child td{border-bottom:none}
   .detail-panel{width:100%}
   .form-grid{grid-template-columns:1fr}
 }
+
+/* ─── Masterclass (CSM) ─── */
+.mc-themes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.mc-theme-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.7);padding:8px 14px;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.mc-theme-chip:hover{background:rgba(255,255,255,.07);color:#fff}
+.mc-theme-chip.active{background:var(--mc-color,#6366F1);color:#fff;border-color:var(--mc-color,#6366F1);box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.mc-theme-count{background:rgba(0,0,0,.25);font-size:11px;padding:1px 8px;border-radius:99px;min-width:22px;text-align:center}
+.mc-theme-chip.active .mc-theme-count{background:rgba(255,255,255,.25)}
+.mc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.mc-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:all .15s}
+.mc-card:hover{border-color:var(--mc-color,rgba(99,102,241,.4));transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.25)}
+.mc-card-thumb{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,var(--mc-color,#6366F1)15,rgba(0,0,0,.3));display:flex;align-items:center;justify-content:center;overflow:hidden}
+.mc-card-thumb img{width:100%;height:100%;object-fit:cover}
+.mc-card-thumb-fallback{font-size:48px;opacity:.4}
+.mc-card-duration{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:3px 8px;border-radius:5px;font-weight:600}
+.mc-card-body{padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.mc-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mc-card-theme{font-size:11px;font-weight:700;color:var(--mc-color,#A5B4FC);background:rgba(99,102,241,.1);padding:3px 9px;border-radius:5px;display:inline-flex;align-items:center;gap:4px}
+.mc-card-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;letter-spacing:.3px}
+.mc-card-pub{background:rgba(16,185,129,.15);color:#34D399}
+.mc-card-draft{background:rgba(245,158,11,.15);color:#FCD34D}
+.mc-card-title{font-size:15px;font-weight:700;color:#fff;line-height:1.3;letter-spacing:-.01em}
+.mc-card-intervenant{font-size:12px;color:rgba(255,255,255,.5);line-height:1.4}
+.mc-card-desc{font-size:12px;color:rgba(255,255,255,.55);line-height:1.5;flex:1}
+.mc-card-actions{display:flex;gap:6px;margin-top:6px}
+.mc-empty{text-align:center;padding:80px 20px;background:rgba(255,255,255,.02);border:2px dashed rgba(255,255,255,.08);border-radius:18px}
 </style>
 </head>
 <body>
@@ -613,6 +639,7 @@ tbody tr:last-child td{border-bottom:none}
       <div class="nav-item" data-page="planning" onclick="nav('planning')"><span class="nav-icon">📅</span><span class="nav-label">Planning RDVs</span><span class="nav-badge" id="badge-planning"></span></div>
       <div class="nav-item" data-page="alertes" onclick="nav('alertes')"><span class="nav-icon">⚠️</span><span class="nav-label">Alertes</span><span class="nav-badge danger" id="badge-alertes"></span></div>
       <div class="nav-item" data-page="cohortes" onclick="nav('cohortes')"><span class="nav-icon">🎓</span><span class="nav-label">Cohortes</span><span class="nav-badge" id="badge-cohortes"></span></div>
+      <div class="nav-item" data-page="masterclass" onclick="nav('masterclass')"><span class="nav-icon">🎬</span><span class="nav-label">Masterclass</span><span class="nav-badge" id="badge-masterclass"></span></div>
       <div class="nav-item" data-page="messages" onclick="nav('messages')"><span class="nav-icon">💬</span><span class="nav-label">Messages</span><span class="nav-badge danger" id="badge-messages" style="display:none">0</span></div>
       <div class="nav-section-label" style="margin-top:12px">Analyse</div>
       <div class="nav-item" data-page="rapports" onclick="nav('rapports')"><span class="nav-icon">📊</span><span class="nav-label">Rapports</span></div>
@@ -653,6 +680,7 @@ tbody tr:last-child td{border-bottom:none}
       <div id="page-rapports" class="page"></div>
       <div id="page-reglages" class="page"></div>
       <div id="page-cohortes" class="page"></div>
+      <div id="page-masterclass" class="page"></div>
       <div id="page-messages" class="page">
         <div class="conv-layout">
           <div class="conv-list">
@@ -868,8 +896,19 @@ const PAGE_INFO={
   rapports:{title:"Rapports & Analyses",sub:"Statistiques de la formation",action:null},
   reglages:{title:"Réglages",sub:"Configuration du dashboard",action:null},
   cohortes:{title:"Cohortes",sub:"Groupes d'apprenants — 8 membres max",action:"+ Cohorte"},
+  masterclass:{title:"Masterclass",sub:"Vidéos thématiques visibles par tous les apprenants",action:"+ Masterclass"},
   messages:{title:"Messages",sub:"Conversations avec les apprenants",action:null},
 };
+
+// ─── Thématiques masterclass (partagé avec student) ───
+const MASTERCLASS_THEMES = [
+  { key:'ia',          label:'IA',           icon:'🤖', color:'#6366F1' },
+  { key:'vente',       label:'Vente',        icon:'💼', color:'#10B981' },
+  { key:'marketing',   label:'Marketing',    icon:'📣', color:'#3B82F6' },
+  { key:'tech',        label:'Tech',         icon:'⚙️', color:'#8B5CF6' },
+  { key:'closing',     label:'Closing',      icon:'🎯', color:'#EF4444' },
+  { key:'acquisition', label:'Acquisition',  icon:'🧲', color:'#F59E0B' },
+];
 
 // ══════════════════════════════════════
 //  STATE
@@ -988,6 +1027,17 @@ function startListeners(){
     S.cohorts=[];
     if(S.page==="cohortes")renderCohortes();
   });
+  // ─── Masterclass ───
+  db.collection("masterclass").orderBy("createdAt","desc").onSnapshot(snap=>{
+    S.masterclasses=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const badge=document.getElementById("badge-masterclass");
+    if(badge)badge.textContent=S.masterclasses.length||"";
+    if(S.page==="masterclass")renderMasterclassPage();
+  },e=>{
+    console.warn("[masterclass] listener:",e);
+    S.masterclasses=[];
+    if(S.page==="masterclass")renderMasterclassPage();
+  });
   // Load all coaches/admins for the charge selector
   db.collection("users").onSnapshot(snap=>{
     S.csmUsers=snap.docs
@@ -1098,7 +1148,7 @@ function nav(page){
   if(info.action){ab.textContent=info.action;ab.style.display="flex";}else{ab.style.display="none";}
   renderCurrent();
 }
-function topbarAction(){if(S.page==="apprenants")openStudentModal();else if(S.page==="planning")openRdvModal();else if(S.page==="cohortes")openCohortModal();}
+function topbarAction(){if(S.page==="apprenants")openStudentModal();else if(S.page==="planning")openRdvModal();else if(S.page==="cohortes")openCohortModal();else if(S.page==="masterclass")openMasterclassModal();}
 function renderCurrent(){
   switch(S.page){
     case"dashboard":renderDashboard();break;
@@ -1108,6 +1158,7 @@ function renderCurrent(){
     case"rapports":renderRapports();break;
     case"reglages":renderReglages();break;
     case"cohortes":renderCohortes();break;
+    case"masterclass":renderMasterclassPage();break;
     case"messages":initCSMConvListener();renderCSMConvList();updateCSMConvBadge();break;
   }
 }
@@ -2212,6 +2263,230 @@ const COHORT_NAMES=[
   {emoji:"🎯",name:"Catalyst"},
 ];
 
+// ══════════════════════════════════════
+// MASTERCLASS — gestion CSM
+// ══════════════════════════════════════
+S.masterclasses = S.masterclasses || [];
+S._mcFilter = 'all';
+S._mcEditing = null;
+
+function mcThemeCfg(key){
+  return MASTERCLASS_THEMES.find(t=>t.key===key) || {key,label:key,icon:'🎬',color:'#6366F1'};
+}
+
+// Extrait embed (Vimeo / YouTube) — comme côté student
+function mcVideoEmbed(url){
+  if(!url) return null;
+  const clean = String(url).trim();
+  const yt = clean.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  if(yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1`;
+  let vi = clean.match(/vimeo\.com\/(?:video\/)?(\d+)\/([A-Za-z0-9]+)(?:[/?#]|$)/);
+  if(vi) return `https://player.vimeo.com/video/${vi[1]}?h=${vi[2]}&badge=0&autopause=0`;
+  vi = clean.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if(vi){
+    const id = vi[1];
+    const hashMatch = clean.match(/[?&]h=([A-Za-z0-9]+)/);
+    return `https://player.vimeo.com/video/${id}?badge=0&autopause=0${hashMatch?`&h=${hashMatch[1]}`:''}`;
+  }
+  if(/^https?:\/\/player\.vimeo\.com\/video\/\d+/.test(clean)) return clean;
+  return null;
+}
+
+function renderMasterclassPage(){
+  const el = document.getElementById('page-masterclass');
+  if(!el) return;
+  const all = S.masterclasses || [];
+  const filtered = S._mcFilter==='all' ? all : all.filter(m => m.theme === S._mcFilter);
+
+  // Compte par thème
+  const counts = MASTERCLASS_THEMES.map(t => ({
+    ...t,
+    count: all.filter(m => m.theme === t.key).length
+  }));
+
+  const themesHtml = `
+    <div class="mc-themes">
+      <div class="mc-theme-chip ${S._mcFilter==='all'?'active':''}" onclick="setMcFilter('all')">
+        <span>📚 Toutes</span>
+        <span class="mc-theme-count">${all.length}</span>
+      </div>
+      ${counts.map(t => `
+        <div class="mc-theme-chip ${S._mcFilter===t.key?'active':''}" style="--mc-color:${t.color}" onclick="setMcFilter('${t.key}')">
+          <span>${t.icon} ${t.label}</span>
+          <span class="mc-theme-count">${t.count}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  const cardsHtml = filtered.length ? `
+    <div class="mc-grid">
+      ${filtered.map(m => {
+        const th = mcThemeCfg(m.theme);
+        const pubBadge = m.published===false
+          ? `<span class="mc-card-badge mc-card-draft">🔒 Brouillon</span>`
+          : `<span class="mc-card-badge mc-card-pub">✓ Publié</span>`;
+        return `<div class="mc-card" style="--mc-color:${th.color}">
+          <div class="mc-card-thumb">
+            ${m.thumbnail_url ? `<img src="${escAttr(m.thumbnail_url)}" alt="">` : `<div class="mc-card-thumb-fallback">${th.icon}</div>`}
+            ${m.duree ? `<span class="mc-card-duration">⏱ ${escHtml(m.duree)}</span>` : ''}
+          </div>
+          <div class="mc-card-body">
+            <div class="mc-card-head">
+              <span class="mc-card-theme">${th.icon} ${th.label}</span>
+              ${pubBadge}
+            </div>
+            <div class="mc-card-title">${escHtml(m.titre||'')}</div>
+            ${m.intervenant?`<div class="mc-card-intervenant">👤 ${escHtml(m.intervenant)}${m.intervenant_role?` · ${escHtml(m.intervenant_role)}`:''}</div>`:''}
+            ${m.description?`<div class="mc-card-desc">${escHtml((m.description||'').slice(0,140))}${(m.description||'').length>140?'…':''}</div>`:''}
+            <div class="mc-card-actions">
+              <button class="btn btn-secondary btn-sm" onclick="openMasterclassModal('${m.id}')">✏️ Modifier</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteMasterclass('${m.id}','${escAttr(m.titre||'').replace(/'/g,"\\'")}')">🗑</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  ` : `
+    <div class="mc-empty">
+      <div style="font-size:48px;margin-bottom:14px">🎬</div>
+      <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px">Aucune masterclass${S._mcFilter!=='all'?` dans "${mcThemeCfg(S._mcFilter).label}"`:' encore'}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:18px">Crée la première pour la rendre visible à tous les apprenants.</div>
+      <button class="btn btn-primary" onclick="openMasterclassModal()">+ Nouvelle masterclass</button>
+    </div>
+  `;
+
+  el.innerHTML = themesHtml + cardsHtml;
+}
+
+function setMcFilter(key){
+  S._mcFilter = key;
+  renderMasterclassPage();
+}
+
+function openMasterclassModal(id){
+  S._mcEditing = id || null;
+  const m = id ? S.masterclasses.find(x => x.id === id) : null;
+  const themesOpts = MASTERCLASS_THEMES.map(t => `<option value="${t.key}" ${m?.theme===t.key?'selected':''}>${t.icon} ${t.label}</option>`).join('');
+
+  const modal = document.getElementById('mc-modal') || (() => {
+    const d = document.createElement('div');
+    d.id = 'mc-modal';
+    d.className = 'modal-overlay';
+    document.body.appendChild(d);
+    return d;
+  })();
+
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:580px">
+      <div class="modal-header">
+        <h2>${id?'Modifier la':'Nouvelle'} masterclass</h2>
+        <button class="modal-close" onclick="closeMasterclassModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group form-full">
+            <label>Titre *</label>
+            <input id="mc-titre" value="${escAttr(m?.titre||'')}" placeholder="Ex: Comment closer un client en 30 min" maxlength="120">
+          </div>
+          <div class="form-group">
+            <label>Thématique *</label>
+            <select id="mc-theme">${themesOpts}</select>
+          </div>
+          <div class="form-group">
+            <label>Durée</label>
+            <input id="mc-duree" value="${escAttr(m?.duree||'')}" placeholder="Ex: 45 min" maxlength="20">
+          </div>
+          <div class="form-group form-full">
+            <label>URL Vidéo * <span style="color:#94A3B8;font-weight:400;font-size:12px">(Vimeo ou YouTube)</span></label>
+            <input id="mc-video" value="${escAttr(m?.video_url||'')}" placeholder="https://vimeo.com/... ou https://youtu.be/...">
+          </div>
+          <div class="form-group form-full">
+            <label>URL Vignette <span style="color:#94A3B8;font-weight:400;font-size:12px">(optionnel)</span></label>
+            <input id="mc-thumb" value="${escAttr(m?.thumbnail_url||'')}" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Intervenant</label>
+            <input id="mc-intervenant" value="${escAttr(m?.intervenant||'')}" placeholder="Ex: Axel Riandière">
+          </div>
+          <div class="form-group">
+            <label>Rôle / Titre</label>
+            <input id="mc-role" value="${escAttr(m?.intervenant_role||'')}" placeholder="Ex: Fondateur DENEM Academy">
+          </div>
+          <div class="form-group form-full">
+            <label>Description</label>
+            <textarea id="mc-desc" rows="3" placeholder="Ce que les apprenants vont apprendre…">${escHtml(m?.description||'')}</textarea>
+          </div>
+          <div class="form-group form-full">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="mc-pub" ${m?.published!==false?'checked':''}>
+              <span>Publié <span style="color:#94A3B8;font-weight:400;font-size:12px">(visible par tous les apprenants)</span></span>
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          ${id?`<button class="btn btn-danger btn-sm" onclick="deleteMasterclass('${id}',null,true)">🗑 Supprimer</button>`:''}
+          <button class="btn btn-outline" onclick="closeMasterclassModal()">Annuler</button>
+          <button class="btn btn-primary" onclick="saveMasterclass()">💾 Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('active');
+}
+
+function closeMasterclassModal(){
+  const m = document.getElementById('mc-modal');
+  if(m) m.classList.remove('active');
+  S._mcEditing = null;
+}
+
+async function saveMasterclass(){
+  const titre = document.getElementById('mc-titre').value.trim();
+  const theme = document.getElementById('mc-theme').value;
+  const video_url = document.getElementById('mc-video').value.trim();
+  if(!titre){ toast('Le titre est requis','error'); return; }
+  if(!video_url){ toast('L\'URL vidéo est requise','error'); return; }
+  const data = {
+    titre, theme, video_url,
+    thumbnail_url: document.getElementById('mc-thumb').value.trim(),
+    duree: document.getElementById('mc-duree').value.trim(),
+    intervenant: document.getElementById('mc-intervenant').value.trim(),
+    intervenant_role: document.getElementById('mc-role').value.trim(),
+    description: document.getElementById('mc-desc').value.trim(),
+    published: document.getElementById('mc-pub').checked,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    if(S._mcEditing){
+      await db.collection('masterclass').doc(S._mcEditing).update(data);
+      toast('Masterclass mise à jour','success');
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      data.created_by = S.user?.uid || '';
+      await db.collection('masterclass').add(data);
+      toast('Masterclass ajoutée — visible par les apprenants','success');
+    }
+    closeMasterclassModal();
+  } catch(e){
+    console.error(e);
+    toast('Erreur : '+(e.message||e.code),'error');
+  }
+}
+
+async function deleteMasterclass(id, titre, fromModal){
+  const name = titre || (S.masterclasses.find(x=>x.id===id)?.titre) || 'cette masterclass';
+  if(!confirm(`Supprimer "${name}" ?`)) return;
+  try{
+    await db.collection('masterclass').doc(id).delete();
+    if(fromModal) closeMasterclassModal();
+    toast('Masterclass supprimée','success');
+  } catch(e){
+    console.error(e);
+    toast('Erreur lors de la suppression','error');
+  }
+}
+
 function renderCohortes(){
   const el=document.getElementById("page-cohortes");
   const cohorts=S.cohorts;
@@ -2828,6 +3103,9 @@ function csmConvResize(el){el.style.height='auto';el.style.height=Math.min(el.sc
 function csmFmtTime(d){const now=new Date(),diff=now-d;if(diff<60000)return'À l\'instant';if(diff<3600000)return Math.floor(diff/60000)+'min';if(diff<86400000)return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});if(diff<604800000)return d.toLocaleDateString('fr-FR',{weekday:'short'});return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
 function csmTrunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}
 function csmEsc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// Aliases utilisés par les nouvelles features (masterclass, etc.)
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escAttr(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
 // ══════════════════════════════════════
 //  VOICE MESSAGES

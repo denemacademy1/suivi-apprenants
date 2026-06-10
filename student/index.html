@@ -383,6 +383,46 @@ nav::-webkit-scrollbar{width:0}
 .support-tech-iframe-container{position:relative;background:#fff;height:min(80vh,750px)}
 .support-tech-iframe-container iframe{width:100%;height:100%;border:0;display:block}
 @media(max-width:700px){.support-tech-iframe-container{height:65vh}.support-tech-load-btn{width:100%}}
+/* ═══ MASTERCLASS (student) ═══ */
+.mcs-header{display:flex;align-items:center;gap:18px;margin-bottom:28px}
+.mcs-header-icon{width:64px;height:64px;background:linear-gradient(135deg,#EC4899,#F472B6);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;box-shadow:0 12px 28px rgba(236,72,153,.3)}
+.mcs-title{font-family:'Manrope','DM Sans',sans-serif;font-weight:800;font-size:28px;color:#fff;letter-spacing:-.02em;margin:0 0 4px}
+.mcs-sub{font-size:14px;color:rgba(255,255,255,.55);margin:0;line-height:1.5}
+.mcs-themes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.mcs-theme-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:rgba(255,255,255,.7);padding:8px 14px;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;user-select:none}
+.mcs-theme-chip:hover{background:rgba(255,255,255,.07);color:#fff;transform:translateY(-1px)}
+.mcs-theme-chip.active{background:var(--mc-color,#6366F1);color:#fff;border-color:var(--mc-color,#6366F1);box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.mcs-theme-count{background:rgba(0,0,0,.3);font-size:11px;padding:1px 8px;border-radius:99px;min-width:22px;text-align:center}
+.mcs-theme-chip.active .mcs-theme-count{background:rgba(255,255,255,.25)}
+.mcs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:20px}
+.mcs-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .2s;display:flex;flex-direction:column}
+.mcs-card:hover{transform:translateY(-3px);border-color:var(--mc-color);box-shadow:0 16px 38px rgba(0,0,0,.35)}
+.mcs-card:hover .mcs-card-play{opacity:1;transform:scale(1)}
+.mcs-card-thumb{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,var(--mc-color,#6366F1),rgba(0,0,0,.4));display:flex;align-items:center;justify-content:center;overflow:hidden}
+.mcs-card-thumb img{width:100%;height:100%;object-fit:cover}
+.mcs-card-thumb-fallback{font-size:54px;opacity:.5;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.mcs-card-play{position:absolute;width:54px;height:54px;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;opacity:.85;transform:scale(.92);transition:all .2s;border:2px solid rgba(255,255,255,.2)}
+.mcs-card-duration{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);color:#fff;font-size:11px;padding:4px 9px;border-radius:6px;font-weight:600}
+.mcs-card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.mcs-card-theme{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--mc-color);background:color-mix(in srgb,var(--mc-color) 12%,transparent);padding:4px 10px;border-radius:5px;align-self:flex-start;letter-spacing:.2px}
+.mcs-card-title{font-size:15px;font-weight:700;color:#fff;line-height:1.35;letter-spacing:-.01em}
+.mcs-card-intervenant{font-size:12px;color:rgba(255,255,255,.5);line-height:1.4}
+.mcs-card-desc{font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.55;margin-top:auto}
+.mcs-empty{text-align:center;padding:80px 24px;background:rgba(255,255,255,.02);border:2px dashed var(--border);border-radius:18px}
+/* Player modal */
+.mcs-player-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:500;overflow-y:auto;padding:24px;align-items:flex-start;justify-content:center}
+.mcs-player-modal.open{display:flex}
+.mcs-player-content{background:var(--surface);border:1px solid var(--border);border-radius:18px;max-width:900px;width:100%;overflow:hidden;animation:fadeUp .25s ease;position:relative}
+.mcs-player-close{position:absolute;top:14px;right:14px;width:36px;height:36px;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .15s}
+.mcs-player-close:hover{background:rgba(0,0,0,.85);transform:scale(1.06)}
+.mcs-player-video{position:relative;aspect-ratio:16/9;background:#000}
+.mcs-player-video iframe{width:100%;height:100%;border:0}
+.mcs-player-novideo{display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.6);text-align:center;font-size:14px;line-height:1.6}
+.mcs-player-info{padding:22px 26px 26px;display:flex;flex-direction:column;gap:10px}
+.mcs-player-title{font-family:'Manrope','DM Sans',sans-serif;font-weight:800;font-size:22px;color:#fff;letter-spacing:-.02em;margin:6px 0 0;line-height:1.3}
+.mcs-player-intervenant,.mcs-player-duree{font-size:13px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:6px}
+.mcs-player-desc{font-size:14px;color:rgba(255,255,255,.72);line-height:1.65;margin-top:8px;padding-top:14px;border-top:1px solid var(--border)}
+@media(max-width:700px){.mcs-grid{grid-template-columns:1fr}.mcs-title{font-size:22px}.mcs-header-icon{width:52px;height:52px;font-size:26px}.mcs-player-modal{padding:0}.mcs-player-content{border-radius:0;min-height:100vh}}
 .pdf-row{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .2s}
 .pdf-row:hover{background:rgba(99,102,241,.06);border-color:rgba(99,102,241,.3);transform:translateY(-1px)}
 .pdf-ico{width:42px;height:42px;background:linear-gradient(135deg,#EF4444,#DC2626);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-.5px}
@@ -843,6 +883,10 @@ nav::-webkit-scrollbar{width:0}
         <span class="nav-icon">📝</span>Notes & Tâches
         <span class="nav-badge" id="nav-badge-todos" style="display:none;background:rgba(239,68,68,.2);color:#F87171">0</span>
       </div>
+      <div class="nav-item" id="nav-masterclass" onclick="showPage('masterclass')">
+        <span class="nav-icon">🎬</span>Masterclass
+        <span class="nav-badge" id="nav-badge-masterclass" style="display:none;background:rgba(236,72,153,.18);color:#F9A8D4">0</span>
+      </div>
       <div class="nav-item nav-coach" id="nav-coach" onclick="openCoachWhatsApp()">
         <span class="nav-icon">💬</span>Mes coachs
         <span class="nav-coach-badge" title="WhatsApp">📲</span>
@@ -1013,6 +1057,9 @@ nav::-webkit-scrollbar{width:0}
           </div>
         </div>
       </div>
+
+      <!-- ── MASTERCLASS PAGE ── -->
+      <div class="page" id="page-masterclass"></div>
 
       <!-- ── MESSAGES PAGE ── -->
       <div class="page" id="page-messages">
@@ -1395,6 +1442,19 @@ function loadData(){
     renderAll();
     checkInitialBadges();
   });
+  // ─── Masterclass (live sync depuis CSM) ───
+  db.collection("masterclass").onSnapshot(snap=>{
+    S.masterclasses = snap.docs
+      .map(d => ({ id:d.id, ...d.data() }))
+      .filter(m => m.published !== false)
+      .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+    const badge = document.getElementById('nav-badge-masterclass');
+    if (badge){
+      if (S.masterclasses.length){ badge.textContent = S.masterclasses.length; badge.style.display = 'flex'; }
+      else { badge.style.display = 'none'; }
+    }
+    if (S.currentPage === 'masterclass') renderMasterclassPageStudent();
+  }, e => { console.warn('[masterclass] listener:', e); S.masterclasses = []; });
   if(S.apprenant){
     // Live sync apprenant profile (CSM edits propagate without page reload)
     db.collection("apprenants").doc(S.apprenant.id).onSnapshot(d=>{
@@ -1954,10 +2014,11 @@ function showPage(p){
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById(`page-${p}`)?.classList.add('active');
   document.getElementById(`nav-${p}`)?.classList.add('active');
-  const titles={home:'Accueil',modules:'Mes modules',notes:'Notes & Tâches',messages:'Messages'};
+  const titles={home:'Accueil',modules:'Mes modules',notes:'Notes & Tâches',messages:'Messages',masterclass:'Les Masterclass'};
   document.getElementById("topbar-title").textContent=titles[p]||p;
   S.currentPage=p;
   if(p==='messages')initChat();
+  if(p==='masterclass')renderMasterclassPageStudent();
   if(window.innerWidth<900)closeSidebar();
 }
 
@@ -3724,6 +3785,139 @@ function getVideoEmbed(url){
 
   return null;
 }
+
+// ═══════════════════════════════════════════════
+//  MASTERCLASS — vue apprenant
+// ═══════════════════════════════════════════════
+S.masterclasses = S.masterclasses || [];
+S._mcStudentFilter = 'all';
+
+const MASTERCLASS_THEMES = [
+  { key:'ia',          label:'IA',           icon:'🤖', color:'#6366F1' },
+  { key:'vente',       label:'Vente',        icon:'💼', color:'#10B981' },
+  { key:'marketing',   label:'Marketing',    icon:'📣', color:'#3B82F6' },
+  { key:'tech',        label:'Tech',         icon:'⚙️', color:'#8B5CF6' },
+  { key:'closing',     label:'Closing',      icon:'🎯', color:'#EF4444' },
+  { key:'acquisition', label:'Acquisition',  icon:'🧲', color:'#F59E0B' },
+];
+
+function mcThemeCfgStudent(key){
+  return MASTERCLASS_THEMES.find(t=>t.key===key) || {key,label:key,icon:'🎬',color:'#6366F1'};
+}
+
+function renderMasterclassPageStudent(){
+  const el = document.getElementById('page-masterclass');
+  if(!el) return;
+  const all = S.masterclasses || [];
+  const filtered = S._mcStudentFilter === 'all' ? all : all.filter(m => m.theme === S._mcStudentFilter);
+
+  const counts = MASTERCLASS_THEMES.map(t => ({...t, count: all.filter(m => m.theme === t.key).length}));
+
+  const themesHtml = `
+    <div class="mcs-themes">
+      <div class="mcs-theme-chip ${S._mcStudentFilter==='all'?'active':''}" onclick="setMcStudentFilter('all')">
+        <span>📚 Toutes</span>
+        <span class="mcs-theme-count">${all.length}</span>
+      </div>
+      ${counts.map(t => `
+        <div class="mcs-theme-chip ${S._mcStudentFilter===t.key?'active':''}" style="--mc-color:${t.color}" onclick="setMcStudentFilter('${t.key}')">
+          <span>${t.icon} ${t.label}</span>
+          <span class="mcs-theme-count">${t.count}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  const cardsHtml = filtered.length ? `
+    <div class="mcs-grid">
+      ${filtered.map(m => {
+        const th = mcThemeCfgStudent(m.theme);
+        const embed = getVideoEmbed(m.video_url);
+        return `<div class="mcs-card" style="--mc-color:${th.color}" onclick="openMasterclassPlayer('${m.id}')">
+          <div class="mcs-card-thumb">
+            ${m.thumbnail_url ? `<img src="${escAttr(m.thumbnail_url)}" alt="">` : `<div class="mcs-card-thumb-fallback">${th.icon}</div>`}
+            <div class="mcs-card-play">▶</div>
+            ${m.duree ? `<span class="mcs-card-duration">⏱ ${escHtml(m.duree)}</span>` : ''}
+          </div>
+          <div class="mcs-card-body">
+            <span class="mcs-card-theme">${th.icon} ${th.label}</span>
+            <div class="mcs-card-title">${escHtml(m.titre||'')}</div>
+            ${m.intervenant?`<div class="mcs-card-intervenant">👤 ${escHtml(m.intervenant)}${m.intervenant_role?` · ${escHtml(m.intervenant_role)}`:''}</div>`:''}
+            ${m.description?`<div class="mcs-card-desc">${escHtml((m.description||'').slice(0,100))}${(m.description||'').length>100?'…':''}</div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  ` : `
+    <div class="mcs-empty">
+      <div style="font-size:60px;margin-bottom:14px;opacity:.5">🎬</div>
+      <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:8px">Aucune masterclass${S._mcStudentFilter!=='all'?` en "${mcThemeCfgStudent(S._mcStudentFilter).label}"`:''}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5)">Reviens bientôt — de nouvelles masterclass sont régulièrement ajoutées par les coachs.</div>
+    </div>
+  `;
+
+  el.innerHTML = `
+    <div class="mcs-header">
+      <div class="mcs-header-icon">🎬</div>
+      <div>
+        <h1 class="mcs-title">Les Masterclass</h1>
+        <p class="mcs-sub">Vidéos thématiques pour aller plus loin — IA, vente, marketing, tech, closing, acquisition</p>
+      </div>
+    </div>
+    ${themesHtml}
+    ${cardsHtml}
+  `;
+}
+
+function setMcStudentFilter(key){
+  S._mcStudentFilter = key;
+  renderMasterclassPageStudent();
+}
+
+function openMasterclassPlayer(id){
+  const m = (S.masterclasses||[]).find(x => x.id === id);
+  if(!m) return;
+  const embed = getVideoEmbed(m.video_url);
+  const th = mcThemeCfgStudent(m.theme);
+  let modal = document.getElementById('mcs-player-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'mcs-player-modal';
+    modal.className = 'mcs-player-modal';
+    modal.onclick = (e) => { if(e.target === modal) closeMasterclassPlayer(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="mcs-player-content">
+      <button class="mcs-player-close" onclick="closeMasterclassPlayer()" title="Fermer">✕</button>
+      <div class="mcs-player-video">
+        ${embed
+          ? `<iframe src="${escAttr(embed)}" frameborder="0" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe>`
+          : `<div class="mcs-player-novideo">⚠️ Vidéo non disponible.<br><a href="${escAttr(m.video_url||'')}" target="_blank" style="color:#A5B4FC">Ouvrir le lien original →</a></div>`}
+      </div>
+      <div class="mcs-player-info">
+        <span class="mcs-card-theme" style="--mc-color:${th.color}">${th.icon} ${th.label}</span>
+        <h2 class="mcs-player-title">${escHtml(m.titre||'')}</h2>
+        ${m.intervenant?`<div class="mcs-player-intervenant">👤 ${escHtml(m.intervenant)}${m.intervenant_role?` · ${escHtml(m.intervenant_role)}`:''}</div>`:''}
+        ${m.duree?`<div class="mcs-player-duree">⏱ ${escHtml(m.duree)}</div>`:''}
+        ${m.description?`<div class="mcs-player-desc">${escHtml(m.description).replace(/\n/g,'<br>')}</div>`:''}
+      </div>
+    </div>
+  `;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMasterclassPlayer(){
+  const modal = document.getElementById('mcs-player-modal');
+  if(!modal) return;
+  // Stop la vidéo en vidant le src
+  const iframe = modal.querySelector('iframe');
+  if(iframe) iframe.src = 'about:blank';
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
 function toggleSidebar(){
   const s=document.getElementById("sidebar");
   const o=document.getElementById("sidebar-overlay");
