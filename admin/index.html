@@ -1664,6 +1664,7 @@ function renderUsers(){
         </div>
         <span class="badge ${ROLE_COLORS[u.role]||'badge-gray'}">${ROLE_LABELS[u.role]||u.role}</span>
         <button class="btn btn-secondary btn-sm" onclick="changeRole('${u.id}','${u.role}','${escHtml((u.prenom||'')+' '+(u.nom||''))}')">Changer rôle</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUserAccount('${u.id}','${escHtml(u.email||'')}','${escHtml((u.prenom||'')+' '+(u.nom||''))}','${u.role||''}')" title="Supprimer ce compte">🗑</button>
       </div>
       ${pwdHtml}
     </div>`;
@@ -1722,6 +1723,120 @@ async function resetUserPwd(uid, email, name){
 }
 
 const BASE_PATH = location.pathname.startsWith('/suivi-apprenants') ? '/suivi-apprenants' : '';
+
+// ─── Suppression d'un compte (Firebase Auth + Firestore + fiche apprenant si élève) ───
+async function deleteUserAccount(uid, email, name, role){
+  // Sécurité : on ne se supprime pas soi-même
+  if (uid === auth.currentUser?.uid){
+    alert("❌ Tu ne peux pas supprimer ton propre compte admin depuis cette interface.");
+    return;
+  }
+  const cleanName = (name||'').trim() || email || 'ce compte';
+  const userObj = users.find(x => x.id === uid);
+
+  // Double confirmation
+  const step1 = confirm(
+    `⚠️ Supprimer le compte de ${cleanName}\n` +
+    `Email : ${email}\n` +
+    `Rôle : ${role||'inconnu'}\n\n` +
+    `Cette action va :\n` +
+    `• Supprimer le compte Firebase Auth (connexion)\n` +
+    `• Supprimer le doc users\n` +
+    (role === 'student' ? `• Supprimer la fiche apprenant associée\n` : '') +
+    `\nLes données suivantes seront aussi supprimées :\n` +
+    (role === 'student' ? `• Progressions de modules\n• Notes\n• RDVs\n` : '') +
+    `\nContinuer ?`
+  );
+  if (!step1) return;
+
+  const typed = prompt(`Pour confirmer définitivement, tape :\n\nSUPPRIMER`, '');
+  if (typed !== 'SUPPRIMER'){
+    alert('Suppression annulée.');
+    return;
+  }
+
+  const report = { authDeleted:false, userDeleted:false, apprenantDeleted:false, progressionsDeleted:0, notesDeleted:0, rdvsDeleted:0, errors:[] };
+
+  // 1) Tenter de supprimer le compte Firebase Auth via instance secondaire + mot de passe stocké
+  if (userObj?.password_admin){
+    try{
+      const secondApp = firebase.apps.find(a => a.name==='secondary') || firebase.initializeApp(FB,'secondary');
+      const secondAuth = secondApp.auth();
+      await secondAuth.signInWithEmailAndPassword(email, userObj.password_admin);
+      await secondAuth.currentUser.delete();
+      report.authDeleted = true;
+    } catch(e){
+      console.warn('[delete] Firebase Auth:', e);
+      report.errors.push('Firebase Auth : '+(e.message||e.code));
+    }
+  } else {
+    report.errors.push("Firebase Auth : mot de passe non stocké → compte Auth non supprimé automatiquement. À retirer manuellement dans la console Firebase.");
+  }
+
+  // 2) Suppression de la fiche apprenant (si élève)
+  if (role === 'student'){
+    try{
+      // Cherche par uid ou par email
+      const byUid = await db.collection('apprenants').where('uid','==',uid).get();
+      const byMail = await db.collection('apprenants').where('email','==',email).get();
+      const docsToDelete = new Set();
+      byUid.docs.forEach(d => docsToDelete.add(d.id));
+      byMail.docs.forEach(d => docsToDelete.add(d.id));
+      for (const aId of docsToDelete){
+        // Sous-collections / liées : progressions, notes, rdvs (par apprenant_id)
+        try{
+          const progs = await db.collection('progressions').where('apprenant_id','==',aId).get();
+          await Promise.all(progs.docs.map(d => d.ref.delete()));
+          report.progressionsDeleted += progs.size;
+        }catch(_){}
+        try{
+          const notes = await db.collection('notes').where('apprenant_id','==',aId).get();
+          await Promise.all(notes.docs.map(d => d.ref.delete()));
+          report.notesDeleted += notes.size;
+        }catch(_){}
+        try{
+          const rdvs = await db.collection('rdvs').where('apprenant_id','==',aId).get();
+          await Promise.all(rdvs.docs.map(d => d.ref.delete()));
+          report.rdvsDeleted += rdvs.size;
+        }catch(_){}
+        await db.collection('apprenants').doc(aId).delete();
+        report.apprenantDeleted = true;
+      }
+    } catch(e){
+      console.warn('[delete] apprenant:', e);
+      report.errors.push('Apprenant : '+(e.message||e.code));
+    }
+  }
+
+  // 3) Suppression du doc users
+  try{
+    await db.collection('users').doc(uid).delete();
+    report.userDeleted = true;
+  } catch(e){
+    console.warn('[delete] users doc:', e);
+    report.errors.push('users/'+uid+' : '+(e.message||e.code));
+  }
+
+  // Rapport final
+  const lines = [
+    `Compte "${cleanName}" supprimé.`,
+    '',
+    `• Firebase Auth : ${report.authDeleted?'✓ supprimé':'⚠️ non supprimé (à faire manuellement dans la console)'}`,
+    `• users doc : ${report.userDeleted?'✓ supprimé':'❌ erreur'}`,
+  ];
+  if (role === 'student'){
+    lines.push(`• apprenant : ${report.apprenantDeleted?'✓ supprimé':'⚠️ aucun trouvé'}`);
+    if (report.progressionsDeleted) lines.push(`• progressions : ${report.progressionsDeleted} supprimées`);
+    if (report.notesDeleted) lines.push(`• notes : ${report.notesDeleted} supprimées`);
+    if (report.rdvsDeleted) lines.push(`• rdvs : ${report.rdvsDeleted} supprimés`);
+  }
+  if (report.errors.length){
+    lines.push('', '⚠️ Détails :');
+    report.errors.forEach(e => lines.push('• '+e));
+  }
+  alert(lines.join('\n'));
+  loadData();
+}
 
 async function changeRole(uid,currentRole,name){
   const roles=['student','csm','setter','closer','admin'];
