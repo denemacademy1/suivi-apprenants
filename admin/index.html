@@ -1174,7 +1174,10 @@ function editModule(id){
   const m=modules.find(x=>x.id===id);
   if(!m)return;
   editingModuleId=id;
-  quizQuestions=m.quiz?JSON.parse(JSON.stringify(m.quiz)):[];
+  quizQuestions=m.quiz?JSON.parse(JSON.stringify(m.quiz)).map(q=>{
+    const arr=_correctAsArray(q.correct);
+    return {...q, correct:arr.length?arr:[0], nb_correct:q.nb_correct||arr.length||1};
+  }):[];
   // Détermine la phase : utilise phase_id si valide (p0-p6), sinon dérive de l'ordre
   const phaseFromOrdre=getPhaseByOrdre(m.ordre);
   if(m.phase_id && PROGRAM.find(p=>p.key===m.phase_id)) selectedPhase=m.phase_id;
@@ -1251,7 +1254,13 @@ async function saveModule(){
     pdf_url:document.getElementById('m-pdf-url').value,
     pdf_nom:document.getElementById('m-pdf-nom').value,
     contenu:document.getElementById('m-contenu-text').value.trim(),
-    quiz:quizQuestions.filter(q=>q.texte.trim()),
+    quiz:quizQuestions.filter(q=>q.texte.trim()).map(q=>({
+      texte:q.texte,
+      options:q.options||['','','',''],
+      correct:_correctAsArray(q.correct),
+      nb_correct:q.nb_correct||_correctAsArray(q.correct).length||1,
+      pourquoi:q.pourquoi||''
+    })),
     score_minimum:parseInt(document.getElementById('m-score-min').value)||70,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -1300,7 +1309,7 @@ document.getElementById('pdf-zone').addEventListener('drop',e=>{e.preventDefault
 
 // ─── Quiz Builder ─────────────────────────────────────────
 function addQuestion(){
-  quizQuestions.push({texte:'',options:['','','',''],correct:0,pourquoi:''});
+  quizQuestions.push({texte:'',options:['','','',''],correct:[0],nb_correct:1,pourquoi:''});
   renderQuizQuestions();
 }
 
@@ -1309,29 +1318,90 @@ function removeQuestion(i){
   renderQuizQuestions();
 }
 
+// Normalise le champ `correct` en array (rétrocompat avec ancien format int)
+function _correctAsArray(c){
+  if (Array.isArray(c)) return c.map(x=>parseInt(x,10)).filter(x=>!isNaN(x));
+  if (typeof c === 'number') return [c];
+  return [];
+}
+
+function setQuestionNbCorrect(qi, nb){
+  const q = quizQuestions[qi];
+  if (!q) return;
+  q.nb_correct = nb;
+  let arr = _correctAsArray(q.correct);
+  // Si trop de bonnes réponses cochées, on tronque ; si pas assez, on garde tel quel
+  if (arr.length > nb) arr = arr.slice(0, nb);
+  // Si vide, on coche la 1ère option par défaut
+  if (arr.length === 0) arr = [0];
+  q.correct = arr;
+  renderQuizQuestions();
+}
+
+function toggleQuestionCorrect(qi, oi){
+  const q = quizQuestions[qi];
+  if (!q) return;
+  const nb = q.nb_correct || 1;
+  let arr = _correctAsArray(q.correct);
+  if (nb === 1){
+    arr = [oi];
+  } else {
+    const idx = arr.indexOf(oi);
+    if (idx >= 0) arr.splice(idx, 1);
+    else {
+      if (arr.length >= nb){
+        // Déjà N coches : on retire la plus ancienne et on ajoute la nouvelle
+        arr.shift();
+      }
+      arr.push(oi);
+    }
+  }
+  q.correct = arr.sort((a,b)=>a-b);
+  renderQuizQuestions();
+}
+
 function renderQuizQuestions(){
   const el=document.getElementById('quiz-questions');
   const empty=document.getElementById('quiz-empty');
   empty.style.display=quizQuestions.length?'none':'block';
-  el.innerHTML=quizQuestions.map((q,qi)=>`
+  el.innerHTML=quizQuestions.map((q,qi)=>{
+    const correctArr = _correctAsArray(q.correct);
+    const nb = q.nb_correct || correctArr.length || 1;
+    const isMulti = nb > 1;
+    return `
     <div class="quiz-question">
       <div class="quiz-question-header">
         <input type="text" value="${escHtml(q.texte)}" placeholder="Question ${qi+1}…" style="flex:1;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:14px;font-weight:600;outline:none" oninput="quizQuestions[${qi}].texte=this.value">
         <button class="btn btn-danger btn-sm" style="margin-left:10px" onclick="removeQuestion(${qi})">🗑</button>
       </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px">
+        <label style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px">Nombre de bonnes réponses</label>
+        <select onchange="setQuestionNbCorrect(${qi}, parseInt(this.value))" style="padding:5px 10px;border:1.5px solid #E2E8F0;border-radius:7px;font-size:13px;font-weight:600;outline:none;background:#fff;cursor:pointer">
+          <option value="1" ${nb===1?'selected':''}>1 bonne réponse</option>
+          <option value="2" ${nb===2?'selected':''}>2 bonnes réponses</option>
+          <option value="3" ${nb===3?'selected':''}>3 bonnes réponses</option>
+          <option value="4" ${nb===4?'selected':''}>4 bonnes réponses</option>
+        </select>
+        <span style="font-size:11px;color:#94A3B8;margin-left:auto">${isMulti?'☑️ Coche multiple':'⚪ Sélection unique'}</span>
+      </div>
       <div class="quiz-options">
-        ${q.options.map((opt,oi)=>`
+        ${q.options.map((opt,oi)=>{
+          const checked = correctArr.includes(oi);
+          const inputType = isMulti ? 'checkbox' : 'radio';
+          return `
           <div class="quiz-option">
             <label>${['A','B','C','D'][oi]}</label>
-            <input type="radio" name="correct-${qi}" ${q.correct===oi?'checked':''} onchange="quizQuestions[${qi}].correct=${oi}" title="Bonne réponse">
+            <input type="${inputType}" name="correct-${qi}" ${checked?'checked':''} onchange="toggleQuestionCorrect(${qi},${oi})" title="Bonne réponse">
             <input type="text" value="${escHtml(opt)}" placeholder="Option ${['A','B','C','D'][oi]}…" oninput="quizQuestions[${qi}].options[${oi}]=this.value">
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>
       <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #E2E8F0">
-        <label style="display:block;font-size:11px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">💡 Pourquoi cette réponse est correcte <span style="color:#94A3B8;font-weight:400;font-size:11px;text-transform:none;letter-spacing:0">(visible par l'apprenant après le quiz)</span></label>
-        <textarea placeholder="Ex : Cette réponse est correcte parce que…&#10;C'est la bonne option car…" rows="2" style="width:100%;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;line-height:1.5;color:#0F172A;outline:none;resize:vertical" oninput="quizQuestions[${qi}].pourquoi=this.value">${escHtml(q.pourquoi||'')}</textarea>
+        <label style="display:block;font-size:11px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">💡 Pourquoi ${isMulti?'ces réponses sont correctes':'cette réponse est correcte'} <span style="color:#94A3B8;font-weight:400;font-size:11px;text-transform:none;letter-spacing:0">(visible par l'apprenant après le quiz)</span></label>
+        <textarea placeholder="Ex : ${isMulti?'Ces réponses sont correctes parce que…':'Cette réponse est correcte parce que…'}" rows="2" style="width:100%;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;line-height:1.5;color:#0F172A;outline:none;resize:vertical" oninput="quizQuestions[${qi}].pourquoi=this.value">${escHtml(q.pourquoi||'')}</textarea>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}

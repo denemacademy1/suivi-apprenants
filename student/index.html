@@ -322,9 +322,14 @@ nav::-webkit-scrollbar{width:0}
 .option.selected{border-color:rgba(99,102,241,.5);background:rgba(99,102,241,.1);color:#A5B4FC;font-weight:500}
 .option.correct{border-color:rgba(16,185,129,.5);background:rgba(16,185,129,.08);color:#34D399;font-weight:500}
 .option.wrong{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06);color:#FCA5A5}
-.option input[type=radio]{display:none}
+.option input[type=radio],.option input[type=checkbox]{display:none}
 .opt-badge{width:26px;height:26px;border-radius:7px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;opacity:.7}
+.option.option-multi .opt-badge{border-radius:6px}
 .option.selected .opt-badge,.option.correct .opt-badge,.option.wrong .opt-badge{opacity:1}
+.option.option-multi.selected .opt-badge::after{content:'✓';position:absolute;font-size:14px;margin-left:-13px;color:inherit}
+.option.option-multi{position:relative}
+.option.option-multi .opt-badge{position:relative;overflow:hidden}
+.q-multi-hint{transition:color .2s}
 /* Justification "Pourquoi cette réponse" — révélée après validation */
 .q-pourquoi{margin-top:14px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.25);border-radius:11px;padding:14px 16px;animation:fadeUp .35s ease}
 .q-pourquoi.q-pourquoi-wrong{background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(245,158,11,.04));border-color:rgba(245,158,11,.3)}
@@ -1809,13 +1814,16 @@ function renderQuizHTML(m,isDone,prog){
     </div>
     <div class="quiz-body">`;
   m.quiz.forEach((q,qi)=>{
-    html+=`<div class="q-block">
-      <div class="q-num-label">Question ${qi+1} sur ${m.quiz.length}</div>
+    const correctArr = quizCorrectArr(q);
+    const nb = q.nb_correct || correctArr.length || 1;
+    const isMulti = nb > 1;
+    html+=`<div class="q-block" data-multi="${isMulti?1:0}" data-nb="${nb}">
+      <div class="q-num-label">Question ${qi+1} sur ${m.quiz.length}${isMulti?` · <span style="color:#A78BFA">${nb} bonnes réponses</span>`:''}</div>
       <div class="q-text">${q.texte||q.question||""}</div>
       <div class="options">`;
     (q.options||[]).forEach((opt,oi)=>{
-      html+=`<label class="option" id="opt-${qi}-${oi}" onclick="selectAnswer(${qi},${oi})">
-        <input type="radio" name="q${qi}" value="${oi}">
+      html+=`<label class="option ${isMulti?'option-multi':''}" id="opt-${qi}-${oi}" onclick="toggleAnswer(${qi},${oi},${nb})">
+        <input type="${isMulti?'checkbox':'radio'}" name="q${qi}" value="${oi}">
         <span class="opt-badge">${letters[oi]}</span>
         <span>${opt}</span>
       </label>`;
@@ -1823,8 +1831,9 @@ function renderQuizHTML(m,isDone,prog){
     // Bloc "Pourquoi" — masqué jusqu'à validation du quiz
     const pourquoi = (q.pourquoi||'').trim();
     html+=`</div>
+      ${isMulti?`<div class="q-multi-hint" id="hint-${qi}" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:8px">Coche <strong style="color:#A78BFA">${nb} réponses</strong> avant de valider.</div>`:''}
       <div class="q-pourquoi" id="pourquoi-${qi}" style="display:none">
-        <div class="q-pourquoi-head">💡 Pourquoi cette réponse</div>
+        <div class="q-pourquoi-head">💡 ${isMulti?'Pourquoi ces réponses':'Pourquoi cette réponse'}</div>
         <div class="q-pourquoi-body">${pourquoi ? pourquoi.replace(/\n/g,'<br>') : '<em style="color:rgba(255,255,255,.5)">(Aucune justification fournie pour cette question.)</em>'}</div>
       </div>
     </div>`;
@@ -1838,29 +1847,112 @@ function renderQuizHTML(m,isDone,prog){
   return html;
 }
 
-function selectAnswer(qi,oi){
-  S.quizAnswers[qi]=oi;
-  document.querySelectorAll(`[id^="opt-${qi}-"]`).forEach(el=>el.classList.remove('selected'));
-  document.getElementById(`opt-${qi}-${oi}`)?.classList.add('selected');
+function quizCorrectArr(q){
+  if (Array.isArray(q?.correct)) return q.correct.map(x=>parseInt(x,10)).filter(x=>!isNaN(x));
+  if (typeof q?.correct === 'number') return [q.correct];
+  return [];
 }
+
+function toggleAnswer(qi, oi, nb){
+  if (S.quizSubmitted) return;
+  if (!Array.isArray(S.quizAnswers[qi])) S.quizAnswers[qi] = [];
+  const arr = S.quizAnswers[qi];
+  if (nb === 1){
+    // Sélection unique : on remplace
+    S.quizAnswers[qi] = [oi];
+    document.querySelectorAll(`[id^="opt-${qi}-"]`).forEach(el=>el.classList.remove('selected'));
+    document.getElementById(`opt-${qi}-${oi}`)?.classList.add('selected');
+    const cb = document.querySelector(`#opt-${qi}-${oi} input`);
+    if (cb) cb.checked = true;
+  } else {
+    // Multi : on toggle, mais on limite à `nb` cochées
+    const idx = arr.indexOf(oi);
+    if (idx >= 0){
+      arr.splice(idx, 1);
+      document.getElementById(`opt-${qi}-${oi}`)?.classList.remove('selected');
+      const cb = document.querySelector(`#opt-${qi}-${oi} input`);
+      if (cb) cb.checked = false;
+    } else {
+      if (arr.length >= nb){
+        // Bloque le clic, message d'aide
+        const hint = document.getElementById(`hint-${qi}`);
+        if (hint){
+          hint.style.color = '#FCA5A5';
+          hint.innerHTML = `Tu as déjà coché <strong>${nb}</strong> réponses — décoches-en une pour en changer.`;
+          setTimeout(()=>{
+            if (hint && hint.style.color === 'rgb(252, 165, 165)'){
+              hint.style.color = 'rgba(255,255,255,.45)';
+              hint.innerHTML = `Coche <strong style="color:#A78BFA">${nb} réponses</strong> avant de valider.`;
+            }
+          }, 2200);
+        }
+        // Décoche visuellement la case que l'utilisateur vient de cocher (sinon l'input checkbox reste coché)
+        const cb = document.querySelector(`#opt-${qi}-${oi} input`);
+        if (cb) cb.checked = false;
+        return;
+      }
+      arr.push(oi);
+      document.getElementById(`opt-${qi}-${oi}`)?.classList.add('selected');
+      const cb = document.querySelector(`#opt-${qi}-${oi} input`);
+      if (cb) cb.checked = true;
+    }
+    // Met à jour le hint avec le compteur
+    const hint = document.getElementById(`hint-${qi}`);
+    if (hint){
+      const remaining = nb - arr.length;
+      if (remaining > 0){
+        hint.style.color = 'rgba(255,255,255,.45)';
+        hint.innerHTML = `Encore <strong style="color:#A78BFA">${remaining} réponse${remaining>1?'s':''}</strong> à cocher.`;
+      } else {
+        hint.style.color = '#34D399';
+        hint.innerHTML = `✓ ${nb} réponses cochées — tu peux valider.`;
+      }
+    }
+  }
+}
+
+// Alias rétrocompat (ancien nom)
+function selectAnswer(qi, oi){ toggleAnswer(qi, oi, 1); }
 
 async function submitQuiz(moduleId){
   if(S.quizSubmitted)return;
   const m=S.modules.find(x=>x.id===moduleId);
   if(!m?.quiz)return;
-  const unanswered=m.quiz.findIndex((_,i)=>S.quizAnswers[i]===undefined);
-  if(unanswered>=0){alert(`Répondez à la question ${unanswered+1}.`);return;}
+
+  // Validation : chaque question doit avoir exactement nb_correct réponses cochées
+  for (let i = 0; i < m.quiz.length; i++){
+    const q = m.quiz[i];
+    const nb = q.nb_correct || quizCorrectArr(q).length || 1;
+    const ua = S.quizAnswers[i];
+    if (!Array.isArray(ua) || ua.length === 0){
+      alert(`Répondez à la question ${i+1}.`);
+      return;
+    }
+    if (ua.length !== nb){
+      alert(`Question ${i+1} : tu dois cocher exactement ${nb} réponse${nb>1?'s':''} (actuellement ${ua.length}).`);
+      return;
+    }
+  }
+
   S.quizSubmitted=true;
   let correct=0;
   m.quiz.forEach((q,qi)=>{
-    const ua=S.quizAnswers[qi],ok=ua===q.correct;
+    const correctArr = quizCorrectArr(q);
+    const ua = S.quizAnswers[qi] || [];
+    // Strict : toutes les bonnes réponses sont cochées ET aucune mauvaise
+    const ok = correctArr.length === ua.length
+            && correctArr.every(c => ua.includes(c))
+            && ua.every(a => correctArr.includes(a));
     if(ok)correct++;
     document.querySelectorAll(`[id^="opt-${qi}-"]`).forEach(el=>{
       el.style.pointerEvents='none';
       const oi=parseInt(el.id.split('-')[2]);
-      if(oi===q.correct)el.classList.add('correct');
-      else if(oi===ua&&!ok)el.classList.add('wrong');
+      if (correctArr.includes(oi)) el.classList.add('correct');
+      else if (ua.includes(oi)) el.classList.add('wrong');
     });
+    // Cache le hint après validation
+    const hint = document.getElementById(`hint-${qi}`);
+    if (hint) hint.style.display = 'none';
     // Affiche la justification "Pourquoi" pour chaque question
     const pq=document.getElementById(`pourquoi-${qi}`);
     if(pq){
