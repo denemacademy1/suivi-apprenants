@@ -1762,19 +1762,58 @@ async function createUser(){
     const secondApp=firebase.apps.find(a=>a.name==='secondary')||firebase.initializeApp(FB,'secondary');
     const secondAuth=secondApp.auth();
     const cred=await secondAuth.createUserWithEmailAndPassword(email,pwd);
-    await db.collection('users').doc(cred.user.uid).set({
+    const uid = cred.user.uid;
+    await db.collection('users').doc(uid).set({
       prenom,nom,email,role,
-      // Stockage du mot de passe pour consultation admin (visible uniquement par admin via masque/toggle dans l'UI)
+      // Stockage du mot de passe pour consultation admin
       password_admin: pwd,
       password_set_at: firebase.firestore.FieldValue.serverTimestamp(),
       createdAt:firebase.firestore.FieldValue.serverTimestamp(),
       createdBy:auth.currentUser?.uid||''
     });
+
+    // 🎯 Si c'est un apprenant → on crée aussi son doc dans la collection "apprenants"
+    // Comme ça il apparaît directement dans la page Apprenants (admin) ET dans le CRM côté CSM
+    if (role === 'student'){
+      const today = new Date().toISOString().slice(0,10);
+      const couleurs = ['#4F46E5','#7C3AED','#DB2777','#EA580C','#16A34A','#0891B2','#CA8A04','#9333EA','#DC2626','#059669'];
+      const couleur = couleurs[Math.floor(Math.random()*couleurs.length)];
+      try {
+        await db.collection('apprenants').add({
+          uid,                                          // lien vers Firebase Auth
+          prenom, nom, email,
+          telephone: '',
+          whatsapp_link: '',
+          cohorte: '',
+          cohort_id: null,
+          charge: '',                                    // à remplir par le CSM
+          csm_id: null,
+          jour: 1,                                       // J1 du parcours
+          date_debut: today,                             // date de démarrage = aujourd'hui par défaut
+          statut: 'En cours',
+          objectif: '',
+          notes: '',
+          modules_scores: [],
+          couleur,
+          xp: 0,
+          streak: 0,
+          badges: [],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: auth.currentUser?.uid || '',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch(e){
+        // Le compte est créé mais l'apprenant n'a pas pu l'être (rules ?). On ne bloque pas.
+        console.warn('[createUser] apprenant non créé :', e);
+      }
+    }
+
     await secondAuth.signOut();
     document.getElementById('user-modal-form').style.display='none';
     document.getElementById('user-modal-success').style.display='block';
     loadData();
-    showAlert(`Compte créé pour ${email} (${role}).`);
+    const extra = role === 'student' ? ' + fiche apprenant créée pour le CSM' : '';
+    showAlert(`Compte créé pour ${email} (${role})${extra}.`);
   }catch(e){
     errMsg.textContent=getFrCreateError(e.code)||e.message;errEl.classList.add('show');
   }
