@@ -1897,7 +1897,7 @@ function renderQuizHTML(m,isDone,prog){
       <div class="q-text">${q.texte||q.question||""}</div>
       <div class="options">`;
     (q.options||[]).forEach((opt,oi)=>{
-      html+=`<div class="option ${isMulti?'option-multi':''}" id="opt-${qi}-${oi}" role="${isMulti?'checkbox':'radio'}" aria-checked="false" tabindex="0" onclick="toggleAnswer(${qi},${oi},${nb})" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleAnswer(${qi},${oi},${nb})}">
+      html+=`<div class="option ${isMulti?'option-multi':''}" id="opt-${qi}-${oi}" data-qi="${qi}" data-oi="${oi}" data-nb="${nb}" role="${isMulti?'checkbox':'radio'}" aria-checked="false" tabindex="0">
         <span class="opt-badge">${letters[oi]}</span>
         <span>${opt}</span>
       </div>`;
@@ -1932,6 +1932,7 @@ function toggleAnswer(qi, oi, nb){
   qi = parseInt(qi,10); oi = parseInt(oi,10); nb = parseInt(nb,10) || 1;
   if (!Array.isArray(S.quizAnswers[qi])) S.quizAnswers[qi] = [];
   const arr = S.quizAnswers[qi];
+  console.log(`[quiz] toggle qi=${qi} oi=${oi} nb=${nb} arr=[${arr.join(',')}]`);
 
   const setSel = (i, on) => {
     const el = document.getElementById(`opt-${qi}-${i}`);
@@ -1952,11 +1953,9 @@ function toggleAnswer(qi, oi, nb){
   // ─── Multi : toggle limité à `nb` ───
   const idx = arr.indexOf(oi);
   if (idx >= 0){
-    // Déjà sélectionné → on retire
     arr.splice(idx, 1);
     setSel(oi, false);
   } else {
-    // Pas sélectionné → on ajoute si limite pas atteinte
     if (arr.length >= nb){
       const hint = document.getElementById(`hint-${qi}`);
       if (hint){
@@ -1974,7 +1973,6 @@ function toggleAnswer(qi, oi, nb){
     setSel(oi, true);
   }
 
-  // Met à jour le hint compteur
   const hint = document.getElementById(`hint-${qi}`);
   if (hint){
     const remaining = nb - arr.length;
@@ -1990,6 +1988,39 @@ function toggleAnswer(qi, oi, nb){
 
 // Alias rétrocompat (ancien nom)
 function selectAnswer(qi, oi){ toggleAnswer(qi, oi, 1); }
+
+// ─── Délégation d'événements sur le quiz (plus robuste que onclick inline) ───
+// Attaché une fois au container principal et trouve l'option cliquée.
+function attachQuizDelegation(){
+  if (window._quizDelegationDone) return;
+  window._quizDelegationDone = true;
+  document.addEventListener('click', (e) => {
+    const opt = e.target.closest('.option');
+    if (!opt) return;
+    if (!opt.dataset.qi) return; // pas une option de quiz
+    const qi = parseInt(opt.dataset.qi, 10);
+    const oi = parseInt(opt.dataset.oi, 10);
+    const nb = parseInt(opt.dataset.nb, 10) || 1;
+    console.log(`[quiz click] option qi=${qi} oi=${oi} nb=${nb} multi=${opt.classList.contains('option-multi')}`);
+    toggleAnswer(qi, oi, nb);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== ' ' && e.key !== 'Enter') return;
+    const opt = e.target.closest && e.target.closest('.option');
+    if (!opt || !opt.dataset.qi) return;
+    e.preventDefault();
+    const qi = parseInt(opt.dataset.qi, 10);
+    const oi = parseInt(opt.dataset.oi, 10);
+    const nb = parseInt(opt.dataset.nb, 10) || 1;
+    toggleAnswer(qi, oi, nb);
+  });
+}
+// Init au chargement
+if (document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', attachQuizDelegation);
+} else {
+  attachQuizDelegation();
+}
 
 async function submitQuiz(moduleId){
   if(S.quizSubmitted)return;
