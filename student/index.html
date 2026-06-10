@@ -322,6 +322,22 @@ nav::-webkit-scrollbar{width:0}
 .sn-note-snippet{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}
 .sn-note-arrow{background:none;border:none;color:rgba(255,255,255,.4);font-size:14px;cursor:pointer;padding:2px 4px;flex-shrink:0}
 .sn-note-item:hover .sn-note-arrow{color:#A5B4FC}
+/* Note en édition inline */
+.sn-note-item.sn-note-editing{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px;background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(99,102,241,.07));border:1.5px solid rgba(245,158,11,.35);cursor:default;box-shadow:0 8px 22px rgba(245,158,11,.12);animation:fadeUp .2s ease}
+.sn-note-editor-title{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:700;color:var(--text);outline:none;font-family:inherit;transition:.15s;width:100%;box-sizing:border-box}
+.sn-note-editor-title:focus{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)}
+.sn-note-editor-title::placeholder{color:rgba(255,255,255,.35);font-weight:500}
+.sn-note-editor-body{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:11px 13px;font-size:13px;color:var(--text);outline:none;font-family:inherit;resize:vertical;line-height:1.6;transition:.15s;width:100%;box-sizing:border-box;min-height:140px}
+.sn-note-editor-body:focus{border-color:rgba(99,102,241,.5);background:rgba(99,102,241,.05)}
+.sn-note-editor-body::placeholder{color:rgba(255,255,255,.3);font-style:italic}
+.sn-note-editor-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding-top:4px}
+.sn-note-save-status{font-size:11px;color:#34D399;font-weight:600;display:inline-flex;align-items:center;gap:4px;transition:.15s}
+.sn-note-save-status.saving{color:#FCD34D}
+.sn-note-save-status.error{color:#F87171}
+.sn-note-btn{background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.3);color:#A5B4FC;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:7px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.sn-note-btn:hover{background:rgba(99,102,241,.28);color:#fff;border-color:rgba(99,102,241,.5)}
+.sn-note-btn-danger{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25);color:#FCA5A5}
+.sn-note-btn-danger:hover{background:rgba(239,68,68,.25);color:#fff;border-color:rgba(239,68,68,.5)}
 /* Todos add input */
 .sn-todo-add{display:flex;gap:6px}
 .sn-todo-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--text);outline:none;font-family:inherit}
@@ -2004,7 +2020,7 @@ function renderModuleContent(m){
             <div class="support-tech-icon">📖</div>
             <div class="support-tech-info">
               <div class="support-tech-title">Support technique officiel DENEM</div>
-              <div class="support-tech-sub">Navigation entre toutes les séances disponible · Hébergé sur GitHub Pages</div>
+              <div class="support-tech-sub">Navigation entre toutes les séances disponible</div>
             </div>
             <button class="support-tech-load-btn" onclick="loadSupportFrame('${m.id}', '${escAttr(supUrl)}')">
               Ouvrir le support →
@@ -2076,24 +2092,41 @@ function renderModuleContent(m){
 //  NOTES & TÂCHES IMMERSIVES PAR SESSION
 // ═══════════════════════════════════════════════
 function renderSessionNotesAndTodos(m){
-  console.log('[session-tools] render pour module', m.id, m.titre, '— notes:', (S.notes||[]).length, 'todos:', (S.todos||[]).length);
   const sessionNotes = (S.notes||[]).filter(n => n.module_id === m.id);
   const sessionTodos = (S.todos||[]).filter(t => t.module_id === m.id);
   const todosDone = sessionTodos.filter(t => t.done).length;
 
-  const notesList = sessionNotes.length
-    ? sessionNotes.map(n => {
-        const titre = (n.titre||'').trim() || '✏️ Note sans titre';
-        const snippet = (n.contenu||'').replace(/<[^>]+>/g,'').trim().slice(0,90);
-        return `<div class="sn-note-item" onclick="openSessionNote('${n.id}')">
-          <div class="sn-note-icon">📝</div>
-          <div class="sn-note-body">
-            <div class="sn-note-title">${escHtml(titre)}</div>
-            ${snippet?`<div class="sn-note-snippet">${escHtml(snippet)}${(n.contenu||'').length>90?'…':''}</div>`:''}
+  // Note ouverte en édition inline (ID stocké dans S._inlineNoteId)
+  const activeId = S._inlineNoteId;
+  const renderNoteCard = (n) => {
+    const isOpen = activeId === n.id;
+    const titre = (n.titre||'').trim();
+    const snippet = (n.contenu||'').replace(/<[^>]+>/g,'').trim().slice(0,120);
+    if (isOpen){
+      return `<div class="sn-note-item sn-note-editing" data-note-id="${n.id}">
+        <input type="text" class="sn-note-editor-title" id="sn-note-title-${n.id}" placeholder="Titre de la note…" value="${escAttr(titre)}" oninput="onInlineNoteChange('${n.id}')">
+        <textarea class="sn-note-editor-body" id="sn-note-body-${n.id}" placeholder="Écris ici tout ce que tu retiens de cette session…" oninput="onInlineNoteChange('${n.id}')" rows="6">${escHtml(n.contenu||'')}</textarea>
+        <div class="sn-note-editor-footer">
+          <span class="sn-note-save-status" id="sn-note-status-${n.id}">✓ Enregistré</span>
+          <div style="display:flex;gap:6px">
+            <button class="sn-note-btn sn-note-btn-danger" onclick="deleteSessionNote('${n.id}','${m.id}')" title="Supprimer">🗑 Supprimer</button>
+            <button class="sn-note-btn" onclick="closeInlineNote('${m.id}')">✓ Terminer</button>
           </div>
-          <button class="sn-note-arrow" title="Ouvrir">→</button>
-        </div>`;
-      }).join('')
+        </div>
+      </div>`;
+    }
+    return `<div class="sn-note-item" onclick="openInlineNote('${n.id}','${m.id}')">
+      <div class="sn-note-icon">📝</div>
+      <div class="sn-note-body">
+        <div class="sn-note-title">${escHtml(titre || '✏️ Note sans titre')}</div>
+        ${snippet?`<div class="sn-note-snippet">${escHtml(snippet)}${(n.contenu||'').length>120?'…':''}</div>`:''}
+      </div>
+      <button class="sn-note-arrow" title="Modifier">✏️</button>
+    </div>`;
+  };
+
+  const notesList = sessionNotes.length
+    ? sessionNotes.map(renderNoteCard).join('')
     : `<div class="sn-empty">Aucune note pour cette session. Capture ce que tu apprends ici 👇</div>`;
 
   const todosList = sessionTodos.length
@@ -2118,7 +2151,7 @@ function renderSessionNotesAndTodos(m){
         <div class="sn-col">
           <div class="sn-col-head">
             <span class="sn-col-title">✏️ Notes <span class="sn-count">${sessionNotes.length}</span></span>
-            <button class="sn-add-btn" onclick="newNoteForModule('${m.id}')">+ Nouvelle note</button>
+            <button class="sn-add-btn" onclick="newInlineNote('${m.id}')">+ Nouvelle note</button>
           </div>
           <div class="sn-list">${notesList}</div>
         </div>
@@ -2139,26 +2172,96 @@ function renderSessionNotesAndTodos(m){
   </div>`;
 }
 
-// ─── Actions ouverture/ajout depuis le module ───
-async function newNoteForModule(moduleId){
+// ─── Notes inline : pas besoin de quitter la page de la session ───
+async function newInlineNote(moduleId){
   if(!S.apprenant){ alert('Pas connecté.'); return; }
   const n = { apprenant_id:S.apprenant.id, titre:'', contenu:'', module_id:moduleId, createdAt:TS(), updatedAt:TS() };
   const ref = await db.collection("notes").add(n);
-  S.currentNote = { id: ref.id, ...n };
-  showPage('notes');
-  setTimeout(() => {
-    openNoteEditor(S.currentNote);
-    const ttl = document.getElementById("note-title");
-    if(ttl) ttl.focus();
-  }, 120);
+  // Optimistic insertion locale (le listener Firestore arrivera juste après)
+  const local = { id: ref.id, ...n };
+  if (!S.notes.find(x => x.id === ref.id)) S.notes = [local, ...(S.notes||[])];
+  S._inlineNoteId = ref.id;
+  // Re-render avec la note ouverte
+  if (S.currentModule && S.currentModule.id === moduleId){
+    renderModuleContent(S.currentModule);
+    setTimeout(() => {
+      const titleEl = document.getElementById('sn-note-title-' + ref.id);
+      if (titleEl){
+        titleEl.focus();
+        // Scroll doux pour amener l'éditeur dans la vue
+        const card = titleEl.closest('.sn-note-item');
+        if (card) card.scrollIntoView({ behavior:'smooth', block:'center' });
+      }
+    }, 80);
+  }
 }
 
-function openSessionNote(noteId){
-  const n = S.notes.find(x => x.id === noteId);
-  if(!n) return;
-  S.currentNote = n;
-  showPage('notes');
-  setTimeout(() => openNoteEditor(n), 120);
+function openInlineNote(noteId, moduleId){
+  S._inlineNoteId = noteId;
+  if (S.currentModule && S.currentModule.id === moduleId){
+    renderModuleContent(S.currentModule);
+    setTimeout(() => {
+      const bodyEl = document.getElementById('sn-note-body-' + noteId);
+      if (bodyEl){
+        bodyEl.focus();
+        const card = bodyEl.closest('.sn-note-item');
+        if (card) card.scrollIntoView({ behavior:'smooth', block:'center' });
+      }
+    }, 80);
+  }
+}
+
+function closeInlineNote(moduleId){
+  S._inlineNoteId = null;
+  if (S.currentModule && S.currentModule.id === moduleId){
+    renderModuleContent(S.currentModule);
+  }
+}
+
+// Auto-save de la note pendant l'édition inline (debounced)
+const _inlineSaveTimers = {};
+function onInlineNoteChange(noteId){
+  const status = document.getElementById('sn-note-status-' + noteId);
+  if (status){ status.textContent = '… Sauvegarde'; status.className = 'sn-note-save-status saving'; }
+  clearTimeout(_inlineSaveTimers[noteId]);
+  _inlineSaveTimers[noteId] = setTimeout(() => saveInlineNote(noteId), 700);
+}
+
+async function saveInlineNote(noteId){
+  const titleEl = document.getElementById('sn-note-title-' + noteId);
+  const bodyEl = document.getElementById('sn-note-body-' + noteId);
+  if (!titleEl || !bodyEl) return;
+  const titre = titleEl.value;
+  const contenu = bodyEl.value;
+  try{
+    await db.collection("notes").doc(noteId).update({
+      titre, contenu, updatedAt: TS()
+    });
+    // Update local cache
+    const idx = (S.notes||[]).findIndex(n => n.id === noteId);
+    if (idx >= 0){ S.notes[idx] = { ...S.notes[idx], titre, contenu }; }
+    const status = document.getElementById('sn-note-status-' + noteId);
+    if (status){ status.textContent = '✓ Enregistré'; status.className = 'sn-note-save-status saved'; }
+  } catch(e){
+    console.error('saveInlineNote:', e);
+    const status = document.getElementById('sn-note-status-' + noteId);
+    if (status){ status.textContent = '❌ Erreur'; status.className = 'sn-note-save-status error'; }
+  }
+}
+
+async function deleteSessionNote(noteId, moduleId){
+  if (!confirm('Supprimer cette note ?')) return;
+  try{
+    await db.collection("notes").doc(noteId).delete();
+    S.notes = (S.notes||[]).filter(n => n.id !== noteId);
+    if (S._inlineNoteId === noteId) S._inlineNoteId = null;
+    if (S.currentModule && S.currentModule.id === moduleId){
+      renderModuleContent(S.currentModule);
+    }
+  } catch(e){
+    console.error('deleteSessionNote:', e);
+    alert('Erreur lors de la suppression.');
+  }
 }
 
 async function addTodoForModule(moduleId){
@@ -2460,10 +2563,14 @@ function renderNotesList(){
     }).join('');
   }
   // Sync : si on est dans un module, re-render la section "Notes & tâches"
+  // MAIS pas si l'utilisateur est en train d'éditer une note inline (sinon on perd le focus / le texte en cours)
   if(S.currentPage==='modules' && S.currentModule){
     const moduleMain = document.getElementById('module-main');
     if(moduleMain && moduleMain.querySelector('.sec-session-tools')){
-      renderModuleContent(S.currentModule);
+      const isEditingInline = S._inlineNoteId && document.getElementById('sn-note-body-' + S._inlineNoteId);
+      if (!isEditingInline){
+        renderModuleContent(S.currentModule);
+      }
     }
   }
 }
