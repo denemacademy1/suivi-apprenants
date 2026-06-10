@@ -276,7 +276,8 @@ nav::-webkit-scrollbar{width:0}
 .sec-title{font-size:13px;font-weight:700;color:var(--text)}
 .sec-body{padding:20px}
 /* ─── Section Notes & Tâches dans le module ─── */
-.sec-session-tools{background:linear-gradient(135deg,rgba(245,158,11,.04),rgba(99,102,241,.03))}
+.sec-session-tools{background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(99,102,241,.08));border:1.5px solid rgba(245,158,11,.25)!important;box-shadow:0 8px 24px rgba(245,158,11,.1)}
+.sec-session-tools .sec-title{font-size:15px;font-weight:800;background:linear-gradient(135deg,#FCD34D,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .sn-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:720px){.sn-grid{grid-template-columns:1fr}}
 .sn-col{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:140px}
@@ -1947,6 +1948,7 @@ function renderModuleContent(m){
 //  NOTES & TÂCHES IMMERSIVES PAR SESSION
 // ═══════════════════════════════════════════════
 function renderSessionNotesAndTodos(m){
+  console.log('[session-tools] render pour module', m.id, m.titre, '— notes:', (S.notes||[]).length, 'todos:', (S.todos||[]).length);
   const sessionNotes = (S.notes||[]).filter(n => n.module_id === m.id);
   const sessionTodos = (S.todos||[]).filter(t => t.module_id === m.id);
   const todosDone = sessionTodos.filter(t => t.done).length;
