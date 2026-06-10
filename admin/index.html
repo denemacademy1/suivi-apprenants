@@ -160,12 +160,24 @@ tr:hover td{background:#FAFBFF}
 .module-meta{font-size:12px;color:#64748B;margin-top:2px;display:flex;gap:12px;align-items:center}
 .module-actions{display:flex;gap:6px}
 /* User list */
-.user-row{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid #F1F5F9;gap:14px}
+.user-row{display:flex;flex-direction:column;padding:14px 18px;border-bottom:1px solid #F1F5F9;gap:10px}
 .user-row:last-child{border-bottom:none}
+.user-row-head{display:flex;align-items:center;gap:14px}
 .user-ava{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
 .user-details{flex:1}
 .user-name-row{font-size:13px;font-weight:600}
 .user-email-row{font-size:12px;color:#64748B}
+/* Mot de passe admin */
+.user-pwd-row{display:flex;align-items:center;gap:8px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;margin-left:50px}
+.user-pwd-row.user-pwd-empty{background:#FEF3C7;border-color:#FCD34D}
+.user-pwd-label{font-size:14px;flex-shrink:0;opacity:.6}
+.user-pwd-input{flex:1;background:transparent;border:none;font-family:'SF Mono','Menlo','Consolas',monospace;font-size:12.5px;color:#0F172A;outline:none;font-weight:600;letter-spacing:.5px;min-width:0}
+.user-pwd-input[type="password"]{font-family:inherit;letter-spacing:4px;font-weight:900}
+.user-pwd-btn{background:#fff;border:1px solid #E2E8F0;border-radius:6px;width:30px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:all .15s;color:#64748B;flex-shrink:0;padding:0}
+.user-pwd-btn:hover{background:#EEF2FF;border-color:#A5B4FC;color:#4F46E5;transform:translateY(-1px)}
+.user-pwd-empty .user-pwd-btn{width:auto;padding:0 10px;font-size:11px;font-weight:600;height:28px;gap:4px}
+.user-pwd-none{flex:1;font-size:11.5px;color:#92400E;font-style:italic}
+@media(max-width:700px){.user-pwd-row{margin-left:0}}
 /* Spinner */
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(79,70,229,.3);border-top-color:#4F46E5;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -1628,17 +1640,88 @@ const ROLE_COLORS={student:'badge-blue',csm:'badge-green',setter:'badge-orange',
 function renderUsers(){
   const el=document.getElementById('users-list');
   if(!users.length){el.innerHTML='<div class="empty"><div class="e-icon">👥</div><div class="e-text">Aucun utilisateur</div></div>';return;}
-  el.innerHTML=users.map(u=>`
-    <div class="user-row">
-      <div class="user-ava">${(u.prenom||'?').charAt(0).toUpperCase()}</div>
-      <div class="user-details">
-        <div class="user-name-row">${u.prenom||''} ${u.nom||''}</div>
-        <div class="user-email-row">${u.email||'—'}</div>
+  el.innerHTML=users.map(u=>{
+    const hasPwd = !!u.password_admin;
+    const pwdHtml = hasPwd
+      ? `<div class="user-pwd-row">
+          <span class="user-pwd-label" title="Mot de passe (visible uniquement par l'admin)">🔑</span>
+          <input type="password" value="${escHtml(u.password_admin)}" id="pwd-${u.id}" readonly class="user-pwd-input">
+          <button class="user-pwd-btn" onclick="toggleUserPwd('${u.id}')" title="Afficher / masquer">👁</button>
+          <button class="user-pwd-btn" onclick="copyUserPwd('${u.id}','${escHtml(u.email||'')}')" title="Copier email + mdp">📋</button>
+          <button class="user-pwd-btn" onclick="resetUserPwd('${u.id}','${escHtml(u.email||'')}','${escHtml((u.prenom||'')+' '+(u.nom||''))}')" title="Réinitialiser le mot de passe">🔄</button>
+        </div>`
+      : `<div class="user-pwd-row user-pwd-empty">
+          <span class="user-pwd-label">🔑</span>
+          <span class="user-pwd-none">Mot de passe non enregistré (compte créé avant cette fonction)</span>
+          <button class="user-pwd-btn" onclick="resetUserPwd('${u.id}','${escHtml(u.email||'')}','${escHtml((u.prenom||'')+' '+(u.nom||''))}')" title="Définir un nouveau mot de passe">🔄 Définir</button>
+        </div>`;
+    return `<div class="user-row">
+      <div class="user-row-head">
+        <div class="user-ava">${(u.prenom||'?').charAt(0).toUpperCase()}</div>
+        <div class="user-details">
+          <div class="user-name-row">${u.prenom||''} ${u.nom||''}</div>
+          <div class="user-email-row">${u.email||'—'}</div>
+        </div>
+        <span class="badge ${ROLE_COLORS[u.role]||'badge-gray'}">${ROLE_LABELS[u.role]||u.role}</span>
+        <button class="btn btn-secondary btn-sm" onclick="changeRole('${u.id}','${u.role}','${escHtml((u.prenom||'')+' '+(u.nom||''))}')">Changer rôle</button>
       </div>
-      <span class="badge ${ROLE_COLORS[u.role]||'badge-gray'}">${ROLE_LABELS[u.role]||u.role}</span>
-      <button class="btn btn-secondary btn-sm" onclick="changeRole('${u.id}','${u.role}','${escHtml(u.prenom+' '+u.nom)}')">Changer rôle</button>
-    </div>`).join('');
+      ${pwdHtml}
+    </div>`;
+  }).join('');
 }
+
+// ── Helpers password admin ──
+function toggleUserPwd(uid){
+  const input = document.getElementById('pwd-'+uid);
+  if(!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+async function copyUserPwd(uid, email){
+  const u = users.find(x => x.id === uid);
+  if(!u || !u.password_admin){ alert('Mot de passe non disponible'); return; }
+  const text = `Email : ${email}\nMot de passe : ${u.password_admin}\nLien : ${location.origin}${BASE_PATH}/login/`;
+  try{
+    await navigator.clipboard.writeText(text);
+    showAlert('✓ Identifiants copiés dans le presse-papier');
+  } catch(e){
+    // Fallback
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); showAlert('✓ Identifiants copiés'); }catch(_){ alert(text); }
+    ta.remove();
+  }
+}
+
+async function resetUserPwd(uid, email, name){
+  const newPwd = prompt(`Réinitialiser le mot de passe de ${name.trim()||email}\n\nEntre un nouveau mot de passe (min 6 caractères) :`, '');
+  if(!newPwd) return;
+  if(newPwd.length < 6){ alert('Le mot de passe doit contenir au moins 6 caractères'); return; }
+  // ⚠️ On ne peut PAS changer le mot de passe Firebase Auth depuis le front sans le mot de passe actuel.
+  // Solution pragmatique : on stocke le nouveau mdp dans Firestore pour affichage admin,
+  // et on envoie un email de réinitialisation Firebase Auth à l'utilisateur pour qu'il l'applique côté Auth.
+  try{
+    await db.collection('users').doc(uid).update({
+      password_admin: newPwd,
+      password_set_at: firebase.firestore.FieldValue.serverTimestamp(),
+      password_updated_by: auth.currentUser?.uid || ''
+    });
+    // Envoi de l'email de réinitialisation Firebase Auth
+    let emailSent = false;
+    try{
+      await auth.sendPasswordResetEmail(email);
+      emailSent = true;
+    }catch(e){ console.warn('sendPasswordResetEmail:', e); }
+    const msg = emailSent
+      ? `✓ Nouveau mdp enregistré.\n\n📧 Un email de réinitialisation a été envoyé à ${email}.\nL'utilisateur doit cliquer dessus pour valider le changement côté authentification.`
+      : `✓ Nouveau mdp enregistré côté admin.\n\n⚠️ Email de réinitialisation non envoyé automatiquement.\nCommunique le nouveau mdp à l'utilisateur manuellement, OU demande-lui de cliquer "Mot de passe oublié ?" sur la page de login.`;
+    alert(msg);
+  } catch(e){
+    console.error(e);
+    alert('Erreur : '+e.message);
+  }
+}
+
+const BASE_PATH = location.pathname.startsWith('/suivi-apprenants') ? '/suivi-apprenants' : '';
 
 async function changeRole(uid,currentRole,name){
   const roles=['student','csm','setter','closer','admin'];
@@ -1681,6 +1764,9 @@ async function createUser(){
     const cred=await secondAuth.createUserWithEmailAndPassword(email,pwd);
     await db.collection('users').doc(cred.user.uid).set({
       prenom,nom,email,role,
+      // Stockage du mot de passe pour consultation admin (visible uniquement par admin via masque/toggle dans l'UI)
+      password_admin: pwd,
+      password_set_at: firebase.firestore.FieldValue.serverTimestamp(),
       createdAt:firebase.firestore.FieldValue.serverTimestamp(),
       createdBy:auth.currentUser?.uid||''
     });
