@@ -2489,13 +2489,23 @@ function closeMasterclassModal(){
   S._mcEditing = null;
 }
 
+// Normalise une URL : préfixe https:// si manquant pour éviter les liens relatifs
+function normalizeUrlCsm(url){
+  if(!url) return '';
+  const trimmed = String(url).trim();
+  if(!trimmed) return '';
+  if(/^https?:\/\//i.test(trimmed)) return trimmed;
+  if(trimmed.startsWith('//')) return 'https:' + trimmed;
+  return 'https://' + trimmed.replace(/^\/+/, '');
+}
+
 async function saveMasterclass(){
   const titre = document.getElementById('mc-titre').value.trim();
   const theme = document.getElementById('mc-theme').value;
-  const video_url = document.getElementById('mc-video').value.trim();
+  const video_url = normalizeUrlCsm(document.getElementById('mc-video').value);
   const date_event = document.getElementById('mc-date')?.value || '';
   const heure = document.getElementById('mc-heure')?.value || '';
-  const meet_link = document.getElementById('mc-meet')?.value.trim() || '';
+  const meet_link = normalizeUrlCsm(document.getElementById('mc-meet')?.value || '');
   if(!titre){ toast('Le titre est requis','error'); return; }
   // Au moins une source vidéo OU un lien Meet
   if(!video_url && !meet_link){
@@ -2504,7 +2514,7 @@ async function saveMasterclass(){
   }
   const data = {
     titre, theme, video_url, meet_link, date_event, heure,
-    thumbnail_url: document.getElementById('mc-thumb').value.trim(),
+    thumbnail_url: normalizeUrlCsm(document.getElementById('mc-thumb').value),
     duree: document.getElementById('mc-duree').value.trim(),
     intervenant: document.getElementById('mc-intervenant').value.trim(),
     intervenant_role: document.getElementById('mc-role').value.trim(),

@@ -3733,15 +3733,29 @@ function renderHomeMasterclass(){
   </div>`;
 }
 
+// Normalise une URL : ajoute https:// si manquant, pour éviter qu'elle soit traitée comme relative
+function normalizeUrl(url){
+  if(!url) return '';
+  const trimmed = String(url).trim();
+  if(!trimmed) return '';
+  // Déjà une URL absolue avec protocole ?
+  if(/^https?:\/\//i.test(trimmed)) return trimmed;
+  // Lien protocole-relatif ?
+  if(trimmed.startsWith('//')) return 'https:' + trimmed;
+  // Sinon : on préfixe par https://
+  return 'https://' + trimmed.replace(/^\/+/, '');
+}
+
 // Ouvre uniquement le lien Meet renseigné par le coach, dans une nouvelle fenêtre garantie
 function openMeetLink(mcId){
   const m = (S.masterclasses||[]).find(x => x.id === mcId);
   if(!m){ console.warn('[meet] masterclass introuvable', mcId); return; }
-  const link = (m.meet_link || '').trim();
+  const link = normalizeUrl(m.meet_link);
   if(!link){
     alert("Le lien de la visioconférence n'a pas encore été renseigné par ton coach.");
     return;
   }
+  console.log('[meet] ouverture', link);
   // Track la connexion (best-effort)
   trackMcJoin(mcId);
   // Ouverture dans une nouvelle fenêtre/onglet — uniquement le lien Meet, rien d'autre
