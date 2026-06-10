@@ -400,6 +400,19 @@ tr:hover td{background:#FAFBFF}
       </div>
     </div>
 
+    <!-- Diagnostic seed status -->
+    <div class="panel" id="seed-status-panel" style="background:#F8FAFC;border:1px solid #E2E8F0;margin-bottom:12px;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <span style="font-size:12px;color:#64748B;font-weight:600">📊 Statut imports :</span>
+      <span id="seed-status-quizzes" style="font-size:12px;color:#64748B">Quiz : —</span>
+      <span style="color:#CBD5E1">·</span>
+      <span id="seed-status-supports" style="font-size:12px;color:#64748B">Supports : —</span>
+    </div>
+
+    <style>
+      @keyframes pulse-cta {0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.5)}50%{box-shadow:0 0 0 10px rgba(99,102,241,0)}}
+      .btn-seed-needed{animation:pulse-cta 1.5s ease-in-out infinite}
+    </style>
+
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">Liste des modules</div>
@@ -895,6 +908,7 @@ function initListeners(){
     updateModuleStats();
     renderStatsPage();
     updateProgramInitVisibility();
+    updateSeedStatus();
   });
   db.collection("users").orderBy("createdAt","desc").onSnapshot(snap=>{
     users=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1100,6 +1114,30 @@ async function seedQuizzes1to23(){
   }
 }
 
+// ─── Diagnostic : combien de modules ont quiz / support technique ? ───
+function updateSeedStatus(){
+  const target = modules.filter(m => typeof m.ordre==='number' && m.ordre>=1 && m.ordre<=23);
+  const withQuiz = target.filter(m => Array.isArray(m.quiz) && m.quiz.length > 0).length;
+  const withSupport = target.filter(m => m.support_technique && m.support_technique.trim()).length;
+  const total = 23;
+
+  const elQ = document.getElementById('seed-status-quizzes');
+  const elS = document.getElementById('seed-status-supports');
+  const btnQ = document.getElementById('btn-seed-quizzes');
+  const btnS = document.getElementById('btn-seed-supports');
+
+  if (elQ){
+    const ok = withQuiz === total;
+    elQ.innerHTML = `Quiz : <strong style="color:${ok?'#10B981':'#F59E0B'}">${withQuiz}/${total}</strong>${ok?' ✓':''}`;
+  }
+  if (elS){
+    const ok = withSupport === total;
+    elS.innerHTML = `Supports techniques : <strong style="color:${ok?'#10B981':'#F59E0B'}">${withSupport}/${total}</strong>${ok?' ✓':''}`;
+  }
+  if (btnQ) btnQ.classList.toggle('btn-seed-needed', target.length > 0 && withQuiz < total);
+  if (btnS) btnS.classList.toggle('btn-seed-needed', target.length > 0 && withSupport < total);
+}
+
 // ─── Import des supports techniques séances 1-23 ───
 const SUPPORTS_TECHNIQUES = {
   1:  "https://denemacademy.github.io/DENEMACADEMY-SEANCE-1-CLAUDE-CODE/",
@@ -1225,6 +1263,7 @@ function renderModules(){
     const hasVideo=m.video_url?'🎬':'';
     const hasPDF=m.pdf_url?'📄':'';
     const hasQuiz=m.quiz&&m.quiz.length?`✅ ${m.quiz.length}Q`:'';
+    const hasSupport=m.support_technique?'📚':'';
     const catBadge=phInfo.catKey?`<span class="cat-badge cat-${phInfo.catKey}">${phInfo.cat}</span>`:'';
     const typeLabel={session:'📚 Session',video:'🎬 Vidéo',['module-bonus']:'⭐ Bonus',ressource:'📁 Ressource'}[m.type||'session']||'📚 Session';
     return `<div class="module-item">
@@ -1237,6 +1276,7 @@ function renderModules(){
           <span style="font-size:11px;color:#94A3B8">${typeLabel}</span>
           ${pub}
           ${hasVideo?`<span style="font-size:11px">${hasVideo} Vidéo</span>`:''}
+          ${hasSupport?`<span style="font-size:11px;color:#6366F1;font-weight:600">${hasSupport} Support</span>`:''}
           ${hasPDF?`<span style="font-size:11px">${hasPDF} PDF</span>`:''}
           ${hasQuiz?`<span style="font-size:11px">${hasQuiz}</span>`:''}
           ${m.duree_estimee?`<span style="font-size:11px">⏱ ${m.duree_estimee}</span>`:''}
