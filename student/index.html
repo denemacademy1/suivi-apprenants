@@ -820,8 +820,8 @@ nav::-webkit-scrollbar{width:0}
         <div class="suc-track"><div class="suc-fill" id="suc-fill" style="width:0%"></div></div>
         <!-- XP bar -->
         <div class="xp-row">
-          <div class="xp-level-badge tip-below" id="xp-level-badge" data-tip="Niveaux XP&#10;1 · Débutant : 0 XP&#10;2 · Apprenti : 200 XP&#10;3 · Confirmé : 500 XP&#10;4 · Expert : 1000 XP&#10;5 · Maître : 2000 XP">⚡ Niveau 1</div>
-          <span class="xp-label tip-below" data-tip="Comment gagner des XP ?&#10;+100 XP par module complété&#10;+50 XP si quiz ≥ 90%&#10;+25 XP si quiz ≥ 80%&#10;+10 XP par connexion quotidienne"><span id="xp-current">0</span> XP</span>
+          <div class="xp-level-badge tip-below" id="xp-level-badge" data-tip="Niveaux XP (calibré sur 24 sessions)&#10;1 · Débutant : 0 XP&#10;2 · Apprenti : 300 XP&#10;3 · Confirmé : 700 XP&#10;4 · Expert : 1200 XP&#10;5 · Maître : 1800 XP">⚡ Niveau 1</div>
+          <span class="xp-label tip-below" data-tip="Comment gagner des XP ?&#10;+50 XP par session complétée&#10;+30 XP si quiz ≥ 90%&#10;+15 XP si quiz ≥ 80%&#10;+5 XP par jour de connexion&#10;+20 XP par badge gagné"><span id="xp-current">0</span> XP</span>
         </div>
         <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
       </div>
@@ -910,7 +910,7 @@ nav::-webkit-scrollbar{width:0}
               <div class="stat-lbl">Jours de formation</div>
               <div class="stat-sub" id="stat-days-sub">depuis le début</div>
             </div>
-            <div class="stat-card sc-xp" data-tip="Comment gagner des XP ?&#10;+100 XP par module complété&#10;+50 XP si quiz ≥ 90%&#10;+25 XP si quiz ≥ 80%&#10;+10 XP par connexion quotidienne">
+            <div class="stat-card sc-xp" data-tip="Comment gagner des XP ?&#10;+50 XP par session complétée&#10;+30 XP si quiz ≥ 90%&#10;+15 XP si quiz ≥ 80%&#10;+5 XP par jour de connexion&#10;+20 XP par badge gagné">
               <div class="stat-icon">⚡</div>
               <div class="stat-val" id="stat-xp">0</div>
               <div class="stat-lbl">Points XP gagnés</div>
@@ -1193,12 +1193,14 @@ const QUOTES=[
 ];
 
 // ── GAMIFICATION CONFIG ──
+// Niveaux calibrés sur le programme officiel : 24 sessions × ~70-90 XP moyen
+// Niveau 5 atteint vers la fin du programme (phases 5-6).
 const LEVELS=[
-  {min:0,   max:199,  num:1, label:"Débutant",      color:"#94A3B8"},
-  {min:200, max:499,  num:2, label:"Apprenti",       color:"#60A5FA"},
-  {min:500, max:999,  num:3, label:"Confirmé",       color:"#818CF8"},
-  {min:1000,max:1999, num:4, label:"Expert",         color:"#A78BFA"},
-  {min:2000,max:99999,num:5, label:"Maître",         color:"#F59E0B"},
+  {min:0,    max:299,   num:1, label:"Débutant",  color:"#94A3B8"},   // début Phase 0 (Tech)
+  {min:300,  max:699,   num:2, label:"Apprenti",  color:"#60A5FA"},   // fin Phase 0 → Phase 1-2
+  {min:700,  max:1199,  num:3, label:"Confirmé",  color:"#818CF8"},   // Phase 2-3 (Vitrine, présence)
+  {min:1200, max:1799,  num:4, label:"Expert",    color:"#A78BFA"},   // Phase 4 (Machine à leads)
+  {min:1800, max:99999, num:5, label:"Maître",    color:"#F59E0B"},   // Phase 5-6 (Delivery, validation)
 ];
 
 const BADGES_DEF={
@@ -1211,11 +1213,13 @@ const BADGES_DEF={
   finisseur:    {icon:"🤖",label:"Expert IA",         desc:"Tous les modules complétés"},
 };
 
-// XP par action
-const XP_MODULE=100;
-const XP_QUIZ_PERFECT=50;
-const XP_QUIZ_GREAT=25;
-const XP_DAILY=10;
+// XP par action — calibré pour que Niveau 5 soit atteint vers la fin des 24 sessions
+// Module = 50 XP de base, bonus quiz (≤45), streak (≤5/j), badges (≤20/badge)
+// Programme complet à 100% : ~1850-2200 XP (Niveau 5)
+const XP_MODULE=50;
+const XP_QUIZ_PERFECT=30;   // bonus si score quiz ≥ 90%
+const XP_QUIZ_GREAT=15;     // bonus si score quiz ≥ 80%
+const XP_DAILY=5;           // XP par jour de streak
 const RDV_SUIVI=[
   {num:1,jour:1, nom:"Kick off",                   icon:"🚀"},
   {num:2,jour:15,nom:"Suivi J15",                  icon:"📞"},
@@ -1493,7 +1497,7 @@ function updateProgress(){
 // ── XP calculé dynamiquement depuis les sources de vérité ──
 // Plus fiable que de se baser sur S.xp stocké : si Firestore est désynchronisé,
 // l'affichage reste toujours correct car recalculé live à chaque render.
-const XP_BADGE = 25;  // +25 XP par badge gagné
+const XP_BADGE = 20;  // +20 XP par badge gagné (équivalent à un quiz great)
 function computeTotalXP(){
   let xp = 0;
   const breakdown = { modules: 0, quizPerfect: 0, quizGreat: 0, streak: 0, badges: 0 };
