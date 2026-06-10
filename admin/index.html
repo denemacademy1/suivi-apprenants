@@ -396,17 +396,15 @@ tr:hover td{background:#FAFBFF}
           <div style="font-size:14px;font-weight:700;color:#1E1B4B;margin-bottom:4px">📖 Programme officiel DENEM Academy non initialisé</div>
           <div style="font-size:12px;color:#4F46E5;line-height:1.5">Crée d'un coup les <strong>24 sessions officielles</strong> (Phase 0 à 6) en brouillon. Tu pourras ensuite les remplir et publier individuellement.</div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="initProgramOfficiel()" id="btn-init-program">🚀 Initialiser le programme (24 sessions)</button>
-          <button class="btn btn-secondary" onclick="seedQuizzes1to23()" id="btn-seed-quizzes" style="background:#10B981;color:#fff;border-color:#10B981">📝 Importer les quiz (séances 1-23)</button>
-        </div>
+        <button class="btn btn-primary" onclick="initProgramOfficiel()" id="btn-init-program">🚀 Initialiser le programme (24 sessions)</button>
       </div>
     </div>
 
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">Liste des modules</div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="seedQuizzes1to23()" id="btn-seed-quizzes" style="background:#10B981;color:#fff;border:1px solid #10B981;font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:600">📝 Importer quiz officiels (1-23)</button>
           <select id="filter-phase" onchange="renderModules()" style="padding:7px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;outline:none">
             <option value="">Toutes les phases</option>
             <optgroup label="⚙️ Technique">
@@ -1045,30 +1043,39 @@ async function initProgramOfficiel(){
 // ─── Import des quizz séances 1-23 ───
 async function seedQuizzes1to23(){
   if (!window.QUIZ_SEED_1_23){
-    alert("Fichier seed-quizzes-1-23.js non chargé. Recharge la page.");
+    alert("⚠️ Fichier seed-quizzes-1-23.js non chargé.\n\n1. Vérifie que tu as bien rechargé la page (Cmd+Maj+R)\n2. Ouvre la console (F12) pour voir s'il y a une erreur de chargement");
+    console.error("QUIZ_SEED_1_23 non défini. Vérifier que <script src='seed-quizzes-1-23.js'> est bien chargé.");
+    return;
+  }
+  if (!modules.length){
+    alert("⚠️ Aucun module n'est encore chargé dans cette page.\n\nClique d'abord sur 🚀 Initialiser le programme pour créer les 24 modules officiels.");
     return;
   }
   const seed = window.QUIZ_SEED_1_23;
   const ordres = Object.keys(seed).map(n => parseInt(n)).sort((a,b)=>a-b);
-  const total = ordres.length;
+  console.log(`[seed] ${ordres.length} séances dans le seed, ${modules.length} modules en BDD`);
   // Vérif que les modules existent
   const missing = ordres.filter(o => !modules.find(m => m.ordre === o));
+  if (missing.length === ordres.length){
+    alert("⚠️ Aucun module n'a d'ordre 1-23.\n\nClique d'abord sur 🚀 Initialiser le programme pour créer les 24 sessions officielles.");
+    return;
+  }
   if (missing.length){
-    if (!confirm(`⚠️ ${missing.length} modules manquants (ordres ${missing.join(', ')}).\n\nClique d'abord sur "🚀 Initialiser le programme" pour créer les modules, puis reviens importer les quiz.\n\nContinuer quand même pour les modules existants ?`)) return;
+    if (!confirm(`⚠️ ${missing.length} modules manquants (ordres ${missing.join(', ')}).\n\nContinuer quand même pour les ${ordres.length-missing.length} modules existants ?`)) return;
   }
   const will = ordres.filter(o => modules.find(m => m.ordre === o));
   const msg = `Importer les quiz de ${will.length} séance${will.length>1?'s':''} (${will.length*20} questions au total) ?\n\nCela écrasera les quiz existants des séances ${will.join(', ')}.`;
   if (!confirm(msg)) return;
   const btn = document.getElementById('btn-seed-quizzes');
-  if (btn){btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Import en cours…';}
-  let done = 0, failed = 0;
+  if (btn){btn.disabled=true; btn.innerHTML='⏳ Import en cours…';}
+  let done = 0;
   try {
-    // Firestore limite 500 ops/batch — on a 23 modules → un seul batch suffit
     const batch = db.batch();
     will.forEach(ordre => {
       const m = modules.find(x => x.ordre === ordre);
       if (!m) return;
       const quiz = seed[ordre];
+      console.log(`[seed] Module ${m.id} (ordre ${ordre}) : ${quiz.length} questions`);
       batch.update(db.collection('modules').doc(m.id), {
         quiz: quiz,
         score_minimum: m.score_minimum || 70,
@@ -1077,13 +1084,13 @@ async function seedQuizzes1to23(){
       done++;
     });
     await batch.commit();
-    showAlert(`✓ ${done} séance${done>1?'s':''} quiz importé${done>1?'s':''} avec succès (${done*20} questions). Édite-les pour ajuster si besoin.`);
+    console.log(`[seed] ✅ Batch commit OK — ${done} modules mis à jour`);
+    showAlert(`✓ ${done} quiz importés avec succès (${done*20} questions). Recharge la page si nécessaire pour les voir dans l'éditeur.`);
   } catch(e){
-    console.error('Seed error:', e);
-    showError(`Erreur lors de l'import : ${e.message||e.code}`);
-    failed = will.length - done;
+    console.error('[seed] Erreur Firestore:', e);
+    alert(`❌ Erreur lors de l'import :\n\n${e.message||e.code}\n\nOuvre la console (F12) pour les détails.`);
   } finally {
-    if (btn){btn.disabled=false; btn.innerHTML='📝 Importer les quiz (séances 1-23)';}
+    if (btn){btn.disabled=false; btn.innerHTML='📝 Importer quiz officiels (1-23)';}
   }
 }
 
