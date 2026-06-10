@@ -530,6 +530,50 @@ tbody tr:last-child td{border-bottom:none}
 .dash-student-day{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
 .dash-student-bar{height:4px;background:#E2E8F0;border-radius:99px;overflow:hidden;margin-top:2px}
 .dash-student-bar-fill{height:100%;border-radius:99px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+
+/* ─── Panel apprenant : onglet Modules ─── */
+.mod-summary{background:linear-gradient(135deg,#EEF2FF,#FAF5FF);border:1px solid #C7D2FE;border-radius:13px;padding:16px 18px;margin-bottom:16px}
+.mod-summary-main{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:12px;flex-wrap:wrap}
+.mod-summary-label{font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.mod-summary-value{font-size:28px;font-weight:900;color:#4F46E5;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.mod-summary-total{font-size:16px;font-weight:700;color:#94A3B8}
+.mod-summary-sub{font-size:11px;color:#64748B;font-weight:500;margin-top:3px}
+.mod-summary-side{text-align:right}
+.mod-summary-side .mod-summary-label{text-align:right}
+.mod-summary-bar{height:8px;background:rgba(99,102,241,.12);border-radius:99px;overflow:hidden;margin-bottom:10px}
+.mod-summary-fill{height:100%;background:linear-gradient(90deg,#6366F1,#8B5CF6,#EC4899);border-radius:99px;transition:width .4s cubic-bezier(.4,0,.2,1);box-shadow:0 0 8px rgba(99,102,241,.3)}
+.mod-summary-last{font-size:11.5px;color:#475569;padding-top:8px;border-top:1px dashed rgba(99,102,241,.2);line-height:1.5}
+
+.phase-blocks{display:flex;flex-direction:column;gap:10px}
+.phase-block{background:#fff;border:1px solid var(--border);border-radius:11px;padding:12px 14px;transition:all .15s}
+.phase-block.phase-active{background:linear-gradient(135deg,#FAFBFF,#fff);border-color:#C7D2FE;box-shadow:0 2px 8px rgba(99,102,241,.06)}
+.phase-block.phase-done{background:linear-gradient(135deg,#F0FDF4,#fff);border-color:#A7F3D0}
+.phase-block-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.phase-block-icon{width:36px;height:36px;background:color-mix(in srgb,var(--ph-color) 10%,transparent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.phase-block.phase-done .phase-block-icon{background:#D1FAE5;color:#10B981}
+.phase-block-info{flex:1;min-width:0}
+.phase-block-name{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-.01em;line-height:1.3}
+.phase-block-cat{font-size:10.5px;color:var(--muted);font-weight:500;margin-top:2px}
+.phase-block-stat{font-size:12px;font-weight:800;color:var(--text);background:#F1F5F9;padding:4px 10px;border-radius:99px;font-variant-numeric:tabular-nums;flex-shrink:0}
+.phase-block-stat.done{background:#D1FAE5;color:#065F46}
+.phase-block-bar{height:4px;background:#F1F5F9;border-radius:99px;overflow:hidden;margin-bottom:10px}
+.phase-block-bar-fill{height:100%;border-radius:99px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+.phase-block-mods{display:flex;flex-direction:column;gap:4px}
+
+.mod-line{display:flex;align-items:center;gap:10px;padding:7px 10px;background:#FAFBFC;border:1px solid var(--border);border-radius:7px;transition:all .12s}
+.mod-line:hover{background:#F1F5F9}
+.mod-line.mod-done{background:#F0FDF4;border-color:#BBF7D0}
+.mod-line-status{width:22px;height:22px;background:#fff;border:1.5px solid #CBD5E1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#94A3B8;flex-shrink:0}
+.mod-line.mod-done .mod-line-status{background:#10B981;border-color:#10B981;color:#fff}
+.mod-line-num{font-size:10.5px;font-weight:800;color:#64748B;font-variant-numeric:tabular-nums;letter-spacing:-.01em;flex-shrink:0;background:#fff;border:1px solid var(--border);padding:2px 7px;border-radius:5px}
+.mod-line.mod-done .mod-line-num{background:#10B981;color:#fff;border-color:#10B981}
+.mod-line-body{flex:1;min-width:0}
+.mod-line-title{font-size:12.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.005em}
+.mod-line-meta{font-size:10.5px;color:var(--muted);margin-top:1px}
+.mod-line-quiz{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:5px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.mod-line-quiz.quiz-ok{background:#D1FAE5;color:#065F46}
+.mod-line-quiz.quiz-ko{background:#FEE2E2;color:#991B1B}
+.mod-line-date{font-size:10.5px;color:#94A3B8;font-weight:500;flex-shrink:0;white-space:nowrap}
 .suivi-date-cell{white-space:nowrap}
 .suivi-date-main{font-size:12.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .suivi-date-sub{font-size:10.5px;color:var(--muted);font-weight:500;margin-top:2px}
@@ -2102,51 +2146,152 @@ function renderPanelParcours(a){
       <div class="jchips">${mods}</div>
     </div>`;}).join("")}</div>`;
 }
+// ─── Programme officiel DENEM Academy (synchronisé avec l'espace admin/apprenant) ───
+const CSM_PHASE_PROGRAM = [
+  { key:'p0', label:'Socle technique & outils',         cat:'Technique',  icon:'🔧', color:'#6366F1', range:[1,5]   },
+  { key:'p1', label:'Positionnement & marque',          cat:'Business',   icon:'🎯', color:'#3B82F6', range:[6,7]   },
+  { key:'p2', label:'Vitrine en ligne',                 cat:'Business',   icon:'🌐', color:'#3B82F6', range:[8,11]  },
+  { key:'p3', label:'Présence sociale & aimant à leads',cat:'Business',   icon:'📡', color:'#3B82F6', range:[12,14] },
+  { key:'p4', label:'Machine à leads & prospection',    cat:'Business',   icon:'🧲', color:'#3B82F6', range:[15,19] },
+  { key:'p5', label:'Delivery client',                  cat:'Delivery',   icon:'📦', color:'#10B981', range:[20,23] },
+  { key:'p6', label:'Validation',                       cat:'Validation', icon:'🏆', color:'#F59E0B', range:[24,24] },
+  { key:'pb', label:'Vidéos bonus',                     cat:'Bonus',      icon:'🎁', color:'#EC4899', range:[101,9999], isBonus:true },
+];
+
+// Trouve la phase d'un module : priorité au champ phase_id, sinon dérive de l'ordre
+function csmGetProgramPhase(m){
+  if (m?.phase_id){
+    const direct = CSM_PHASE_PROGRAM.find(p => p.key === m.phase_id);
+    if (direct) return direct;
+  }
+  if (typeof m?.ordre !== 'number') return null;
+  return CSM_PHASE_PROGRAM.find(p => m.ordre >= p.range[0] && m.ordre <= p.range[1]) || null;
+}
+
 function renderPanelModules(a){
-  const progs=stuProgs(a.id);
-  const doneIds=new Set(progs.map(p=>p.module_id));
-  const PHASE_COLORS={onboarding:"#8B5CF6",formation:"#3B82F6",pratique:"#10B981",finalisation:"#F59E0B"};
-  const PHASE_LABELS={onboarding:"Onboarding",formation:"Formation",pratique:"Pratique",finalisation:"Finalisation"};
-  if(!S.modules.length){
-    document.getElementById("panel-body").innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)">
+  const progs = stuProgs(a.id); // statut completed / termine
+  const progByModId = new Map(progs.map(p => [p.module_id, p]));
+
+  if (!S.modules.length){
+    document.getElementById("panel-body").innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
       <div style="font-size:32px;margin-bottom:8px">📚</div>
       <div style="font-weight:600">Aucun module publié</div>
-      <div style="font-size:12px;margin-top:4px">Créez des modules depuis le <a href="../admin/" target="_blank" style="color:var(--primary)">panel admin</a></div>
-    </div>`;return;
-  }
-  const rows=S.modules.map(m=>{
-    const prog=progs.find(p=>p.module_id===m.id);
-    const ok=doneIds.has(m.id);
-    const score=prog?.score_quiz??null;
-    const minScore=m.score_minimum||70;
-    const phasec=PHASE_COLORS[m.phase_id]||"var(--primary)";
-    const phasel=PHASE_LABELS[m.phase_id]||m.phase_id||"";
-    return`<div class="mod-row">
-      <div class="mod-dot" style="background:${ok?"#10B981":"#E2E8F0"}"></div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px">
-          ${m.titre}
-          ${ok?`<span style="font-size:10px;background:#DCFCE7;color:#16A34A;padding:1px 6px;border-radius:10px;font-weight:700">✓ Complété</span>`:''}
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-          <span style="font-size:10px;background:${phasec}22;color:${phasec};padding:1px 7px;border-radius:10px;font-weight:600">${phasel}</span>
-          ${m.duree_estimee?`<span style="font-size:11px;color:var(--muted)">⏱ ${m.duree_estimee}</span>`:''}
-          ${score!=null?`<span style="font-size:11px;color:${score>=minScore?"#16A34A":"#DC2626"};font-weight:600">Quiz : ${score}% ${score>=minScore?"✓":"✗"}</span>`:''}
-          ${ok&&prog?.completed_at?`<span style="font-size:11px;color:var(--muted)">${fDate(prog.completed_at?.toDate?.()?.toISOString?.()?.split('T')[0]||'')}</span>`:''}
-        </div>
-      </div>
+      <div style="font-size:12px;margin-top:4px">Crée des modules depuis le <a href="../admin/" target="_blank" style="color:var(--primary)">panel admin</a></div>
     </div>`;
-  }).join("");
-  const done=progs.length,total=S.modules.length,pct=total?Math.round(done/total*100):0;
-  document.getElementById("panel-body").innerHTML=`
-    <div style="background:var(--primary-light);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:6px">${done} / ${total} modules complétés</div>
-        <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:${pct}%;background:var(--primary)"></div></div>
+    return;
+  }
+
+  // Tri par ordre, exclusion des bonus du calcul principal
+  const allModules = [...S.modules].sort((m1,m2) => (m1.ordre||0) - (m2.ordre||0));
+  const isBonus = m => { const ph = csmGetProgramPhase(m); return !!(ph && ph.isBonus); };
+  const mainModules = allModules.filter(m => !isBonus(m));
+
+  // Stats globales
+  const mainDone = mainModules.filter(m => progByModId.has(m.id)).length;
+  const mainTotal = mainModules.length;
+  const mainPct = mainTotal ? Math.round((mainDone/mainTotal)*100) : 0;
+
+  // Score moyen quiz
+  const scoredProgs = progs.filter(p => typeof p.score_quiz === 'number');
+  const avgScore = scoredProgs.length ? Math.round(scoredProgs.reduce((s,p)=>s+p.score_quiz, 0) / scoredProgs.length) : null;
+
+  // Module en cours / dernier complété
+  const lastProg = [...progs].sort((p1,p2) => {
+    const t1 = p1.completed_at?.seconds||0, t2 = p2.completed_at?.seconds||0;
+    return t2 - t1;
+  })[0];
+  const lastDate = lastProg?.completed_at?.toDate ? lastProg.completed_at.toDate() : null;
+  const lastDateStr = lastDate ? lastDate.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'}) : null;
+  const lastModule = lastProg ? allModules.find(m => m.id === lastProg.module_id) : null;
+
+  // Helper : rendu d'une ligne module
+  const renderRow = (m, idx) => {
+    const prog = progByModId.get(m.id);
+    const done = !!prog;
+    const score = prog?.score_quiz;
+    const minScore = m.score_minimum || 70;
+    const completedAt = prog?.completed_at?.toDate ? prog.completed_at.toDate() : null;
+    const completedStr = completedAt ? completedAt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : null;
+    const sessionNum = m.ordre ? String(m.ordre).padStart(2,'0') : '—';
+    return `<div class="mod-line ${done?'mod-done':''}">
+      <div class="mod-line-status">${done?'✓':'·'}</div>
+      <div class="mod-line-num">${sessionNum}</div>
+      <div class="mod-line-body">
+        <div class="mod-line-title">${escHtml(m.titre||'(Sans titre)')}</div>
+        ${m.duree_estimee?`<div class="mod-line-meta">⏱ ${escHtml(m.duree_estimee)}</div>`:''}
       </div>
-      <div style="font-size:22px;font-weight:800;color:var(--primary)">${pct}%</div>
+      ${score!=null?`<div class="mod-line-quiz ${score>=minScore?'quiz-ok':'quiz-ko'}">${score}%</div>`:''}
+      ${completedStr?`<div class="mod-line-date">${completedStr}</div>`:''}
+    </div>`;
+  };
+
+  // Sections par phase
+  const phasesHtml = CSM_PHASE_PROGRAM.map(phase => {
+    const mods = allModules.filter(m => {
+      const ph = csmGetProgramPhase(m);
+      return ph && ph.key === phase.key;
+    });
+    if (!mods.length) return '';
+    const done = mods.filter(m => progByModId.has(m.id)).length;
+    const total = mods.length;
+    const pct = Math.round((done/total)*100);
+    const isComplete = done === total;
+    const isActive = !isComplete && done > 0;
+    const phaseIdx = CSM_PHASE_PROGRAM.indexOf(phase);
+    const nonBonusIdx = CSM_PHASE_PROGRAM.filter((p,i) => i < phaseIdx && !p.isBonus).length;
+    const label = phase.isBonus ? phase.label : `Phase ${nonBonusIdx} — ${phase.label}`;
+    return `<div class="phase-block ${isComplete?'phase-done':isActive?'phase-active':''}" style="--ph-color:${phase.color}">
+      <div class="phase-block-head">
+        <span class="phase-block-icon">${phase.icon}</span>
+        <div class="phase-block-info">
+          <div class="phase-block-name">${label}</div>
+          <div class="phase-block-cat">${phase.cat} · ${total} session${total>1?'s':''}</div>
+        </div>
+        <div class="phase-block-stat ${isComplete?'done':''}">${done}/${total}</div>
+      </div>
+      <div class="phase-block-bar"><div class="phase-block-bar-fill" style="width:${pct}%;background:${isComplete?'#10B981':phase.color}"></div></div>
+      <div class="phase-block-mods">${mods.map(renderRow).join('')}</div>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  // Modules orphelins (sans phase)
+  const orphans = allModules.filter(m => !csmGetProgramPhase(m));
+  const orphansHtml = orphans.length ? `<div class="phase-block">
+    <div class="phase-block-head">
+      <span class="phase-block-icon">📋</span>
+      <div class="phase-block-info">
+        <div class="phase-block-name">Autres modules</div>
+        <div class="phase-block-cat">${orphans.length} non classé${orphans.length>1?'s':''}</div>
+      </div>
     </div>
-    <div>${rows}</div>`;
+    <div class="phase-block-mods">${orphans.map(renderRow).join('')}</div>
+  </div>` : '';
+
+  document.getElementById("panel-body").innerHTML = `
+    <!-- Header global -->
+    <div class="mod-summary">
+      <div class="mod-summary-main">
+        <div>
+          <div class="mod-summary-label">Progression globale</div>
+          <div class="mod-summary-value">${mainDone}<span class="mod-summary-total"> / ${mainTotal}</span></div>
+          <div class="mod-summary-sub">${mainPct}% du programme officiel</div>
+        </div>
+        ${avgScore!=null?`<div class="mod-summary-side">
+          <div class="mod-summary-label">Score moyen quiz</div>
+          <div class="mod-summary-value" style="color:#10B981">${avgScore}%</div>
+          <div class="mod-summary-sub">${scoredProgs.length} quiz validé${scoredProgs.length>1?'s':''}</div>
+        </div>`:''}
+      </div>
+      <div class="mod-summary-bar"><div class="mod-summary-fill" style="width:${mainPct}%"></div></div>
+      ${lastModule?`<div class="mod-summary-last">
+        <span style="font-weight:700">Dernière activité :</span>
+        ${escHtml(lastModule.titre||'')}${lastDateStr?` · ${lastDateStr}`:''}
+      </div>`:'<div class="mod-summary-last" style="color:var(--muted)">Aucun module encore complété</div>'}
+    </div>
+
+    <!-- Phases -->
+    <div class="phase-blocks">${phasesHtml}${orphansHtml}</div>
+  `;
 }
 function saveModScores(id){
   const scores=MODULES.map((_,i)=>{const v=document.getElementById(`ms-${i}`)?.value;return(v===undefined||v==="")?null:Math.min(parseInt(v)||0,MODULES[i].pts);});
