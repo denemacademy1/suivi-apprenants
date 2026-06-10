@@ -71,14 +71,32 @@ nav::-webkit-scrollbar{width:0}
 .nav-coach:hover .nav-icon{color:#34D399}
 .nav-coach-badge{margin-left:auto;font-size:12px;opacity:.7;transition:.15s}
 .nav-coach:hover .nav-coach-badge{opacity:1;transform:scale(1.1)}
-/* Phase mini progress */
-.phase-mini{margin:0 8px;padding:12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)}
-.pm-title{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
-.pm-phase{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.pm-phase:last-child{margin-bottom:0}
-.pm-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.pm-name{font-size:11px;color:var(--muted);flex:1}
-.pm-count{font-size:10px;font-weight:600;color:rgba(255,255,255,.5)}
+/* Phase mini progress — Programme officiel */
+#phase-mini-list{margin:0 8px;display:flex;flex-direction:column;gap:8px}
+.pm-overall{background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.06));border:1px solid rgba(99,102,241,.25);border-radius:11px;padding:12px 13px}
+.pm-overall-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pm-overall-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.85);letter-spacing:-.01em}
+.pm-overall-stat{font-size:17px;font-weight:800;color:#A5B4FC;letter-spacing:-.02em}
+.pm-overall-total{font-size:12px;font-weight:600;color:rgba(255,255,255,.4)}
+.pm-overall-bar{height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-bottom:6px}
+.pm-overall-fill{height:100%;background:linear-gradient(90deg,#6366F1,#8B5CF6,#EC4899);border-radius:99px;transition:width .4s ease;box-shadow:0 0 8px rgba(99,102,241,.4)}
+.pm-overall-pct{font-size:10px;color:rgba(255,255,255,.5);font-weight:600;text-align:right}
+.pm-phases{display:flex;flex-direction:column;gap:6px}
+.pm-phase{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:9px;padding:9px 11px;transition:all .15s}
+.pm-phase:hover{background:rgba(255,255,255,.05);border-color:rgba(99,102,241,.2)}
+.pm-phase.active{background:rgba(99,102,241,.07);border-color:rgba(99,102,241,.25)}
+.pm-phase.done{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.2)}
+.pm-phase-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.pm-phase-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;color:var(--pm-color)}
+.pm-phase.done .pm-phase-icon{color:#10B981}
+.pm-phase-num{font-size:10px;font-weight:800;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.3px;flex:1}
+.pm-phase.done .pm-phase-num{color:#34D399}
+.pm-phase-count{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);background:rgba(255,255,255,.04);padding:1px 7px;border-radius:99px}
+.pm-phase.done .pm-phase-count{background:rgba(16,185,129,.15);color:#34D399}
+.pm-phase.active .pm-phase-count{background:rgba(99,102,241,.15);color:#A5B4FC}
+.pm-phase-label{font-size:10.5px;color:rgba(255,255,255,.55);line-height:1.35;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical}
+.pm-phase-bar{height:3px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.pm-phase-bar-fill{height:100%;border-radius:99px;transition:width .4s ease}
 /* Sidebar footer */
 .sidebar-footer{padding:12px 8px;border-top:1px solid var(--border);flex-shrink:0}
 .btn-logout{width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:9px;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:.15s;text-align:left;padding-left:12px}
@@ -1617,19 +1635,54 @@ function renderHomePage(){
   }).join('');
 }
 
-// ── PHASE MINI (sidebar) ──
+// ── PHASE MINI (sidebar) ── basée sur PHASE_PROGRAM (programme officiel)
 function renderPhaseMini(){
-  const el=document.getElementById("phase-mini-list");
-  el.innerHTML=`<div class="phase-mini">${Object.entries(PHASES).map(([id,cfg])=>{
-    const mods=S.modules.filter(m=>m.phase_id===id);
-    if(!mods.length)return'';
-    const done=mods.filter(m=>["termine","completed"].includes(S.progressions[m.id]?.statut)).length;
-    return`<div class="pm-phase">
-      <div class="pm-dot" style="background:${done===mods.length?"#10B981":done>0?cfg.color:"rgba(255,255,255,.35)"}"></div>
-      <div class="pm-name">${cfg.label}</div>
-      <div class="pm-count">${done}/${mods.length}</div>
+  const el = document.getElementById("phase-mini-list");
+  if (!el) return;
+  if (!S.modules.length){
+    el.innerHTML = `<div class="phase-mini"><div style="font-size:11px;color:rgba(255,255,255,.4);text-align:center;padding:6px">Chargement…</div></div>`;
+    return;
+  }
+
+  // Stats globales
+  const total = S.modules.length;
+  const done = S.modules.filter(m => ["termine","completed"].includes(S.progressions[m.id]?.statut)).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  // Détail par phase officielle
+  const phasesHtml = PHASE_PROGRAM.map((phase, idx) => {
+    const mods = S.modules.filter(m => {
+      const ph = getProgramPhase(m);
+      return ph && ph.key === phase.key;
+    });
+    if (!mods.length) return '';
+    const phDone = mods.filter(m => ["termine","completed"].includes(S.progressions[m.id]?.statut)).length;
+    const phPct = mods.length ? Math.round(phDone/mods.length*100) : 0;
+    const isComplete = phDone === mods.length;
+    const isActive = !isComplete && phDone > 0;
+    const stateClass = isComplete ? 'done' : (isActive ? 'active' : '');
+    return `<div class="pm-phase ${stateClass}" style="--pm-color:${phase.color}">
+      <div class="pm-phase-row">
+        <span class="pm-phase-icon">${isComplete?'✓':phase.icon}</span>
+        <span class="pm-phase-num">Phase ${idx}</span>
+        <span class="pm-phase-count">${phDone}/${mods.length}</span>
+      </div>
+      <div class="pm-phase-label">${phase.label}</div>
+      <div class="pm-phase-bar"><div class="pm-phase-bar-fill" style="width:${phPct}%;background:${isComplete?'#10B981':phase.color}"></div></div>
     </div>`;
-  }).join('')}</div>`;
+  }).filter(Boolean).join('');
+
+  el.innerHTML = `
+    <div class="pm-overall">
+      <div class="pm-overall-head">
+        <span class="pm-overall-title">Programme officiel</span>
+        <span class="pm-overall-stat">${done}<span class="pm-overall-total">/${total}</span></span>
+      </div>
+      <div class="pm-overall-bar"><div class="pm-overall-fill" style="width:${pct}%"></div></div>
+      <div class="pm-overall-pct">${pct}% du parcours</div>
+    </div>
+    <div class="pm-phases">${phasesHtml || '<div style="font-size:11px;color:rgba(255,255,255,.35);text-align:center;padding:10px">Aucune phase à afficher</div>'}</div>
+  `;
 }
 
 // ── MODULES SIDEBAR — Vue programme officielle ──
