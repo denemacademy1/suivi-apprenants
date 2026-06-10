@@ -250,6 +250,9 @@ nav::-webkit-scrollbar{width:0}
 .parcours-cat-biz{background:rgba(59,130,246,.18);color:#93C5FD}
 .parcours-cat-del{background:rgba(16,185,129,.18);color:#6EE7B7}
 .parcours-cat-val{background:rgba(245,158,11,.18);color:#FCD34D}
+.parcours-cat-bonus{background:rgba(236,72,153,.18);color:#F9A8D4}
+.pm-phase-bonus{background:linear-gradient(135deg,rgba(236,72,153,.07),rgba(236,72,153,.03))!important;border-color:rgba(236,72,153,.18)!important;border-style:dashed!important}
+.pm-phase-bonus .pm-phase-num{color:#F9A8D4}
 .parcours-phase-progress{font-size:11px;font-weight:700;color:#fff;font-feature-settings:'tnum';font-variant-numeric:tabular-nums;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:5px;border:1px solid rgba(255,255,255,.08)}
 .parcours-phase-progress.done{background:rgba(16,185,129,.18);color:#6EE7B7;border-color:rgba(16,185,129,.3)}
 .parcours-phase-bar{height:3px;background:rgba(255,255,255,.04)}
@@ -1114,6 +1117,7 @@ const PHASE_PROGRAM = [
   { key:'p4', label:'Machine à leads & prospection',    category:'Business',   catKey:'biz',  icon:'🧲', color:'#3B82F6', range:[15,19] },
   { key:'p5', label:'Delivery client',                  category:'Delivery',   catKey:'del',  icon:'📦', color:'#10B981', range:[20,23] },
   { key:'p6', label:'Validation',                       category:'Validation', catKey:'val',  icon:'🏆', color:'#F59E0B', range:[24,24] },
+  { key:'pb', label:'Vidéos bonus',                     category:'Bonus',      catKey:'bonus',icon:'🎁', color:'#EC4899', range:[101,9999], isBonus:true },
 ];
 
 function getProgramPhase(m){
@@ -1134,19 +1138,28 @@ function isModuleDone(m){
 }
 
 // Module N+1 débloqué quand N est completé. Le 1er module est toujours débloqué.
+function isBonusModule(m){
+  const ph = getProgramPhase(m);
+  return !!(ph && ph.isBonus);
+}
+
 function isModuleUnlocked(m){
-  const sorted = [...S.modules].sort((a,b)=>(a.ordre||0)-(b.ordre||0));
-  const idx = sorted.findIndex(x => x.id === m.id);
+  // Vidéos bonus : toujours débloquées
+  if(isBonusModule(m)) return true;
+  // Programme principal : chaîne séquentielle parmi les modules non-bonus
+  const mainSorted = [...S.modules].filter(x => !isBonusModule(x)).sort((a,b)=>(a.ordre||0)-(b.ordre||0));
+  const idx = mainSorted.findIndex(x => x.id === m.id);
   if(idx <= 0) return true;
-  return isModuleDone(sorted[idx-1]);
+  return isModuleDone(mainSorted[idx-1]);
 }
 
 function getOverallStats(){
-  const total = S.modules.length || 0;
-  const done = S.modules.filter(isModuleDone).length;
+  // Stats globales : on n'inclut PAS les vidéos bonus dans le 24/24
+  const mainMods = S.modules.filter(m => !isBonusModule(m));
+  const total = mainMods.length || 0;
+  const done = mainMods.filter(isModuleDone).length;
   const pct = total ? Math.round((done/total)*100) : 0;
-  // Trouver le prochain module à débloquer/faire
-  const sorted = [...S.modules].sort((a,b)=>(a.ordre||0)-(b.ordre||0));
+  const sorted = [...mainMods].sort((a,b)=>(a.ordre||0)-(b.ordre||0));
   const next = sorted.find(m => !isModuleDone(m) && isModuleUnlocked(m));
   return { total, done, pct, next };
 }
@@ -1666,15 +1679,18 @@ function renderHomePage(){
   // On cherche le 1er module dont la progression n'est PAS "termine" ni "completed"
   const nsEl=document.getElementById("next-step-section");
   const isDoneStatus = s => s === "termine" || s === "completed";
-  const next = S.modules.find(m => !isDoneStatus(S.progressions[m.id]?.statut));
+  // La prochaine étape suit toujours le programme principal (les bonus n'interrompent pas le parcours)
+  const mainMods = S.modules.filter(m => !isBonusModule(m));
+  const next = mainMods.find(m => !isDoneStatus(S.progressions[m.id]?.statut));
   if(next){
     // Phase via le programme officiel (PHASE_PROGRAM) — fallback PHASES legacy
     const phaseProg = getProgramPhase(next);
     let ph;
     if (phaseProg){
-      const phaseNum = PHASE_PROGRAM.indexOf(phaseProg);
+      const phaseIdx = PHASE_PROGRAM.indexOf(phaseProg);
+      const nonBonusIdx = PHASE_PROGRAM.filter((p,i) => i < phaseIdx && !p.isBonus).length;
       ph = {
-        label: `Phase ${phaseNum} — ${phaseProg.label}`,
+        label: phaseProg.isBonus ? phaseProg.label : `Phase ${nonBonusIdx} — ${phaseProg.label}`,
         icon: phaseProg.icon,
         color: phaseProg.color
       };
@@ -1683,9 +1699,9 @@ function renderHomePage(){
     }
     // Numéro de session (ordre) pour contexte
     const sessionLabel = next.ordre ? `Session ${String(next.ordre).padStart(2,'0')}` : '';
-    // Progression globale pour donner du contexte ("X / Y modules complétés")
-    const totalMods = S.modules.length;
-    const doneMods = S.modules.filter(m => isDoneStatus(S.progressions[m.id]?.statut)).length;
+    // Progression globale (sur le programme principal, hors bonus)
+    const totalMods = mainMods.length;
+    const doneMods = mainMods.filter(m => isDoneStatus(S.progressions[m.id]?.statut)).length;
     nsEl.innerHTML=`<div class="next-step" style="margin-bottom:28px">
       <div class="ns-label">
         Prochaine étape
@@ -1709,11 +1725,11 @@ function renderHomePage(){
         <button class="btn-start" onclick="goToModule('${next.id}')">${doneMods===0?'Commencer →':'Continuer →'}</button>
       </div>
     </div>`;
-  } else if(S.modules.length){
+  } else if(mainMods.length){
     nsEl.innerHTML=`<div class="next-step" style="margin-bottom:28px;text-align:center">
       <div style="font-size:40px;margin-bottom:10px">🎉</div>
       <div style="font-size:18px;font-weight:800;background:linear-gradient(135deg,#10B981,#34D399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px">Formation complétée !</div>
-      <div style="font-size:14px;color:var(--muted)">Félicitations, vous avez terminé tous les modules.</div>
+      <div style="font-size:14px;color:var(--muted)">Félicitations, vous avez terminé toutes les sessions du programme officiel.${S.modules.length>mainMods.length?'<br><br>👉 Découvre les <strong style="color:#EC4899">🎁 Vidéos bonus</strong> dans tes modules.':''}</div>
     </div>`;
   } else {
     nsEl.innerHTML='';
@@ -1756,9 +1772,10 @@ function renderPhaseMini(){
     return;
   }
 
-  // Stats globales
-  const total = S.modules.length;
-  const done = S.modules.filter(m => ["termine","completed"].includes(S.progressions[m.id]?.statut)).length;
+  // Stats globales : exclure les vidéos bonus du compteur principal
+  const mainOnly = S.modules.filter(m => !isBonusModule(m));
+  const total = mainOnly.length;
+  const done = mainOnly.filter(m => ["termine","completed"].includes(S.progressions[m.id]?.statut)).length;
   const pct = total ? Math.round(done/total*100) : 0;
 
   // Détail par phase officielle
@@ -1773,10 +1790,12 @@ function renderPhaseMini(){
     const isComplete = phDone === mods.length;
     const isActive = !isComplete && phDone > 0;
     const stateClass = isComplete ? 'done' : (isActive ? 'active' : '');
-    return `<div class="pm-phase ${stateClass}" style="--pm-color:${phase.color}">
+    const nonBonusIdx = PHASE_PROGRAM.filter((p,i) => i < idx && !p.isBonus).length;
+    const phaseLabel = phase.isBonus ? '🎁 Bonus' : `Phase ${nonBonusIdx}`;
+    return `<div class="pm-phase ${stateClass}${phase.isBonus?' pm-phase-bonus':''}" style="--pm-color:${phase.color}">
       <div class="pm-phase-row">
         <span class="pm-phase-icon">${isComplete?'✓':phase.icon}</span>
-        <span class="pm-phase-num">Phase ${idx}</span>
+        <span class="pm-phase-num">${phaseLabel}</span>
         <span class="pm-phase-count">${phDone}/${mods.length}</span>
       </div>
       <div class="pm-phase-label">${phase.label}</div>
@@ -1824,7 +1843,11 @@ function renderModulesSidebar(){
 
   // ── Phases ──
   PHASE_PROGRAM.forEach((phase, phaseIdx) => {
-    const phaseFullLabel = `Phase ${phaseIdx} — ${phase.label}`;
+    // Comptage de l'index "Phase N" basé sur les phases NON-bonus (pour rester sur Phase 0-6)
+    const nonBonusIdx = PHASE_PROGRAM.filter((p,i) => i < phaseIdx && !p.isBonus).length;
+    const phaseFullLabel = phase.isBonus
+      ? phase.label
+      : `Phase ${nonBonusIdx} — ${phase.label}`;
     const mods = S.modules.filter(m => {
       const ph = getProgramPhase(m);
       return ph && ph.key === phase.key;
@@ -1962,10 +1985,11 @@ function renderModuleContent(m){
   const phaseProg = getProgramPhase(m);
   let cfg;
   if(phaseProg){
-    // Numéro de phase : on prend l'index dans PHASE_PROGRAM (p0 → "Phase 0", p1 → "Phase 1"…)
-    const phaseNum = PHASE_PROGRAM.indexOf(phaseProg);
+    // Numéro de phase : index parmi les phases non-bonus (Phase 0 à 6)
+    const phaseIdx = PHASE_PROGRAM.indexOf(phaseProg);
+    const nonBonusIdx = PHASE_PROGRAM.filter((p,i) => i < phaseIdx && !p.isBonus).length;
     cfg = {
-      label: `Phase ${phaseNum} — ${phaseProg.label}`,
+      label: phaseProg.isBonus ? phaseProg.label : `Phase ${nonBonusIdx} — ${phaseProg.label}`,
       icon: phaseProg.icon,
       color: phaseProg.color
     };
