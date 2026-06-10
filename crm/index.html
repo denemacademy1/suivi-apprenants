@@ -484,6 +484,52 @@ tbody tr:last-child td{border-bottom:none}
 .suivi-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
 .suivi-table tr:last-child td{border-bottom:none}
 .suivi-table tr:hover td{background:var(--bg)}
+
+/* ─── Dashboard refondu ─── */
+.dash-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.dash-kpi{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:13px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.dash-kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dash-kpi-val{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dash-kpi-lbl{font-size:11.5px;color:var(--muted);font-weight:500;line-height:1.3}
+@media(max-width:1100px){.dash-kpis{grid-template-columns:repeat(2,1fr)}}
+
+.dash-main-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+@media(max-width:1100px){.dash-main-grid{grid-template-columns:1fr}}
+
+/* RDVs */
+.dash-rdvs-card{display:flex;flex-direction:column}
+.dash-rdv-group{margin-bottom:14px}
+.dash-rdv-group:last-child{margin-bottom:0}
+.dash-rdv-group-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
+.dash-rdv-item{display:flex;align-items:center;gap:12px;padding:12px;background:#FAFBFC;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.dash-rdv-item:hover{background:#F1F5F9;border-color:#CBD5E1;transform:translateX(2px)}
+.dash-rdv-item.is-today{background:linear-gradient(135deg,#FEF3C7,#FFFBEB);border-color:#FCD34D}
+.dash-rdv-item.is-today:hover{background:linear-gradient(135deg,#FDE68A,#FEF3C7)}
+.dash-rdv-time{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px}
+.dash-rdv-hour{font-size:15px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.dash-rdv-type-tag{font-size:9.5px;font-weight:700;color:#64748B;background:#fff;padding:2px 6px;border-radius:4px;border:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-rdv-info{flex:1;min-width:0}
+.dash-rdv-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-rdv-sub{font-size:12px;color:#64748B;line-height:1.4}
+.dash-rdv-actions{display:flex;gap:5px;flex-shrink:0}
+.dash-rdv-btn{width:32px;height:32px;background:#fff;border:1px solid var(--border);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#64748B;text-decoration:none;transition:all .15s}
+.dash-rdv-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff;transform:translateY(-1px)}
+.dash-rdv-btn-meet:hover{background:#10B981;border-color:#10B981}
+
+/* Avancement apprenants */
+.dash-progress-card{display:flex;flex-direction:column}
+.dash-students-list{display:flex;flex-direction:column;gap:8px}
+.dash-student{display:flex;align-items:center;gap:12px;padding:10px 12px;background:#FAFBFC;border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s}
+.dash-student:hover{background:#F1F5F9;border-color:#CBD5E1;transform:translateX(2px)}
+.dash-student-ava{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-.01em}
+.dash-student-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.dash-student-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dash-student-name{font-size:13.5px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.dash-student-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.3px}
+.dash-student-meta{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#64748B;flex-wrap:wrap}
+.dash-student-day{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.dash-student-bar{height:4px;background:#E2E8F0;border-radius:99px;overflow:hidden;margin-top:2px}
+.dash-student-bar-fill{height:100%;border-radius:99px;transition:width .4s cubic-bezier(.4,0,.2,1)}
 .suivi-date-cell{white-space:nowrap}
 .suivi-date-main{font-size:12.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .suivi-date-sub{font-size:10.5px;color:var(--muted);font-weight:500;margin-top:2px}
@@ -1238,63 +1284,198 @@ function updateUserDisplay(){
 //  PAGE: DASHBOARD
 // ══════════════════════════════════════
 function renderDashboard(){
-  const data=byCharge(S.apprenants);
-  const total=data.length,enCours=data.filter(a=>a.statut==="En cours").length;
-  const aRisque=data.filter(a=>a.statut==="À risque"||a.statut==="En retard").length;
-  const termines=data.filter(a=>a.statut==="Terminé").length;
-  const avgAv=total?Math.round(data.reduce((s,a)=>s+avp(calcJour(a)),0)/total):0;
-  const alerts=computeAlerts().slice(0,4);
-  const upRdvs=S.rdvs.filter(r=>r.statut==="Planifié"&&isUpcoming(r.date,7)).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
-  const recentC=S.contacts.slice(0,5);
+  const data = byCharge(S.apprenants);
+  const total = data.length;
+  const enCours = data.filter(a => a.statut === "En cours").length;
+  const aRisque = data.filter(a => a.statut === "À risque" || a.statut === "En retard").length;
+  const termines = data.filter(a => a.statut === "Terminé").length;
+  const avgAv = total ? Math.round(data.reduce((s,a) => s + avp(calcJour(a)), 0) / total) : 0;
+  const alertsAll = computeAlerts();
 
-  document.getElementById("page-dashboard").innerHTML=`
-    <div class="grid-5 mb">
-      <div class="kpi-card" style="border-left-color:#4F46E5"><div class="kpi-icon" style="background:#EEF2FF">👥</div><div><div class="kpi-label">Apprenants</div><div class="kpi-value" style="color:#4F46E5">${total}</div><div class="kpi-sub">${enCours} actifs</div></div></div>
-      <div class="kpi-card" style="border-left-color:#10B981"><div class="kpi-icon" style="background:#D1FAE5">📈</div><div><div class="kpi-label">Avancement moyen</div><div class="kpi-value" style="color:#10B981">${avgAv}%</div><div class="kpi-sub">Parcours 90 jours</div></div></div>
-      <div class="kpi-card" style="border-left-color:#F59E0B"><div class="kpi-icon" style="background:#FEF3C7">⚠️</div><div><div class="kpi-label">Attention requise</div><div class="kpi-value" style="color:#F59E0B">${aRisque}</div><div class="kpi-sub">À risque ou en retard</div></div></div>
-      <div class="kpi-card" style="border-left-color:#3B82F6"><div class="kpi-icon" style="background:#DBEAFE">🎓</div><div><div class="kpi-label">Certifiés</div><div class="kpi-value" style="color:#3B82F6">${termines}</div><div class="kpi-sub">Formation terminée</div></div></div>
-      <div class="kpi-card" style="border-left-color:#8B5CF6"><div class="kpi-icon" style="background:#EDE9FE">📅</div><div><div class="kpi-label">RDVs cette semaine</div><div class="kpi-value" style="color:#8B5CF6">${upRdvs.length}</div><div class="kpi-sub">7 prochains jours</div></div></div>
+  // Prochains RDVs sur 14 jours, triés par date puis heure
+  const upRdvs = S.rdvs
+    .filter(r => r.statut === "Planifié" && isUpcoming(r.date, 14))
+    .sort((a,b) => {
+      const d = a.date.localeCompare(b.date);
+      return d !== 0 ? d : (a.heure||'').localeCompare(b.heure||'');
+    });
+
+  // Avancement apprenants (les + actifs prioritairement, exclure terminés)
+  const apprenantsForRanking = [...data]
+    .filter(a => a.date_debut)
+    .sort((a,b) => {
+      // priorité aux apprenants à risque / en retard puis par jour décroissant
+      const statutWeight = s => s === "À risque" ? 0 : s === "En retard" ? 1 : s === "En cours" ? 2 : 3;
+      const sw = statutWeight(a.statut) - statutWeight(b.statut);
+      return sw !== 0 ? sw : calcJour(b) - calcJour(a);
+    });
+
+  // Helper : prochain RDV planifié pour un apprenant
+  const nextRdvFor = (appId) => S.rdvs
+    .filter(r => r.apprenant_id === appId && r.statut === "Planifié")
+    .sort((a,b) => a.date.localeCompare(b.date))[0];
+
+  // Helper : groupe les RDVs par date (Aujourd'hui / Demain / dd MMM)
+  const groupRdvsByDate = (rdvs) => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const tomo = new Date(today); tomo.setDate(tomo.getDate()+1);
+    const fmtISO = (d) => d.toISOString().slice(0,10);
+    const todayIso = fmtISO(today);
+    const tomoIso = fmtISO(tomo);
+    const groups = {};
+    rdvs.forEach(r => {
+      let label;
+      if (r.date === todayIso) label = "Aujourd'hui";
+      else if (r.date === tomoIso) label = "Demain";
+      else label = new Date(r.date).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(r);
+    });
+    return groups;
+  };
+  const rdvGroups = groupRdvsByDate(upRdvs);
+
+  // Couleur de la barre de progression selon le jour
+  const progColor = (j) => j >= 80 ? '#10B981' : j >= 50 ? '#3B82F6' : j >= 20 ? '#F59E0B' : '#EF4444';
+
+  document.getElementById("page-dashboard").innerHTML = `
+    <!-- KPIs compacts -->
+    <div class="dash-kpis mb">
+      <div class="dash-kpi"><span class="dash-kpi-icon" style="background:#EEF2FF;color:#4F46E5">👥</span><span class="dash-kpi-val">${total}</span><span class="dash-kpi-lbl">Apprenants <span style="color:#94A3B8">·</span> ${enCours} actifs</span></div>
+      <div class="dash-kpi"><span class="dash-kpi-icon" style="background:#D1FAE5;color:#10B981">📈</span><span class="dash-kpi-val">${avgAv}%</span><span class="dash-kpi-lbl">Avancement moyen</span></div>
+      <div class="dash-kpi"><span class="dash-kpi-icon" style="background:#FEF3C7;color:#D97706">⚠️</span><span class="dash-kpi-val">${aRisque}</span><span class="dash-kpi-lbl">À risque / retard</span></div>
+      <div class="dash-kpi"><span class="dash-kpi-icon" style="background:#EDE9FE;color:#8B5CF6">📅</span><span class="dash-kpi-val">${upRdvs.length}</span><span class="dash-kpi-lbl">RDVs à venir (14j)</span></div>
+      <div class="dash-kpi"><span class="dash-kpi-icon" style="background:#DBEAFE;color:#3B82F6">🎓</span><span class="dash-kpi-val">${termines}</span><span class="dash-kpi-lbl">Certifiés</span></div>
     </div>
 
-    <div class="phase-progress mb">
-      ${PHASES.map(p=>{const count=data.filter(a=>calcJour(a)>=p.debut&&calcJour(a)<=p.fin).length;const pct=total?Math.round((count/total)*100):0;
-        return`<div class="phase-chip" style="border-color:${count>0?p.c:'transparent'}">
-          <div class="phase-chip-icon">${p.icon}</div>
-          <div class="phase-chip-name" style="color:${p.c}">${p.nom}</div>
-          <div class="phase-chip-days">J${p.debut}–J${p.fin}</div>
-          <div class="phase-chip-count" style="color:${p.c}">${count}</div>
-          <div class="phase-chip-bar"><div class="phase-chip-fill" style="width:${pct}%;background:${p.c}"></div></div>
-        </div>`;}).join("")}
-    </div>
-
-    <div class="grid-2 mb">
-      <div class="card">
-        <div class="section-title">Alertes urgentes <span style="font-weight:400;font-size:12px;color:var(--muted)">${computeAlerts().length} signalement(s)</span></div>
-        ${alerts.length?alerts.map(a=>`<div class="alert-item alert-${a.type}"><div class="alert-icon">${a.icon}</div><div style="flex:1"><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div>${a.aid?`<span class="alert-action" onclick="openStudentPanel('${a.aid}')">Voir l'apprenant →</span>`:""}</div></div>`).join(""):
-        `<div class="empty" style="padding:20px"><div class="empty-icon">✅</div><p>Aucune alerte active</p></div>`}
-        ${computeAlerts().length>4?`<div style="text-align:center;margin-top:8px"><button class="btn btn-outline btn-sm" onclick="nav('alertes')">Voir toutes (${computeAlerts().length})</button></div>`:""}
+    <!-- 2 colonnes principales : RDVs + Avancement apprenants -->
+    <div class="dash-main-grid">
+      <!-- ─── Bloc gauche : Prochains RDVs ─── -->
+      <div class="card dash-rdvs-card">
+        <div class="section-title">
+          <span>📅 Prochains rendez-vous</span>
+          <div style="display:flex;gap:6px;margin-left:auto">
+            <button class="btn btn-sm btn-primary" onclick="openRdvModal()">+ Planifier</button>
+            <button class="btn btn-sm btn-outline" onclick="nav('planning')">Voir tout</button>
+          </div>
+        </div>
+        ${upRdvs.length ? Object.entries(rdvGroups).map(([label, rdvs]) => `
+          <div class="dash-rdv-group">
+            <div class="dash-rdv-group-label">${label}</div>
+            ${rdvs.map(r => {
+              const isMeet = r.lien_meet && /^https?:\/\//.test(r.lien_meet);
+              const isToday = label === "Aujourd'hui";
+              return `<div class="dash-rdv-item${isToday?' is-today':''}" onclick="openStudentPanel('${r.apprenant_id}')">
+                <div class="dash-rdv-time">
+                  <div class="dash-rdv-hour">${r.heure || '—'}</div>
+                  <div class="dash-rdv-type-tag">${escHtml(r.type || 'RDV')}</div>
+                </div>
+                <div class="dash-rdv-info">
+                  <div class="dash-rdv-name">${escHtml(r.apprenant_nom || '—')}</div>
+                  <div class="dash-rdv-sub">
+                    ${r.type ? `📌 ${escHtml(r.type)}` : ''}
+                    ${r.charge_suivi ? `<span style="color:#94A3B8;margin-left:6px">· ${escHtml(r.charge_suivi)}</span>` : ''}
+                  </div>
+                </div>
+                <div class="dash-rdv-actions" onclick="event.stopPropagation()">
+                  ${isMeet ? `<a href="${escAttr(r.lien_meet)}" target="_blank" rel="noopener" class="dash-rdv-btn dash-rdv-btn-meet" title="Rejoindre la visio">📹</a>` : ''}
+                  <button class="dash-rdv-btn" onclick="openRdvModal(S.rdvs.find(x=>x.id==='${r.id}'))" title="Modifier le RDV">✏️</button>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        `).join('') : `
+          <div class="empty" style="padding:32px">
+            <div class="empty-icon">📅</div>
+            <p style="font-weight:600">Aucun RDV planifié dans les 14 prochains jours</p>
+            <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="openRdvModal()">+ Planifier un RDV</button>
+          </div>
+        `}
       </div>
-      <div class="card">
-        <div class="section-title">Prochains RDVs <button class="btn btn-sm btn-outline" onclick="nav('planning')">Voir tout</button></div>
-        ${upRdvs.length?upRdvs.map(r=>`<div class="rdv-item" style="cursor:default">
-          <div style="font-size:18px">🕐</div>
-          <div class="rdv-time">${r.heure||"—"}</div>
-          <div class="rdv-content"><div class="rdv-name">${r.apprenant_nom}</div><div class="rdv-type">${r.type} · ${fDateLong(r.date)}</div></div>
-          ${sBadge(r.statut)}</div>`).join(""):
-        `<div class="empty" style="padding:20px"><div class="empty-icon">📅</div><p>Aucun RDV cette semaine</p><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openRdvModal()">+ Planifier</button></div>`}
+
+      <!-- ─── Bloc droit : Avancement apprenants ─── -->
+      <div class="card dash-progress-card">
+        <div class="section-title">
+          <span>📈 Avancement des apprenants</span>
+          <button class="btn btn-sm btn-outline" style="margin-left:auto" onclick="nav('apprenants')">Voir tout</button>
+        </div>
+        ${apprenantsForRanking.length ? `
+          <div class="dash-students-list">
+            ${apprenantsForRanking.slice(0, 12).map(a => {
+              const j = calcJour(a);
+              const pct = avp(j);
+              const col = progColor(j);
+              const nxt = nextRdvFor(a.id);
+              const status = a.statut || 'En cours';
+              const statusColors = {
+                'À risque':'#EF4444',
+                'En retard':'#F59E0B',
+                'En cours':'#3B82F6',
+                'Terminé':'#10B981'
+              };
+              const stCol = statusColors[status] || '#64748B';
+              return `<div class="dash-student" onclick="openStudentPanel('${a.id}')">
+                <div class="dash-student-ava" style="background:${a.couleur||'#4F46E5'}">${(a.prenom||'?').charAt(0).toUpperCase()}</div>
+                <div class="dash-student-info">
+                  <div class="dash-student-name-row">
+                    <span class="dash-student-name">${escHtml(a.prenom||'')} ${escHtml(a.nom||'')}</span>
+                    <span class="dash-student-status" style="background:${stCol}15;color:${stCol}">${status}</span>
+                  </div>
+                  <div class="dash-student-meta">
+                    <span class="dash-student-day">J${j} / 90</span>
+                    <span style="color:#CBD5E1">·</span>
+                    <span>${pct}%</span>
+                    ${a.cohorte ? `<span style="color:#CBD5E1">·</span><span>🎓 ${escHtml(a.cohorte)}</span>` : ''}
+                    ${nxt ? `<span style="color:#CBD5E1">·</span><span style="color:${stCol};font-weight:600">📅 ${fDate(nxt.date)}${nxt.heure?' '+nxt.heure:''}</span>` : ''}
+                  </div>
+                  <div class="dash-student-bar"><div class="dash-student-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          ${apprenantsForRanking.length > 12 ? `<div style="text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"><button class="btn btn-outline btn-sm" onclick="nav('apprenants')">Voir les ${apprenantsForRanking.length - 12} autres apprenants →</button></div>` : ''}
+        ` : `
+          <div class="empty" style="padding:32px">
+            <div class="empty-icon">👥</div>
+            <p style="font-weight:600">Aucun apprenant avec une date de démarrage</p>
+            <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="openStudentModal()">+ Ajouter un apprenant</button>
+          </div>
+        `}
       </div>
     </div>
 
-    <div class="card">
-      <div class="section-title">Activité récente</div>
-      ${recentC.length?recentC.map(c=>`<div class="activity-item">
-        <div class="activity-dot">📞</div>
-        <div><div style="font-size:13px"><strong>${c.apprenant_nom}</strong> — ${c.type} <span style="color:var(--muted)">(${c.charge_suivi})</span></div>
-        ${c.note?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${c.note}</div>`:""}
-        <div class="activity-time">${fDate(c.date)}</div></div>
-      </div>`).join(""):
-      `<div class="empty" style="padding:20px"><div class="empty-icon">💬</div><p>Aucun contact enregistré</p></div>`}
-    </div>`;
+    <!-- Bandeau alertes compact (si présentes) -->
+    ${alertsAll.length ? `<div class="card mb" style="margin-top:18px;border-left:3px solid #F59E0B">
+      <div class="section-title">
+        <span>⚠️ Alertes urgentes</span>
+        <span style="font-weight:400;font-size:12px;color:var(--muted);margin-left:8px">${alertsAll.length} signalement(s)</span>
+        <button class="btn btn-sm btn-outline" style="margin-left:auto" onclick="nav('alertes')">Voir toutes</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+        ${alertsAll.slice(0,6).map(a => `<div class="alert-item alert-${a.type}" style="margin-bottom:0">
+          <div class="alert-icon">${a.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div class="alert-title" style="font-size:12.5px">${a.title}</div>
+            <div class="alert-desc" style="font-size:11.5px">${a.desc}</div>
+            ${a.aid ? `<span class="alert-action" onclick="event.stopPropagation();openStudentPanel('${a.aid}')">Voir →</span>` : ''}
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${(() => {
+      const recentC = (S.contacts || []).slice(0, 5);
+      return recentC.length ? `<div class="card" style="margin-top:18px">
+        <div class="section-title">Activité récente</div>
+        ${recentC.map(c => `<div class="activity-item">
+          <div class="activity-dot">📞</div>
+          <div><div style="font-size:13px"><strong>${escHtml(c.apprenant_nom||'')}</strong> — ${escHtml(c.type||'')} <span style="color:var(--muted)">(${escHtml(c.charge_suivi||'')})</span></div>
+          ${c.note ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${escHtml(c.note)}</div>` : ''}
+          <div class="activity-time">${fDate(c.date)}</div></div>
+        </div>`).join('')}
+      </div>` : '';
+    })()}
+  `;
 }
 
 // ══════════════════════════════════════
