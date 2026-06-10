@@ -1662,27 +1662,51 @@ function showToast(icon,title,sub,isBadge=false){
 
 // ── HOME ──
 function renderHomePage(){
-  // Next step
+  // ── Prochaine étape (LIVE) ──
+  // On cherche le 1er module dont la progression n'est PAS "termine" ni "completed"
   const nsEl=document.getElementById("next-step-section");
-  const next=S.modules.find(m=>!S.progressions[m.id]||S.progressions[m.id].statut!=="termine");
+  const isDoneStatus = s => s === "termine" || s === "completed";
+  const next = S.modules.find(m => !isDoneStatus(S.progressions[m.id]?.statut));
   if(next){
-    const ph=PHASES[next.phase_id]||{label:next.phase_id,color:"#6366F1",icon:"📋"};
+    // Phase via le programme officiel (PHASE_PROGRAM) — fallback PHASES legacy
+    const phaseProg = getProgramPhase(next);
+    let ph;
+    if (phaseProg){
+      const phaseNum = PHASE_PROGRAM.indexOf(phaseProg);
+      ph = {
+        label: `Phase ${phaseNum} — ${phaseProg.label}`,
+        icon: phaseProg.icon,
+        color: phaseProg.color
+      };
+    } else {
+      ph = PHASES[next.phase_id] || { label: next.phase_id || 'Non classé', color: '#6366F1', icon: '📋' };
+    }
+    // Numéro de session (ordre) pour contexte
+    const sessionLabel = next.ordre ? `Session ${String(next.ordre).padStart(2,'0')}` : '';
+    // Progression globale pour donner du contexte ("X / Y modules complétés")
+    const totalMods = S.modules.length;
+    const doneMods = S.modules.filter(m => isDoneStatus(S.progressions[m.id]?.statut)).length;
     nsEl.innerHTML=`<div class="next-step" style="margin-bottom:28px">
-      <div class="ns-label">Prochaine étape</div>
+      <div class="ns-label">
+        Prochaine étape
+        ${totalMods ? `<span style="margin-left:10px;font-size:11px;font-weight:500;color:rgba(255,255,255,.4)">${doneMods}/${totalMods} sessions complétées</span>` : ''}
+      </div>
       <div class="ns-content">
         <div style="flex:1">
           <div class="ns-phase-badge" style="background:${ph.color}18;color:${ph.color};margin-bottom:10px;display:inline-block">${ph.icon} ${ph.label}</div>
-          <div class="ns-title">${next.titre}</div>
-          ${next.description?`<div class="ns-desc">${next.description}</div>`:""}
+          ${sessionLabel?`<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${sessionLabel}</div>`:''}
+          <div class="ns-title">${escHtml(next.titre||'')}</div>
+          ${next.description?`<div class="ns-desc">${escHtml(next.description)}</div>`:""}
           <div class="ns-meta">
             ${next.video_url?`<span class="ns-chip">🎬 Vidéo</span>`:""}
+            ${(next.support_technique||(next.ordre>=1&&next.ordre<=23))?`<span class="ns-chip">📚 Support</span>`:""}
             ${next.pdf_url?`<span class="ns-chip">📄 PDF</span>`:""}
-            ${next.quiz?.length?`<span class="ns-chip">📝 Quiz · +${next.quiz.length>0?XP_MODULE:0} XP</span>`:""}
+            ${next.quiz?.length?`<span class="ns-chip">📝 ${next.quiz.length} questions</span>`:""}
             ${next.duree_estimee?`<span class="ns-chip">⏱ ${next.duree_estimee}</span>`:""}
             <span class="ns-chip">⚡ +${XP_MODULE} XP</span>
           </div>
         </div>
-        <button class="btn-start" onclick="goToModule('${next.id}')">Commencer →</button>
+        <button class="btn-start" onclick="goToModule('${next.id}')">${doneMods===0?'Commencer →':'Continuer →'}</button>
       </div>
     </div>`;
   } else if(S.modules.length){
