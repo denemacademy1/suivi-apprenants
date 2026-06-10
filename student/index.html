@@ -275,6 +275,48 @@ nav::-webkit-scrollbar{width:0}
 .sec-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
 .sec-title{font-size:13px;font-weight:700;color:var(--text)}
 .sec-body{padding:20px}
+/* ─── Section Notes & Tâches dans le module ─── */
+.sec-session-tools{background:linear-gradient(135deg,rgba(245,158,11,.04),rgba(99,102,241,.03))}
+.sn-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:720px){.sn-grid{grid-template-columns:1fr}}
+.sn-col{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:140px}
+.sn-col-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.sn-col-title{font-size:13px;font-weight:700;color:rgba(255,255,255,.85);display:inline-flex;align-items:center;gap:8px}
+.sn-count{background:rgba(99,102,241,.15);color:#A5B4FC;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;min-width:24px;text-align:center}
+.sn-add-btn{background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.3);color:#A5B4FC;font-size:11px;font-weight:700;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:inherit;transition:all .15s}
+.sn-add-btn:hover{background:rgba(99,102,241,.28);color:#fff}
+.sn-list{display:flex;flex-direction:column;gap:6px}
+.sn-empty{font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:14px 8px;line-height:1.6}
+/* Notes items */
+.sn-note-item{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s}
+.sn-note-item:hover{background:rgba(99,102,241,.07);border-color:rgba(99,102,241,.3)}
+.sn-note-icon{width:24px;height:24px;background:rgba(245,158,11,.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.sn-note-body{flex:1;min-width:0}
+.sn-note-title{font-size:12px;font-weight:700;color:rgba(255,255,255,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+.sn-note-snippet{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}
+.sn-note-arrow{background:none;border:none;color:rgba(255,255,255,.4);font-size:14px;cursor:pointer;padding:2px 4px;flex-shrink:0}
+.sn-note-item:hover .sn-note-arrow{color:#A5B4FC}
+/* Todos add input */
+.sn-todo-add{display:flex;gap:6px}
+.sn-todo-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--text);outline:none;font-family:inherit}
+.sn-todo-input:focus{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.06)}
+.sn-todo-input::placeholder{color:rgba(255,255,255,.35)}
+.sn-todo-add-btn{background:linear-gradient(135deg,#6366F1,#8B5CF6);border:none;border-radius:7px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;padding:0 12px;transition:all .15s;font-family:inherit}
+.sn-todo-add-btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(99,102,241,.4)}
+/* Todos items */
+.sn-todo-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;transition:.15s}
+.sn-todo-item:hover{background:rgba(255,255,255,.03)}
+.sn-todo-cb{width:18px;height:18px;border-radius:5px;border:1.5px solid rgba(255,255,255,.25);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:.15s}
+.sn-todo-cb.done{background:rgba(16,185,129,.22);border-color:#10B981;color:#10B981}
+.sn-todo-text{flex:1;font-size:12.5px;color:rgba(255,255,255,.78);cursor:text;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}
+.sn-todo-text.done{text-decoration:line-through;color:rgba(255,255,255,.4)}
+.sn-todo-del{background:none;border:none;font-size:13px;color:rgba(255,255,255,.4);cursor:pointer;flex-shrink:0;padding:2px 5px;border-radius:4px;opacity:0;transition:.15s}
+.sn-todo-item:hover .sn-todo-del{opacity:1}
+.sn-todo-del:hover{color:#F87171;background:rgba(239,68,68,.1)}
+.sn-footer{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);font-size:11px;color:rgba(255,255,255,.5);text-align:center;line-height:1.6}
+/* Badge session sur les tâches (sidebar + page notes) */
+.todo-session-badge{font-size:9px;font-weight:700;color:#A5B4FC;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);padding:2px 7px;border-radius:99px;margin-left:6px;cursor:pointer;flex-shrink:0;transition:all .15s;white-space:nowrap}
+.todo-session-badge:hover{background:rgba(99,102,241,.3);color:#fff}
 .video-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000}
 .video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%}
 /* Support technique — carte + iframe lazy-load */
@@ -1877,6 +1919,9 @@ function renderModuleContent(m){
     </div>`;
   }
 
+  // ─── Notes & tâches de la session ───
+  html += renderSessionNotesAndTodos(m);
+
   if(m.quiz?.length){
     html+=renderQuizHTML(m,isDone,prog);
   } else if(!isDone){
@@ -1898,6 +1943,116 @@ function renderModuleContent(m){
 }
 
 // ── QUIZ ──
+// ═══════════════════════════════════════════════
+//  NOTES & TÂCHES IMMERSIVES PAR SESSION
+// ═══════════════════════════════════════════════
+function renderSessionNotesAndTodos(m){
+  const sessionNotes = (S.notes||[]).filter(n => n.module_id === m.id);
+  const sessionTodos = (S.todos||[]).filter(t => t.module_id === m.id);
+  const todosDone = sessionTodos.filter(t => t.done).length;
+
+  const notesList = sessionNotes.length
+    ? sessionNotes.map(n => {
+        const titre = (n.titre||'').trim() || '✏️ Note sans titre';
+        const snippet = (n.contenu||'').replace(/<[^>]+>/g,'').trim().slice(0,90);
+        return `<div class="sn-note-item" onclick="openSessionNote('${n.id}')">
+          <div class="sn-note-icon">📝</div>
+          <div class="sn-note-body">
+            <div class="sn-note-title">${escHtml(titre)}</div>
+            ${snippet?`<div class="sn-note-snippet">${escHtml(snippet)}${(n.contenu||'').length>90?'…':''}</div>`:''}
+          </div>
+          <button class="sn-note-arrow" title="Ouvrir">→</button>
+        </div>`;
+      }).join('')
+    : `<div class="sn-empty">Aucune note pour cette session. Capture ce que tu apprends ici 👇</div>`;
+
+  const todosList = sessionTodos.length
+    ? sessionTodos.map(t => {
+        const todoIdx = (S.todos||[]).findIndex(x => x.id === t.id);
+        return `<div class="sn-todo-item${t.done?' done':''}">
+          <div class="sn-todo-cb${t.done?' done':''}" onclick="toggleTodo(${todoIdx})">${t.done?'✓':''}</div>
+          <div class="sn-todo-text${t.done?' done':''}" onclick="editTodo(${todoIdx})">${escHtml(t.texte||'')}</div>
+          <button class="sn-todo-del" onclick="deleteTodo(${todoIdx})" title="Supprimer">✕</button>
+        </div>`;
+      }).join('')
+    : '';
+
+  return `<div class="sec sec-session-tools">
+    <div class="sec-head">
+      <div class="sec-icon" style="background:rgba(245,158,11,.12);color:#FCD34D">📓</div>
+      <div class="sec-title">Mes notes & tâches sur cette session</div>
+    </div>
+    <div class="sec-body">
+      <div class="sn-grid">
+        <!-- Colonne Notes -->
+        <div class="sn-col">
+          <div class="sn-col-head">
+            <span class="sn-col-title">✏️ Notes <span class="sn-count">${sessionNotes.length}</span></span>
+            <button class="sn-add-btn" onclick="newNoteForModule('${m.id}')">+ Nouvelle note</button>
+          </div>
+          <div class="sn-list">${notesList}</div>
+        </div>
+        <!-- Colonne Tâches -->
+        <div class="sn-col">
+          <div class="sn-col-head">
+            <span class="sn-col-title">✅ Tâches <span class="sn-count">${todosDone}/${sessionTodos.length}</span></span>
+          </div>
+          <div class="sn-todo-add">
+            <input type="text" class="sn-todo-input" id="sn-todo-input-${m.id}" placeholder="Une action à faire ?" onkeydown="if(event.key==='Enter')addTodoForModule('${m.id}')">
+            <button class="sn-todo-add-btn" onclick="addTodoForModule('${m.id}')">+</button>
+          </div>
+          ${todosList?`<div class="sn-list">${todosList}</div>`:'<div class="sn-empty">Pas encore de tâche. Note ici les actions à faire après cette session 👆</div>'}
+        </div>
+      </div>
+      <div class="sn-footer">💡 Tes notes et tâches restent visibles sur l'accueil et dans <strong>Notes &amp; Tâches</strong>, avec un lien vers cette session.</div>
+    </div>
+  </div>`;
+}
+
+// ─── Actions ouverture/ajout depuis le module ───
+async function newNoteForModule(moduleId){
+  if(!S.apprenant){ alert('Pas connecté.'); return; }
+  const n = { apprenant_id:S.apprenant.id, titre:'', contenu:'', module_id:moduleId, createdAt:TS(), updatedAt:TS() };
+  const ref = await db.collection("notes").add(n);
+  S.currentNote = { id: ref.id, ...n };
+  showPage('notes');
+  setTimeout(() => {
+    openNoteEditor(S.currentNote);
+    const ttl = document.getElementById("note-title");
+    if(ttl) ttl.focus();
+  }, 120);
+}
+
+function openSessionNote(noteId){
+  const n = S.notes.find(x => x.id === noteId);
+  if(!n) return;
+  S.currentNote = n;
+  showPage('notes');
+  setTimeout(() => openNoteEditor(n), 120);
+}
+
+async function addTodoForModule(moduleId){
+  const input = document.getElementById('sn-todo-input-'+moduleId);
+  if(!input) return;
+  const texte = input.value.trim();
+  if(!texte) return;
+  if(!S.user){ alert('Pas connecté.'); return; }
+  S.todos.unshift({
+    id: Date.now(),
+    texte,
+    done: false,
+    module_id: moduleId,
+    createdAt: new Date().toISOString()
+  });
+  input.value = '';
+  renderTodos();
+  // Re-render le module pour que la nouvelle tâche s'affiche
+  if(S.currentModule && S.currentModule.id === moduleId){
+    renderModuleContent(S.currentModule);
+  }
+  saveTodos();
+}
+
 function renderQuizHTML(m,isDone,prog){
   if(isDone&&prog){
     return`<div class="quiz-wrap">
@@ -2162,17 +2317,26 @@ async function completeModule(moduleId,score){
 // ── NOTES ──
 function renderNotesList(){
   const el=document.getElementById("notes-list");
-  if(!S.notes.length){el.innerHTML='<div class="notes-empty">Aucune note.<br>Créez-en une !</div>';return;}
-  el.innerHTML=S.notes.map(n=>{
-    const mod=S.modules.find(m=>m.id===n.module_id);
-    const preview=(n.contenu||'').replace(/\n/g,' ').slice(0,60);
-    const date=n.updatedAt?.seconds?new Date(n.updatedAt.seconds*1000).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'';
-    return`<div class="note-item${S.currentNote?.id===n.id?' active':''}" onclick="selectNote('${n.id}')">
-      <div class="note-item-title">${n.titre||'Sans titre'}</div>
-      <div class="note-item-meta">${mod?`📚 ${mod.titre}`:'📁 Libre'}${date?' · '+date:''}</div>
-      ${preview?`<div class="note-item-preview">${preview}</div>`:''}
-    </div>`;
-  }).join('');
+  if(el){
+    if(!S.notes.length){el.innerHTML='<div class="notes-empty">Aucune note.<br>Créez-en une !</div>';}
+    else el.innerHTML=S.notes.map(n=>{
+      const mod=S.modules.find(m=>m.id===n.module_id);
+      const preview=(n.contenu||'').replace(/\n/g,' ').slice(0,60);
+      const date=n.updatedAt?.seconds?new Date(n.updatedAt.seconds*1000).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'';
+      return`<div class="note-item${S.currentNote?.id===n.id?' active':''}" onclick="selectNote('${n.id}')">
+        <div class="note-item-title">${escHtml(n.titre||'Sans titre')}</div>
+        <div class="note-item-meta">${mod?`📚 Session ${mod.ordre?String(mod.ordre).padStart(2,'0'):'?'} · ${escHtml(mod.titre||'')}`:'📁 Libre'}${date?' · '+date:''}</div>
+        ${preview?`<div class="note-item-preview">${escHtml(preview)}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+  // Sync : si on est dans un module, re-render la section "Notes & tâches"
+  if(S.currentPage==='modules' && S.currentModule){
+    const moduleMain = document.getElementById('module-main');
+    if(moduleMain && moduleMain.querySelector('.sec-session-tools')){
+      renderModuleContent(S.currentModule);
+    }
+  }
 }
 
 function renderHomeQuick(){
@@ -2288,13 +2452,24 @@ function renderTodos(){
   const remaining=S.todos.filter(t=>!t.done).length;
   if(countEl)countEl.textContent=remaining?`${remaining} restante${remaining>1?'s':''}`:remaining===0&&S.todos.length?'Tout fait ✅':'';
   if(!S.todos.length){el.innerHTML='<div style="padding:12px 8px;font-size:12px;color:rgba(255,255,255,.4);text-align:center">Aucune tâche</div>';renderHomeQuick();return;}
-  el.innerHTML=S.todos.map((t,i)=>`
-    <div class="todo-item">
+  el.innerHTML=S.todos.map((t,i)=>{
+    const mod = t.module_id ? S.modules.find(x => x.id === t.module_id) : null;
+    const sessionBadge = mod ? `<span class="todo-session-badge" onclick="event.stopPropagation();selectModule('${mod.id}')" title="Aller à la session">📚 ${mod.ordre?'Session '+String(mod.ordre).padStart(2,'0'):'Module'}</span>` : '';
+    return `<div class="todo-item">
       <div class="todo-cb${t.done?' done':''}" onclick="toggleTodo(${i})">${t.done?'✓':''}</div>
-      <span class="todo-text${t.done?' done':''}" ondblclick="editTodo(${i})">${t.texte}</span>
+      <span class="todo-text${t.done?' done':''}" ondblclick="editTodo(${i})">${escHtml(t.texte||'')}</span>
+      ${sessionBadge}
       <span class="todo-del" onclick="deleteTodo(${i})">✕</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   renderHomeQuick();
+  // Si on est dans un module, re-render aussi la section session pour rester synchro
+  if(S.currentPage==='modules' && S.currentModule){
+    const moduleMain = document.getElementById('module-main');
+    if(moduleMain && moduleMain.querySelector('.sec-session-tools')){
+      renderModuleContent(S.currentModule);
+    }
+  }
 }
 
 async function addTodo(){
