@@ -159,6 +159,14 @@ tr:hover td{background:#FAFBFF}
 .module-title{font-size:14px;font-weight:600;color:#1E293B}
 .module-meta{font-size:12px;color:#64748B;margin-top:2px;display:flex;gap:12px;align-items:center}
 .module-actions{display:flex;gap:6px}
+/* Chips filtre par rôle */
+.role-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.role-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #E2E8F0;color:#475569;padding:8px 14px;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.role-chip:hover{background:#F8FAFC;border-color:#CBD5E1;transform:translateY(-1px)}
+.role-chip.active{background:var(--rc-color,#4F46E5);color:#fff;border-color:var(--rc-color,#4F46E5);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.role-chip-count{background:#F1F5F9;color:#64748B;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;min-width:24px;text-align:center}
+.role-chip.active .role-chip-count{background:rgba(255,255,255,.25);color:#fff}
+
 /* User list */
 .user-row{display:flex;flex-direction:column;padding:14px 18px;border-bottom:1px solid #F1F5F9;gap:10px}
 .user-row:last-child{border-bottom:none}
@@ -473,10 +481,16 @@ tr:hover td{background:#FAFBFF}
 
   <!-- USERS PAGE -->
   <div class="page" id="page-users">
+    <!-- Filtres par rôle -->
+    <div class="role-filters" id="role-filters"></div>
+
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title">Comptes utilisateurs</div>
-        <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Nouveau compte</button>
+        <div class="panel-title">Comptes utilisateurs <span id="users-count" style="font-weight:400;font-size:12px;color:#64748B;margin-left:8px"></span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="users-search" placeholder="🔍 Rechercher (nom, email)…" oninput="renderUsers()" style="padding:7px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;outline:none;width:240px">
+          <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Nouveau compte</button>
+        </div>
       </div>
       <div id="users-list">
         <div class="empty"><div class="e-icon">👥</div><div class="e-text">Chargement…</div></div>
@@ -1637,10 +1651,63 @@ function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 const ROLE_LABELS={student:'👤 Apprenant',csm:'🎯 Chargé suivi',setter:'🎯 Setter',closer:'🤝 Closer',admin:'⚙️ Admin'};
 const ROLE_COLORS={student:'badge-blue',csm:'badge-green',setter:'badge-orange',closer:'badge-teal',admin:'badge-purple'};
 
+// Filtre actif sur la page Comptes (par rôle)
+let _userRoleFilter = 'all';
+function setUserRoleFilter(role){
+  _userRoleFilter = role;
+  renderUsers();
+}
+
 function renderUsers(){
   const el=document.getElementById('users-list');
-  if(!users.length){el.innerHTML='<div class="empty"><div class="e-icon">👥</div><div class="e-text">Aucun utilisateur</div></div>';return;}
-  el.innerHTML=users.map(u=>{
+  const filtersEl=document.getElementById('role-filters');
+  const searchEl=document.getElementById('users-search');
+  const search=(searchEl?.value||'').toLowerCase().trim();
+
+  // Compteurs par rôle
+  const counts = { all: users.length, student:0, csm:0, setter:0, closer:0, admin:0 };
+  users.forEach(u => { if(counts[u.role]!==undefined) counts[u.role]++; });
+
+  // Render des chips de filtre par rôle
+  if (filtersEl){
+    const chips = [
+      { key:'all', label:'Tous', icon:'👥', color:'#64748B' },
+      { key:'student', label:'Apprenants', icon:'👤', color:'#3B82F6' },
+      { key:'csm', label:'Chargés de suivi', icon:'🎯', color:'#10B981' },
+      { key:'setter', label:'Setters', icon:'🎯', color:'#F59E0B' },
+      { key:'closer', label:'Closers', icon:'🤝', color:'#14B8A6' },
+      { key:'admin', label:'Admins', icon:'⚙️', color:'#8B5CF6' },
+    ];
+    filtersEl.innerHTML = chips.map(c => `
+      <button class="role-chip ${_userRoleFilter===c.key?'active':''}" style="--rc-color:${c.color}" onclick="setUserRoleFilter('${c.key}')">
+        <span>${c.icon} ${c.label}</span>
+        <span class="role-chip-count">${counts[c.key]||0}</span>
+      </button>
+    `).join('');
+  }
+
+  // Filtrage
+  let filtered = users;
+  if (_userRoleFilter !== 'all') filtered = filtered.filter(u => u.role === _userRoleFilter);
+  if (search) filtered = filtered.filter(u => {
+    const txt = `${u.prenom||''} ${u.nom||''} ${u.email||''}`.toLowerCase();
+    return txt.includes(search);
+  });
+
+  // Compteur visible
+  const countEl=document.getElementById('users-count');
+  if(countEl) countEl.textContent = filtered.length === users.length
+    ? `(${users.length})`
+    : `(${filtered.length} / ${users.length})`;
+
+  if(!filtered.length){
+    const msg = _userRoleFilter !== 'all'
+      ? `Aucun compte avec le rôle "${_userRoleFilter}". Crée-en un avec le bouton "+ Nouveau compte".`
+      : search ? `Aucun résultat pour "${search}".` : 'Aucun utilisateur';
+    el.innerHTML=`<div class="empty"><div class="e-icon">👥</div><div class="e-text">${msg}</div></div>`;
+    return;
+  }
+  el.innerHTML=filtered.map(u=>{
     const hasPwd = !!u.password_admin;
     const pwdHtml = hasPwd
       ? `<div class="user-pwd-row">
