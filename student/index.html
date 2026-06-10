@@ -1774,7 +1774,7 @@ function renderModuleContent(m){
     ${m.description?`<div class="mod-big-desc">${m.description}</div>`:""}
     <div class="mod-tags">
       ${embed?`<span class="mod-tag">🎬 Vidéo</span>`:""}
-      ${m.support_technique?`<span class="mod-tag">📚 Support</span>`:""}
+      ${(m.support_technique||(m.ordre>=1&&m.ordre<=23))?`<span class="mod-tag">📚 Support</span>`:""}
       ${m.pdf_url?`<span class="mod-tag">📄 PDF</span>`:""}
       ${m.quiz?.length?`<span class="mod-tag">📝 ${m.quiz.length} question${m.quiz.length>1?"s":""}</span>`:""}
       ${m.duree_estimee?`<span class="mod-tag">⏱ ${m.duree_estimee}</span>`:""}
@@ -1792,8 +1792,35 @@ function renderModuleContent(m){
   }
 
   // ─── Support technique (iframe lazy-load + bouton plein écran) ───
-  if(m.support_technique){
-    const supUrl = m.support_technique.trim();
+  // Fallback hardcodé pour les séances 1-23 si l'admin n'a pas (encore) défini d'URL custom
+  const SUPPORTS_FALLBACK = {
+    1:  "https://denemacademy.github.io/DENEMACADEMY-SEANCE-1-CLAUDE-CODE/",
+    2:  "https://denemacademy.github.io/seance-02-codex/",
+    3:  "https://denemacademy.github.io/seance-03-n8n/",
+    4:  "https://denemacademy.github.io/seance-04-cowork/",
+    5:  "https://denemacademy.github.io/seance-05-etude-marche/",
+    6:  "https://denemacademy.github.io/formation-seance-06-qg-cowork/",
+    7:  "https://denemacademy.github.io/seance-07-identite-marque/",
+    8:  "https://denemacademy.github.io/formation-seance-08-audit-seo-geo/",
+    9:  "https://denemacademy.github.io/seance-09-site-web-wordpress/",
+    10: "https://denemacademy.github.io/denemacademy-seance-10-blog-automatique/",
+    11: "https://denemacademy.github.io/seance-11-automatiser-publication-article/",
+    12: "https://denemacademy.github.io/formation-seance-12-profil-linkedin/",
+    13: "https://denemacademy.github.io/seance-13-creer-son-lead-magnet/",
+    14: "https://denemacademy.github.io/seance-14-automatiser-posts-linkedin/",
+    15: "https://denemacademy.github.io/denemacademy-seance-15-leads-gratuits/",
+    16: "https://denemacademy.github.io/seance-16-enrichir-leads-data-gouv/",
+    17: "https://denemacademy.github.io/formation-seance-17-enrichir-leads-apify/",
+    18: "https://denemacademy.github.io/seance-18-nettoyer-scorer-bdd/",
+    19: "https://denemacademy.github.io/seance-19-prospection-automatisee/",
+    20: "https://denemacademy.github.io/seance-20-audit-technique-client/",
+    21: "https://denemacademy.github.io/seance-21-organisation-projet-client/",
+    22: "https://denemacademy.github.io/seance-22-rag-supabase/",
+    23: "https://denemacademy.github.io/seance-23-chatbot-ia-vocal-texte/"
+  };
+  const supportUrl = (m.support_technique && m.support_technique.trim()) || SUPPORTS_FALLBACK[m.ordre] || '';
+  if(supportUrl){
+    const supUrl = supportUrl;
     html+=`<div class="sec">
       <div class="sec-head">
         <div class="sec-icon" style="background:rgba(99,102,241,.12);color:#A5B4FC">📚</div>
