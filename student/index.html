@@ -423,6 +423,33 @@ nav::-webkit-scrollbar{width:0}
 .mcs-player-intervenant,.mcs-player-duree{font-size:13px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:6px}
 .mcs-player-desc{font-size:14px;color:rgba(255,255,255,.72);line-height:1.65;margin-top:8px;padding-top:14px;border-top:1px solid var(--border)}
 @media(max-width:700px){.mcs-grid{grid-template-columns:1fr}.mcs-title{font-size:22px}.mcs-header-icon{width:52px;height:52px;font-size:26px}.mcs-player-modal{padding:0}.mcs-player-content{border-radius:0;min-height:100vh}}
+/* ═══ Prochaine Masterclass (accueil) ═══ */
+.home-mc-card{background:linear-gradient(135deg,rgba(236,72,153,.08),rgba(99,102,241,.06));border:1px solid rgba(236,72,153,.22);border-radius:18px;padding:22px;margin-bottom:28px;position:relative;overflow:hidden;animation:fadeUp .35s ease}
+.home-mc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--mc-color,#EC4899),#A78BFA,#EC4899);background-size:200% 100%;animation:gradientShift 4s linear infinite}
+@keyframes gradientShift{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.home-mc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.home-mc-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(236,72,153,.18);border:1px solid rgba(236,72,153,.4);color:#F9A8D4;font-size:11px;font-weight:700;padding:5px 12px;border-radius:99px;text-transform:uppercase;letter-spacing:.5px}
+.home-mc-pulse{width:6px;height:6px;background:#EC4899;border-radius:50%;box-shadow:0 0 8px #EC4899;animation:livePulse 1.5s ease-in-out infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.3)}}
+.home-mc-theme{font-size:11px;font-weight:700;color:var(--mc-color,#A5B4FC);background:color-mix(in srgb,var(--mc-color) 14%,transparent);padding:5px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:5px}
+.home-mc-body{display:flex;gap:18px;align-items:flex-start}
+.home-mc-icon{width:56px;height:56px;background:linear-gradient(135deg,#EC4899,#A78BFA);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 10px 24px rgba(236,72,153,.3)}
+.home-mc-content{flex:1;min-width:0}
+.home-mc-label{font-size:10px;font-weight:800;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.home-mc-title{font-family:'Manrope','DM Sans',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.3;letter-spacing:-.01em;margin-bottom:6px}
+.home-mc-intervenant{font-size:12.5px;color:rgba(255,255,255,.6);margin-bottom:8px}
+.home-mc-when{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:rgba(255,255,255,.7);font-weight:600}
+.home-mc-when span{display:inline-flex;align-items:center;gap:5px}
+.home-mc-desc{font-size:13px;color:rgba(255,255,255,.6);line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)}
+.home-mc-actions{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.home-mc-cta{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#EC4899,#A855F7);color:#fff;font-family:inherit;font-weight:700;font-size:14px;padding:11px 22px;border-radius:11px;text-decoration:none;transition:all .18s;box-shadow:0 8px 22px rgba(236,72,153,.32);letter-spacing:-.01em}
+.home-mc-cta:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(236,72,153,.45)}
+.home-mc-cta.live{background:linear-gradient(135deg,#EF4444,#EC4899);animation:liveBtnPulse 2s ease-in-out infinite;box-shadow:0 8px 24px rgba(239,68,68,.4)}
+@keyframes liveBtnPulse{0%,100%{box-shadow:0 8px 24px rgba(239,68,68,.4)}50%{box-shadow:0 12px 32px rgba(239,68,68,.65)}}
+.home-mc-details-btn{background:rgba(255,255,255,.06);border:1px solid var(--border);color:rgba(255,255,255,.7);font-family:inherit;font-weight:600;font-size:13px;padding:10px 18px;border-radius:11px;cursor:pointer;transition:all .15s}
+.home-mc-details-btn:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.18)}
+.home-mc-no-link{flex:1;font-size:12px;color:rgba(255,255,255,.45);font-style:italic;padding:10px 0}
+@media(max-width:700px){.home-mc-body{flex-direction:column}.home-mc-icon{width:48px;height:48px;font-size:24px}.home-mc-title{font-size:17px}.home-mc-cta{width:100%;justify-content:center}.home-mc-details-btn{width:100%}}
 .pdf-row{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .2s}
 .pdf-row:hover{background:rgba(99,102,241,.06);border-color:rgba(99,102,241,.3);transform:translateY(-1px)}
 .pdf-ico{width:42px;height:42px;background:linear-gradient(135deg,#EF4444,#DC2626);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-.5px}
@@ -936,6 +963,9 @@ nav::-webkit-scrollbar{width:0}
 
           <!-- Prochain RDV -->
           <div id="home-rdv-section"></div>
+
+          <!-- Prochaine Masterclass live -->
+          <div id="home-mc-section"></div>
 
           <!-- Stats -->
           <div class="stats-row">
@@ -1454,7 +1484,8 @@ function loadData(){
       else { badge.style.display = 'none'; }
     }
     if (S.currentPage === 'masterclass') renderMasterclassPageStudent();
-  }, e => { console.warn('[masterclass] listener:', e); S.masterclasses = []; });
+    renderHomeMasterclass();
+  }, e => { console.warn('[masterclass] listener:', e); S.masterclasses = []; renderHomeMasterclass(); });
   if(S.apprenant){
     // Live sync apprenant profile (CSM edits propagate without page reload)
     db.collection("apprenants").doc(S.apprenant.id).onSnapshot(d=>{
@@ -1534,6 +1565,7 @@ function renderAll(){
   renderHomeQuick();
   renderHomeRdv();
   renderRdvSuivi();
+  renderHomeMasterclass();
 }
 
 // ── PROGRESS ──
@@ -3640,6 +3672,94 @@ function stuToggleAudio(msgId){
 }
 
 // ── RDV HOME ──
+// ─── Prochaine masterclass live sur l'accueil ───
+function renderHomeMasterclass(){
+  const el = document.getElementById("home-mc-section");
+  if(!el) return;
+  // On cherche la prochaine masterclass avec une date d'événement future (ou aujourd'hui)
+  const now = Date.now();
+  const upcoming = (S.masterclasses||[])
+    .filter(m => m.date_event && m.published !== false)
+    .map(m => {
+      // Parse date_event (YYYY-MM-DD) + heure (HH:MM) → timestamp
+      const dateStr = m.date_event;
+      const timeStr = m.heure || '00:00';
+      const ts = new Date(`${dateStr}T${timeStr}`).getTime();
+      return { ...m, _ts: ts };
+    })
+    .filter(m => !isNaN(m._ts) && m._ts >= now - 2*3600*1000) // tolérance 2h après début (encore en live)
+    .sort((a,b) => a._ts - b._ts);
+
+  const next = upcoming[0];
+  if(!next){ el.innerHTML = ''; return; }
+
+  const th = mcThemeCfgStudent(next.theme);
+  const dt = new Date(next._ts);
+  const dateLabel = dt.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+  const heureLabel = next.heure || dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  // Time until event
+  const diffMs = next._ts - now;
+  let countdown = '';
+  if (diffMs < 0){
+    countdown = '🔴 En direct maintenant';
+  } else if (diffMs < 3600*1000){
+    const min = Math.max(1, Math.round(diffMs/60000));
+    countdown = `Dans ${min} min`;
+  } else if (diffMs < 24*3600*1000){
+    const h = Math.round(diffMs/3600000);
+    countdown = `Dans ${h}h`;
+  } else {
+    const d = Math.round(diffMs/(24*3600*1000));
+    countdown = `Dans ${d} jour${d>1?'s':''}`;
+  }
+  const isLive = diffMs < 30*60*1000; // dans 30 min ou moins → bouton "Rejoindre"
+
+  const meetLink = next.meet_link || next.video_url || '';
+  el.innerHTML = `<div class="home-mc-card" style="--mc-color:${th.color}">
+    <div class="home-mc-head">
+      <span class="home-mc-pill"><span class="home-mc-pulse"></span>${countdown}</span>
+      <span class="home-mc-theme">${th.icon} ${th.label}</span>
+    </div>
+    <div class="home-mc-body">
+      <div class="home-mc-icon">🎬</div>
+      <div class="home-mc-content">
+        <div class="home-mc-label">Prochaine Masterclass</div>
+        <div class="home-mc-title">${escHtml(next.titre||'')}</div>
+        ${next.intervenant?`<div class="home-mc-intervenant">👤 ${escHtml(next.intervenant)}${next.intervenant_role?` · ${escHtml(next.intervenant_role)}`:''}</div>`:''}
+        <div class="home-mc-when">
+          <span>📅 ${dateLabel}</span>
+          <span>🕐 ${heureLabel}</span>
+          ${next.duree?`<span>⏱ ${escHtml(next.duree)}</span>`:''}
+        </div>
+      </div>
+    </div>
+    ${next.description?`<div class="home-mc-desc">${escHtml((next.description||'').slice(0,180))}${(next.description||'').length>180?'…':''}</div>`:''}
+    <div class="home-mc-actions">
+      ${meetLink
+        ? `<a href="${escAttr(meetLink)}" target="_blank" rel="noopener" class="home-mc-cta ${isLive?'live':''}" onclick="trackMcJoin('${next.id}')">${isLive?'🔴 Rejoindre maintenant':'🎬 Rejoindre via Google Meet'} →</a>`
+        : `<div class="home-mc-no-link">Le lien sera ajouté par le coach prochainement.</div>`}
+      <button class="home-mc-details-btn" onclick="openMasterclassPlayer('${next.id}')">Voir le détail</button>
+    </div>
+  </div>`;
+}
+
+// Refresh auto du countdown chaque minute
+setInterval(() => {
+  if (document.getElementById('home-mc-section')?.querySelector('.home-mc-card')){
+    renderHomeMasterclass();
+  }
+}, 60000);
+
+function trackMcJoin(mcId){
+  // Best-effort tracking (peut servir au CSM pour voir qui rejoint)
+  if(!S.user) return;
+  try{
+    db.collection("masterclass").doc(mcId).update({
+      [`joined.${S.user.uid}`]: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(()=>{});
+  }catch(e){}
+}
+
 function renderHomeRdv(){
   const el=document.getElementById("home-rdv-section");
   if(!el)return;
