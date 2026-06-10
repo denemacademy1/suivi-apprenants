@@ -1375,8 +1375,14 @@ function loadData(){
         const el=document.getElementById("stat-days");
         if(el)el.textContent=`J${Math.min(days,90)}`;
       }
-      // Refresh XP/badges/streak if changed externally
-      if(S.apprenant.xp!==prev.xp){S.xp=S.apprenant.xp||0;updateXPUI();}
+      // Refresh streak/badges si modifiés
+      if(S.apprenant.streak !== prev.streak) S.streak = S.apprenant.streak || 0;
+      if(Array.isArray(S.apprenant.badges)) S.badges = S.apprenant.badges;
+      // XP, niveau et progression toujours recalculés à partir des sources actuelles
+      updateXPUI();
+      updateProgress();
+      renderPhaseMini();
+      updateStreakChip();
       renderHomePage();
     });
     // Pre-load unread message badge without subscribing to all messages
@@ -1468,16 +1474,78 @@ function updateProgress(){
   }
 }
 
-// ── XP UI ──
+// ── XP calculé dynamiquement depuis les sources de vérité ──
+// Plus fiable que de se baser sur S.xp stocké : si Firestore est désynchronisé,
+// l'affichage reste toujours correct car recalculé live à chaque render.
+const XP_BADGE = 25;  // +25 XP par badge gagné
+function computeTotalXP(){
+  let xp = 0;
+  const breakdown = { modules: 0, quizPerfect: 0, quizGreat: 0, streak: 0, badges: 0 };
+  // 1) XP par module complété + bonus quiz
+  Object.values(S.progressions || {}).forEach(p => {
+    if (p.statut === 'termine' || p.statut === 'completed'){
+      xp += XP_MODULE;
+      breakdown.modules += XP_MODULE;
+      const sc = p.score_quiz;
+      if (sc != null){
+        if (sc >= 90){ xp += XP_QUIZ_PERFECT; breakdown.quizPerfect += XP_QUIZ_PERFECT; }
+        else if (sc >= 80){ xp += XP_QUIZ_GREAT; breakdown.quizGreat += XP_QUIZ_GREAT; }
+      }
+    }
+  });
+  // 2) XP streak (1 par jour de streak)
+  const streakBonus = (S.streak || 0) * XP_DAILY;
+  xp += streakBonus;
+  breakdown.streak = streakBonus;
+  // 3) XP badges
+  const badgeBonus = (Array.isArray(S.badges) ? S.badges.length : 0) * XP_BADGE;
+  xp += badgeBonus;
+  breakdown.badges = badgeBonus;
+  return { total: xp, breakdown };
+}
+
+// ── XP UI ── (utilise computeTotalXP)
 function updateXPUI(){
-  const lvl=getLevel(S.xp);
-  const next=LEVELS[lvl.num]||lvl;
-  const pct=lvl.num>=5?100:Math.round(((S.xp-lvl.min)/(next.min-lvl.min))*100);
-  document.getElementById("xp-current").textContent=S.xp;
-  document.getElementById("xp-fill").style.width=pct+"%";
-  document.getElementById("xp-level-badge").textContent=`⚡ Niveau ${lvl.num}`;
-  document.getElementById("stat-xp").textContent=S.xp;
-  document.getElementById("stat-level-sub").textContent=`Niveau ${lvl.num} — ${lvl.label}`;
+  const { total: xp, breakdown } = computeTotalXP();
+  // On synchronise S.xp (utilisé ailleurs) mais l'affichage est toujours basé sur xp calculé
+  S.xp = xp;
+  const lvl = getLevel(xp);
+  const next = LEVELS[lvl.num] || lvl;
+  const pct = lvl.num >= 5 ? 100 : Math.round(((xp - lvl.min) / (next.min - lvl.min)) * 100);
+
+  const elCur = document.getElementById("xp-current"); if (elCur) elCur.textContent = xp;
+  const elFill = document.getElementById("xp-fill"); if (elFill) elFill.style.width = pct + "%";
+  const elBadge = document.getElementById("xp-level-badge");
+  if (elBadge) {
+    elBadge.textContent = `⚡ Niveau ${lvl.num} · ${lvl.label}`;
+    elBadge.style.color = lvl.color;
+    elBadge.style.borderColor = lvl.color + '40';
+    elBadge.style.background = lvl.color + '15';
+    // Tooltip dynamique : montre le breakdown
+    const next4 = lvl.num >= 5 ? 0 : (next.min - xp);
+    const tip = [
+      `Niveau ${lvl.num} · ${lvl.label} (${xp} XP)`,
+      lvl.num < 5 ? `Prochain niveau dans ${next4} XP` : 'Niveau max atteint 🏆',
+      `\nDétail des XP gagnés :`,
+      `· Modules complétés : +${breakdown.modules}`,
+      breakdown.quizPerfect ? `· Quiz parfaits (≥90%) : +${breakdown.quizPerfect}` : null,
+      breakdown.quizGreat ? `· Quiz très bons (≥80%) : +${breakdown.quizGreat}` : null,
+      breakdown.streak ? `· Streak (${S.streak}j × ${XP_DAILY}) : +${breakdown.streak}` : null,
+      breakdown.badges ? `· Badges (${S.badges?.length||0} × ${XP_BADGE}) : +${breakdown.badges}` : null,
+    ].filter(Boolean).join('\n');
+    elBadge.setAttribute('data-tip', tip);
+  }
+  const elStatXp = document.getElementById("stat-xp"); if (elStatXp) elStatXp.textContent = xp;
+  const elStatSub = document.getElementById("stat-level-sub");
+  if (elStatSub) elStatSub.textContent = `Niveau ${lvl.num} — ${lvl.label}`;
+
+  // Sauvegarde en arrière-plan si la valeur stockée est différente (best-effort)
+  if (S.apprenant && S.apprenant.xp !== xp){
+    db.collection("apprenants").doc(S.apprenant.id)
+      .update({ xp, updatedAt: TS() })
+      .catch(()=>{});
+    S.apprenant.xp = xp;
+  }
 }
 
 function getLevel(xp){
@@ -2345,14 +2413,12 @@ async function completeModule(moduleId,score){
   const progData={apprenant_id:S.apprenant.id,module_id:moduleId,statut:"completed",score_quiz:score,completed_at:TS(),updatedAt:TS()};
   await db.collection("progressions").doc(progId).set(progData,{merge:true});
   S.progressions[moduleId]=progData;
-  // Award XP
+  // Calcul XP gagnés (pour le toast). Le total est recalculé par computeTotalXP via updateXPUI.
   let xpEarned=XP_MODULE;
   if(score>=90)xpEarned+=XP_QUIZ_PERFECT;
   else if(score>=80)xpEarned+=XP_QUIZ_GREAT;
   const prevLevel=getLevel(S.xp);
-  S.xp+=xpEarned;
-  const newLevel=getLevel(S.xp);
-  // Save XP to Firestore
+  // S.xp sera recalculé automatiquement après renderAll() ci-dessous via updateXPUI → computeTotalXP
   const m=S.modules.find(x=>x.id===moduleId);
   if(m&&S.apprenant){
     const scores=[...(S.apprenant.modules_scores||Array(9).fill(null))];
@@ -2360,11 +2426,12 @@ async function completeModule(moduleId,score){
     await db.collection("apprenants").doc(S.apprenant.id).update({
       modules_scores:scores,
       jour:Math.min(90,Math.max(S.apprenant.jour||1,m.jour_fin||S.apprenant.jour||1)),
-      xp:S.xp,
       updatedAt:TS()
     });
-    S.apprenant.xp=S.xp;
+    // xp sera resynchronisé par updateXPUI (S.apprenant.xp est mis à jour dedans)
   }
+  // Projection XP local pour détecter la montée de niveau (S.xp sera réellement recalculé via computeTotalXP dans renderAll)
+  const newLevel = getLevel(S.xp + xpEarned);
   // Show toast
   showToast('⚡',`+${xpEarned} XP gagnés !`,m?m.titre:'Module complété');
   if(newLevel.num>prevLevel.num){
