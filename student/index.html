@@ -64,6 +64,13 @@ nav::-webkit-scrollbar{width:0}
 .nav-item.active .nav-icon{color:#818CF8}
 .nav-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
 .nav-badge{min-width:18px;height:18px;background:rgba(99,102,241,.25);color:#818CF8;font-size:10px;font-weight:700;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:auto}
+/* Item "Mes coachs" — direct WhatsApp */
+.nav-coach{background:linear-gradient(135deg,rgba(37,211,102,.10),rgba(18,140,126,.06));border:1px solid rgba(37,211,102,.18);color:rgba(255,255,255,.85);font-weight:600;margin-top:2px;position:relative}
+.nav-coach:hover{background:linear-gradient(135deg,rgba(37,211,102,.18),rgba(18,140,126,.10));border-color:rgba(37,211,102,.35);color:#fff;transform:translateX(2px)}
+.nav-coach .nav-icon{color:#25D366;font-size:15px}
+.nav-coach:hover .nav-icon{color:#34D399}
+.nav-coach-badge{margin-left:auto;font-size:12px;opacity:.7;transition:.15s}
+.nav-coach:hover .nav-coach-badge{opacity:1;transform:scale(1.1)}
 /* Phase mini progress */
 .phase-mini{margin:0 8px;padding:12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)}
 .pm-title{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
@@ -799,9 +806,9 @@ nav::-webkit-scrollbar{width:0}
         <span class="nav-icon">📝</span>Notes & Tâches
         <span class="nav-badge" id="nav-badge-todos" style="display:none;background:rgba(239,68,68,.2);color:#F87171">0</span>
       </div>
-      <div class="nav-item" id="nav-messages" onclick="showPage('messages')">
-        <span class="nav-icon">💬</span>Messages
-        <span class="nav-badge" id="nav-badge-messages" style="display:none;background:rgba(239,68,68,.2);color:#F87171">0</span>
+      <div class="nav-item nav-coach" id="nav-coach" onclick="openCoachWhatsApp()">
+        <span class="nav-icon">💬</span>Mes coachs
+        <span class="nav-coach-badge" title="WhatsApp">📲</span>
       </div>
 
       <div class="nav-section" style="margin-top:8px">Ma progression</div>
@@ -2706,6 +2713,25 @@ function renderWhatsAppCard(link){
       <div class="wa-card-tip">📲 Si rien ne se passe, ouvre WhatsApp manuellement et cherche le coach.</div>
     </div>
   </div>`;
+}
+
+// ─── Ouvre directement la conversation WhatsApp depuis le menu ───
+function openCoachWhatsApp(){
+  const link = S.apprenant?.whatsapp_link?.trim();
+  if(link){
+    // Track + ouvre dans un nouvel onglet
+    trackWaOpen();
+    window.open(link, '_blank', 'noopener');
+    closeSidebar();
+  } else {
+    // Pas de lien défini → toast informatif
+    showToast(
+      '💬',
+      'WhatsApp pas encore configuré',
+      "Ton coach n'a pas encore activé le suivi WhatsApp. Il l'ajoutera depuis son espace, et tu pourras y accéder dès qu'il sera prêt.",
+      false
+    );
+  }
 }
 
 function trackWaOpen(){
