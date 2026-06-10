@@ -405,6 +405,7 @@ tr:hover td{background:#FAFBFF}
         <div class="panel-title">Liste des modules</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-sm" onclick="seedQuizzes1to23()" id="btn-seed-quizzes" style="background:#10B981;color:#fff;border:1px solid #10B981;font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:600">📝 Importer quiz officiels (1-23)</button>
+          <button class="btn btn-sm" onclick="seedSupports1to23()" id="btn-seed-supports" style="background:#6366F1;color:#fff;border:1px solid #6366F1;font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:600">📚 Importer supports techniques (1-23)</button>
           <select id="filter-phase" onchange="renderModules()" style="padding:7px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;outline:none">
             <option value="">Toutes les phases</option>
             <optgroup label="⚙️ Technique">
@@ -697,6 +698,11 @@ tr:hover td{background:#FAFBFF}
           <label>URL Vidéo</label>
           <input type="text" id="m-video-url" placeholder="https://vimeo.com/123456789/abcdef0123 ou https://youtu.be/...">
           <div style="font-size:11px;color:#94A3B8;margin-top:6px">Supporte <strong>Vimeo</strong> (avec hash pour les vidéos privées : <code>vimeo.com/ID/HASH</code> ou <code>?h=HASH</code>) et <strong>YouTube</strong> (watch, embed, shorts, youtu.be)</div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>📚 URL Support technique <span style="color:#94A3B8;font-weight:400;font-size:12px">(GitHub Pages DENEM ou autre)</span></label>
+          <input type="text" id="m-support-url" placeholder="https://denemacademy.github.io/seance-XX-XXX/">
+          <div style="font-size:11px;color:#94A3B8;margin-top:6px">Le support s'affichera en <strong>iframe intégrée</strong> dans le module côté apprenant + bouton plein écran.</div>
         </div>
         <div class="form-group" style="margin-bottom:16px">
           <label>Fichier PDF</label>
@@ -1094,6 +1100,70 @@ async function seedQuizzes1to23(){
   }
 }
 
+// ─── Import des supports techniques séances 1-23 ───
+const SUPPORTS_TECHNIQUES = {
+  1:  "https://denemacademy.github.io/DENEMACADEMY-SEANCE-1-CLAUDE-CODE/",
+  2:  "https://denemacademy.github.io/seance-02-codex/",
+  3:  "https://denemacademy.github.io/seance-03-n8n/",
+  4:  "https://denemacademy.github.io/seance-04-cowork/",
+  5:  "https://denemacademy.github.io/seance-05-etude-marche/",
+  6:  "https://denemacademy.github.io/formation-seance-06-qg-cowork/",
+  7:  "https://denemacademy.github.io/seance-07-identite-marque/",
+  8:  "https://denemacademy.github.io/formation-seance-08-audit-seo-geo/",
+  9:  "https://denemacademy.github.io/seance-09-site-web-wordpress/",
+  10: "https://denemacademy.github.io/denemacademy-seance-10-blog-automatique/",
+  11: "https://denemacademy.github.io/seance-11-automatiser-publication-article/",
+  12: "https://denemacademy.github.io/formation-seance-12-profil-linkedin/",
+  13: "https://denemacademy.github.io/seance-13-creer-son-lead-magnet/",
+  14: "https://denemacademy.github.io/seance-14-automatiser-posts-linkedin/",
+  15: "https://denemacademy.github.io/denemacademy-seance-15-leads-gratuits/",
+  16: "https://denemacademy.github.io/seance-16-enrichir-leads-data-gouv/",
+  17: "https://denemacademy.github.io/formation-seance-17-enrichir-leads-apify/",
+  18: "https://denemacademy.github.io/seance-18-nettoyer-scorer-bdd/",
+  19: "https://denemacademy.github.io/seance-19-prospection-automatisee/",
+  20: "https://denemacademy.github.io/seance-20-audit-technique-client/",
+  21: "https://denemacademy.github.io/seance-21-organisation-projet-client/",
+  22: "https://denemacademy.github.io/seance-22-rag-supabase/",
+  23: "https://denemacademy.github.io/seance-23-chatbot-ia-vocal-texte/"
+};
+
+async function seedSupports1to23(){
+  if (!modules.length){
+    alert("⚠️ Aucun module chargé. Clique d'abord sur 🚀 Initialiser le programme.");
+    return;
+  }
+  const ordres = Object.keys(SUPPORTS_TECHNIQUES).map(n => parseInt(n));
+  const will = ordres.filter(o => modules.find(m => m.ordre === o));
+  if (!will.length){
+    alert("⚠️ Aucun module avec ordre 1-23. Initialise d'abord le programme.");
+    return;
+  }
+  const msg = `Importer les URLs de support technique pour ${will.length} séance${will.length>1?'s':''} ?\n\nCela écrasera le champ "support_technique" des séances ${will.join(', ')}.`;
+  if (!confirm(msg)) return;
+  const btn = document.getElementById('btn-seed-supports');
+  if (btn){btn.disabled=true; btn.innerHTML='⏳ Import…';}
+  let done = 0;
+  try {
+    const batch = db.batch();
+    will.forEach(ordre => {
+      const m = modules.find(x => x.ordre === ordre);
+      if (!m) return;
+      batch.update(db.collection('modules').doc(m.id), {
+        support_technique: SUPPORTS_TECHNIQUES[ordre],
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      done++;
+    });
+    await batch.commit();
+    showAlert(`✓ ${done} support${done>1?'s':''} technique${done>1?'s':''} importé${done>1?'s':''} avec succès.`);
+  } catch(e){
+    console.error('seedSupports error:', e);
+    alert(`Erreur : ${e.message||e.code}`);
+  } finally {
+    if (btn){btn.disabled=false; btn.innerHTML='📚 Importer supports techniques (1-23)';}
+  }
+}
+
 function updateProgramInitVisibility(){
   const panel=document.getElementById('program-init-panel');
   if(!panel) return;
@@ -1215,6 +1285,7 @@ function openModuleModal(id){
   document.getElementById('m-statut').value='draft';
   document.getElementById('m-video-url').value='';
   document.getElementById('m-contenu-text').value='';
+  if(document.getElementById('m-support-url')) document.getElementById('m-support-url').value='';
   document.getElementById('m-pdf-url').value='';
   document.getElementById('m-pdf-nom').value='';
   document.getElementById('pdf-zone-text').textContent='Cliquez ou glissez un fichier PDF';
@@ -1249,6 +1320,7 @@ function editModule(id){
   document.getElementById('m-statut').value=m.published?'published':'draft';
   document.getElementById('m-video-url').value=m.video_url||'';
   document.getElementById('m-contenu-text').value=m.contenu||'';
+  if(document.getElementById('m-support-url')) document.getElementById('m-support-url').value=m.support_technique||'';
   document.getElementById('m-pdf-url').value=m.pdf_url||'';
   document.getElementById('m-pdf-nom').value=m.pdf_nom||'';
   document.getElementById('pdf-zone-text').textContent=m.pdf_nom||'Cliquez ou glissez un fichier PDF';
@@ -1306,6 +1378,7 @@ async function saveModule(){
     jour_fin:parseInt(document.getElementById('m-jour-fin').value)||null,
     published:document.getElementById('m-statut').value==='published',
     video_url:document.getElementById('m-video-url').value.trim(),
+    support_technique:document.getElementById('m-support-url')?.value.trim()||'',
     pdf_url:document.getElementById('m-pdf-url').value,
     pdf_nom:document.getElementById('m-pdf-nom').value,
     contenu:document.getElementById('m-contenu-text').value.trim(),

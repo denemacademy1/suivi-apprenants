@@ -277,6 +277,25 @@ nav::-webkit-scrollbar{width:0}
 .sec-body{padding:20px}
 .video-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000}
 .video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%}
+/* Support technique — carte + iframe lazy-load */
+.support-fullscreen-btn{margin-left:auto;font-size:11px;color:#A5B4FC;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);padding:5px 11px;border-radius:7px;text-decoration:none;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.support-fullscreen-btn:hover{background:rgba(99,102,241,.18);color:#C7D2FE;border-color:rgba(99,102,241,.4)}
+.support-tech-card{background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(139,92,246,.04));border:1px solid rgba(99,102,241,.18);border-radius:13px;overflow:hidden}
+.support-tech-preview{display:flex;align-items:center;gap:16px;padding:20px 22px;flex-wrap:wrap}
+.support-tech-icon{width:54px;height:54px;background:linear-gradient(135deg,#6366F1,#8B5CF6);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;box-shadow:0 6px 16px rgba(99,102,241,.3)}
+.support-tech-info{flex:1;min-width:220px}
+.support-tech-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.01em;margin-bottom:3px}
+.support-tech-sub{font-size:12px;color:rgba(255,255,255,.55);line-height:1.5}
+.support-tech-load-btn{background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;font-family:inherit;font-weight:700;font-size:13px;padding:11px 18px;border-radius:10px;border:none;cursor:pointer;transition:all .15s;box-shadow:0 6px 16px rgba(99,102,241,.3);letter-spacing:-.01em;white-space:nowrap}
+.support-tech-load-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(99,102,241,.4)}
+.support-tech-frame-wrap{display:flex;flex-direction:column;animation:fadeUp .3s ease}
+.support-tech-frame-toolbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(255,255,255,.05)}
+.support-tech-domain{font-size:11px;color:rgba(255,255,255,.5);font-family:'SF Mono','Menlo',monospace}
+.support-tech-toolbar-btn{width:28px;height:28px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);border-radius:7px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:all .15s}
+.support-tech-toolbar-btn:hover{background:rgba(99,102,241,.18);color:#fff;border-color:rgba(99,102,241,.3)}
+.support-tech-iframe-container{position:relative;background:#fff;height:min(80vh,750px)}
+.support-tech-iframe-container iframe{width:100%;height:100%;border:0;display:block}
+@media(max-width:700px){.support-tech-iframe-container{height:65vh}.support-tech-load-btn{width:100%}}
 .pdf-row{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .2s}
 .pdf-row:hover{background:rgba(99,102,241,.06);border-color:rgba(99,102,241,.3);transform:translateY(-1px)}
 .pdf-ico{width:42px;height:42px;background:linear-gradient(135deg,#EF4444,#DC2626);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-.5px}
@@ -1739,6 +1758,7 @@ function renderModuleContent(m){
     ${m.description?`<div class="mod-big-desc">${m.description}</div>`:""}
     <div class="mod-tags">
       ${embed?`<span class="mod-tag">🎬 Vidéo</span>`:""}
+      ${m.support_technique?`<span class="mod-tag">📚 Support</span>`:""}
       ${m.pdf_url?`<span class="mod-tag">📄 PDF</span>`:""}
       ${m.quiz?.length?`<span class="mod-tag">📝 ${m.quiz.length} question${m.quiz.length>1?"s":""}</span>`:""}
       ${m.duree_estimee?`<span class="mod-tag">⏱ ${m.duree_estimee}</span>`:""}
@@ -1752,6 +1772,45 @@ function renderModuleContent(m){
     html+=`<div class="sec">
       <div class="sec-head"><div class="sec-icon" style="background:rgba(239,68,68,.1)">🎬</div><div class="sec-title">Vidéo du cours</div></div>
       <div class="sec-body"><div class="video-wrap"><iframe src="${embed}" frameborder="0" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe></div></div>
+    </div>`;
+  }
+
+  // ─── Support technique (iframe lazy-load + bouton plein écran) ───
+  if(m.support_technique){
+    const supUrl = m.support_technique.trim();
+    html+=`<div class="sec">
+      <div class="sec-head">
+        <div class="sec-icon" style="background:rgba(99,102,241,.12);color:#A5B4FC">📚</div>
+        <div class="sec-title">Support technique</div>
+        <a href="${escAttr(supUrl)}" target="_blank" rel="noopener" class="support-fullscreen-btn" title="Ouvrir en plein écran dans un nouvel onglet">↗ Plein écran</a>
+      </div>
+      <div class="sec-body">
+        <div class="support-tech-card" id="support-card-${m.id}">
+          <div class="support-tech-preview">
+            <div class="support-tech-icon">📖</div>
+            <div class="support-tech-info">
+              <div class="support-tech-title">Support technique officiel DENEM</div>
+              <div class="support-tech-sub">Navigation entre toutes les séances disponible · Hébergé sur GitHub Pages</div>
+            </div>
+            <button class="support-tech-load-btn" onclick="loadSupportFrame('${m.id}', '${escAttr(supUrl)}')">
+              Ouvrir le support →
+            </button>
+          </div>
+          <div class="support-tech-frame-wrap" id="support-frame-${m.id}" style="display:none">
+            <div class="support-tech-frame-toolbar">
+              <span class="support-tech-domain">📚 ${escHtml(new URL(supUrl).hostname)}</span>
+              <div style="display:flex;gap:6px">
+                <button class="support-tech-toolbar-btn" onclick="document.getElementById('iframe-support-${m.id}').src=document.getElementById('iframe-support-${m.id}').src" title="Recharger">⟳</button>
+                <a href="${escAttr(supUrl)}" target="_blank" rel="noopener" class="support-tech-toolbar-btn" title="Plein écran">↗</a>
+                <button class="support-tech-toolbar-btn" onclick="closeSupportFrame('${m.id}')" title="Fermer">✕</button>
+              </div>
+            </div>
+            <div class="support-tech-iframe-container">
+              <iframe id="iframe-support-${m.id}" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" loading="lazy"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>`;
   }
 
@@ -2407,6 +2466,28 @@ function trackWaOpen(){
 }
 
 function escAttr(s){return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ─── Support technique iframe ───
+function loadSupportFrame(moduleId, url){
+  const wrap = document.getElementById('support-frame-'+moduleId);
+  const preview = document.querySelector(`#support-card-${moduleId} .support-tech-preview`);
+  const iframe = document.getElementById('iframe-support-'+moduleId);
+  if(!wrap || !iframe) return;
+  iframe.src = url;
+  wrap.style.display = 'block';
+  if(preview) preview.style.display = 'none';
+  // Scroll vers l'iframe pour focus
+  setTimeout(()=>{ wrap.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
+}
+function closeSupportFrame(moduleId){
+  const wrap = document.getElementById('support-frame-'+moduleId);
+  const preview = document.querySelector(`#support-card-${moduleId} .support-tech-preview`);
+  const iframe = document.getElementById('iframe-support-'+moduleId);
+  if(!wrap) return;
+  if(iframe) iframe.src = 'about:blank'; // libère la ressource
+  wrap.style.display = 'none';
+  if(preview) preview.style.display = '';
+}
 
 function setupPrivateChat(){
   // Unsubscribe previous cohort listener
