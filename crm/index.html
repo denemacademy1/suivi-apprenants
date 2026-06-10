@@ -2469,8 +2469,9 @@ function openMasterclassModal(id){
             </div>
           </div>
           <div class="form-group form-full">
-            <label>URL Vidéo (replay) <span style="color:#94A3B8;font-weight:400;font-size:12px">(Vimeo ou YouTube — pour le replay une fois la session terminée)</span></label>
-            <input id="mc-video" value="${escAttr(m?.video_url||'')}" placeholder="https://vimeo.com/... ou https://youtu.be/...">
+            <label>URL Vidéo (replay) <span style="color:#94A3B8;font-weight:400;font-size:12px">(Fathom, Vimeo, YouTube ou Loom — pour le replay après la session)</span></label>
+            <input id="mc-video" value="${escAttr(m?.video_url||'')}" placeholder="https://fathom.video/share/... · https://vimeo.com/... · https://youtu.be/...">
+            <div style="font-size:11px;color:#64748B;margin-top:5px;line-height:1.5">Supporté : <strong>Fathom</strong> (share/calls/embed), <strong>Vimeo</strong> (avec hash pour vidéos privées), <strong>YouTube</strong> (watch, embed, shorts), <strong>Loom</strong> (share)</div>
           </div>
           <div class="form-group form-full">
             <label>URL Vignette <span style="color:#94A3B8;font-weight:400;font-size:12px">(optionnel)</span></label>

@@ -3928,6 +3928,24 @@ function getVideoEmbed(url){
     return clean; // l'utilisateur a déjà collé l'URL embed complète
   }
 
+  // ─── Fathom Video ───
+  // Formats reconnus :
+  //  - https://fathom.video/share/HASH
+  //  - https://fathom.video/calls/123456
+  //  - https://fathom.video/embed/HASH
+  const fathom = clean.match(/fathom\.video\/(share|calls|embed)\/([A-Za-z0-9_-]+)/);
+  if(fathom){
+    const type = fathom[1];
+    const id = fathom[2];
+    // L'URL d'embed officielle de Fathom = /share/HASH (fonctionne en iframe)
+    // calls/ID → on tente directement avec /share/
+    return `https://fathom.video/${type === 'calls' ? 'calls' : 'share'}/${id}`;
+  }
+
+  // ─── Loom (bonus, même pattern) ───
+  const loom = clean.match(/loom\.com\/share\/([A-Za-z0-9]+)/);
+  if(loom) return `https://www.loom.com/embed/${loom[1]}`;
+
   return null;
 }
 
