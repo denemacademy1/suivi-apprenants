@@ -1077,7 +1077,17 @@ const stuContacts=(id)=>S.contacts.filter(c=>c.apprenant_id===id);
 const stuRdvsDone=(appId)=>S.rdvs.filter(r=>r.apprenant_id===appId&&r.statut==="Réalisé").sort((a,b)=>a.date.localeCompare(b.date));
 const rdvSuiviMilestones=(a)=>{const done=stuRdvsDone(a.id);return RDV_SUIVI.map((m,i)=>({...m,rdv:done[i]||null,isDone:!!done[i]}));};
 const rdvSuiviCount=(appId)=>stuRdvsDone(appId).length;
-function byCharge(arr){if(S.filterCharge==="all")return arr;return arr.filter(a=>a.csm_id===S.filterCharge||a.charge===S.filterCharge||a.charge_suivi===S.filterCharge);}
+function byCharge(arr){
+  if(S.filterCharge==="all") return arr;
+  return arr.filter(a => {
+    // 🆕 Les apprenants non encore assignés (sans csm_id et sans charge) sont visibles par tout coach
+    const isUnassigned = !a.csm_id && !a.charge && !a.charge_suivi;
+    return isUnassigned
+        || a.csm_id===S.filterCharge
+        || a.charge===S.filterCharge
+        || a.charge_suivi===S.filterCharge;
+  });
+}
 
 function computeAlerts(){
   const al=[];

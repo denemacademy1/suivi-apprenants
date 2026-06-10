@@ -1889,37 +1889,43 @@ async function createUser(){
 
     // 🎯 Si c'est un apprenant → on crée aussi son doc dans la collection "apprenants"
     // Comme ça il apparaît directement dans la page Apprenants (admin) ET dans le CRM côté CSM
+    let apprenantCreated = false;
+    let apprenantError = null;
     if (role === 'student'){
       const today = new Date().toISOString().slice(0,10);
       const couleurs = ['#4F46E5','#7C3AED','#DB2777','#EA580C','#16A34A','#0891B2','#CA8A04','#9333EA','#DC2626','#059669'];
       const couleur = couleurs[Math.floor(Math.random()*couleurs.length)];
+      const apprenantData = {
+        uid,                                          // lien vers Firebase Auth
+        prenom, nom, email,
+        telephone: '',
+        whatsapp_link: '',
+        cohorte: '',
+        cohort_id: null,
+        charge: '',                                    // à remplir par le CSM
+        csm_id: null,
+        jour: 1,                                       // J1 du parcours
+        date_debut: today,                             // date de démarrage = aujourd'hui par défaut
+        statut: 'En cours',
+        objectif: '',
+        notes: '',
+        modules_scores: [],
+        couleur,
+        xp: 0,
+        streak: 0,
+        badges: [],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdBy: auth.currentUser?.uid || '',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      console.log('[createUser] Création apprenant Firestore →', apprenantData);
       try {
-        await db.collection('apprenants').add({
-          uid,                                          // lien vers Firebase Auth
-          prenom, nom, email,
-          telephone: '',
-          whatsapp_link: '',
-          cohorte: '',
-          cohort_id: null,
-          charge: '',                                    // à remplir par le CSM
-          csm_id: null,
-          jour: 1,                                       // J1 du parcours
-          date_debut: today,                             // date de démarrage = aujourd'hui par défaut
-          statut: 'En cours',
-          objectif: '',
-          notes: '',
-          modules_scores: [],
-          couleur,
-          xp: 0,
-          streak: 0,
-          badges: [],
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          createdBy: auth.currentUser?.uid || '',
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        const ref = await db.collection('apprenants').add(apprenantData);
+        console.log('[createUser] ✅ Apprenant créé avec ID:', ref.id);
+        apprenantCreated = true;
       } catch(e){
-        // Le compte est créé mais l'apprenant n'a pas pu l'être (rules ?). On ne bloque pas.
-        console.warn('[createUser] apprenant non créé :', e);
+        console.error('[createUser] ❌ Apprenant non créé :', e);
+        apprenantError = e;
       }
     }
 
@@ -1927,8 +1933,22 @@ async function createUser(){
     document.getElementById('user-modal-form').style.display='none';
     document.getElementById('user-modal-success').style.display='block';
     loadData();
-    const extra = role === 'student' ? ' + fiche apprenant créée pour le CSM' : '';
-    showAlert(`Compte créé pour ${email} (${role})${extra}.`);
+    // Message final adapté selon ce qui a réussi
+    if (role === 'student'){
+      if (apprenantCreated){
+        showAlert(`✓ Compte créé pour ${email} + fiche apprenant visible dans le CRM CSM.`);
+      } else {
+        const msg = apprenantError?.message || apprenantError?.code || 'erreur inconnue';
+        alert(
+          `⚠️ Le compte Firebase Auth a bien été créé pour ${email}.\n\n` +
+          `MAIS la fiche apprenant n'a PAS pu être créée dans Firestore :\n${msg}\n\n` +
+          `→ L'apprenant peut se connecter, mais il n'apparaîtra pas dans le CRM CSM.\n` +
+          `→ Vérifie tes règles Firestore sur la collection "apprenants" et réessaie.`
+        );
+      }
+    } else {
+      showAlert(`Compte créé pour ${email} (${role}).`);
+    }
   }catch(e){
     errMsg.textContent=getFrCreateError(e.code)||e.message;errEl.classList.add('show');
   }
