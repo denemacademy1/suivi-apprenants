@@ -1608,7 +1608,8 @@ function renderModulesSidebar(){
   </div>`;
 
   // ── Phases ──
-  PHASE_PROGRAM.forEach(phase => {
+  PHASE_PROGRAM.forEach((phase, phaseIdx) => {
+    const phaseFullLabel = `Phase ${phaseIdx} — ${phase.label}`;
     const mods = S.modules.filter(m => {
       const ph = getProgramPhase(m);
       return ph && ph.key === phase.key;
@@ -1627,7 +1628,7 @@ function renderModulesSidebar(){
       <div class="parcours-phase-head" onclick="toggleProgramPhase('${phase.key}')">
         <div class="parcours-phase-icon" style="border-color:${phase.color}40;color:${phase.color}">${phase.icon}</div>
         <div class="parcours-phase-info">
-          <div class="parcours-phase-name">${phase.label}</div>
+          <div class="parcours-phase-name">${phaseFullLabel}</div>
           <div class="parcours-phase-meta">
             <span class="parcours-cat-badge parcours-cat-${phase.catKey}">${phase.category}</span>
             <span>·</span>
@@ -1742,7 +1743,20 @@ function selectModule(id){
 function renderModuleContent(m){
   const prog=S.progressions[m.id];
   const isDone=["termine","completed"].includes(prog?.statut);
-  const cfg=PHASES[m.phase_id]||{label:m.phase_id||"",color:"#6366F1",icon:"📋"};
+  // Récupère la phase via le programme officiel (PHASE_PROGRAM), avec fallback sur l'ancien système
+  const phaseProg = getProgramPhase(m);
+  let cfg;
+  if(phaseProg){
+    // Numéro de phase : on prend l'index dans PHASE_PROGRAM (p0 → "Phase 0", p1 → "Phase 1"…)
+    const phaseNum = PHASE_PROGRAM.indexOf(phaseProg);
+    cfg = {
+      label: `Phase ${phaseNum} — ${phaseProg.label}`,
+      icon: phaseProg.icon,
+      color: phaseProg.color
+    };
+  } else {
+    cfg = PHASES[m.phase_id] || {label:m.phase_id||"Non classé", color:"#6366F1", icon:"📋"};
+  }
   const embed=getVideoEmbed(m.video_url);
   let html=`<div style="animation:fadeUp .3s ease">`;
 
