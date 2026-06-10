@@ -428,6 +428,8 @@ nav::-webkit-scrollbar{width:0}
 .mcs-player-info{padding:22px 26px 26px;display:flex;flex-direction:column;gap:10px}
 .mcs-player-title{font-family:'Manrope','DM Sans',sans-serif;font-weight:800;font-size:22px;color:#fff;letter-spacing:-.02em;margin:6px 0 0;line-height:1.3}
 .mcs-player-intervenant,.mcs-player-duree{font-size:13px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:6px}
+.mcs-player-meet-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#EC4899,#A855F7);color:#fff;font-family:inherit;font-weight:700;font-size:14px;padding:11px 22px;border:none;border-radius:11px;cursor:pointer;transition:all .18s;box-shadow:0 8px 22px rgba(236,72,153,.32);letter-spacing:-.01em;margin-top:6px;align-self:flex-start}
+.mcs-player-meet-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(236,72,153,.45)}
 .mcs-player-desc{font-size:14px;color:rgba(255,255,255,.72);line-height:1.65;margin-top:8px;padding-top:14px;border-top:1px solid var(--border)}
 @media(max-width:700px){.mcs-grid{grid-template-columns:1fr}.mcs-title{font-size:22px}.mcs-header-icon{width:52px;height:52px;font-size:26px}.mcs-player-modal{padding:0}.mcs-player-content{border-radius:0;min-height:100vh}}
 /* ═══ Prochaine Masterclass (accueil) ═══ */
@@ -3701,7 +3703,8 @@ function renderHomeMasterclass(){
   }
   const isLive = diffMs < 30*60*1000; // dans 30 min ou moins → bouton "Rejoindre"
 
-  const meetLink = next.meet_link || next.video_url || '';
+  // ⚠️ Uniquement le lien Meet renseigné par le CSM (pas de fallback vidéo)
+  const meetLink = (next.meet_link || '').trim();
   el.innerHTML = `<div class="home-mc-card" style="--mc-color:${th.color}">
     <div class="home-mc-head">
       <span class="home-mc-pill"><span class="home-mc-pulse"></span>${countdown}</span>
@@ -3723,11 +3726,32 @@ function renderHomeMasterclass(){
     ${next.description?`<div class="home-mc-desc">${escHtml((next.description||'').slice(0,180))}${(next.description||'').length>180?'…':''}</div>`:''}
     <div class="home-mc-actions">
       ${meetLink
-        ? `<a href="${escAttr(meetLink)}" target="_blank" rel="noopener" class="home-mc-cta ${isLive?'live':''}" onclick="trackMcJoin('${next.id}')">${isLive?'🔴 Rejoindre maintenant':'🎬 Rejoindre via Google Meet'} →</a>`
+        ? `<button class="home-mc-cta ${isLive?'live':''}" onclick="openMeetLink('${next.id}')">${isLive?'🔴 Rejoindre maintenant':'🎬 Rejoindre via Google Meet'} →</button>`
         : `<div class="home-mc-no-link">Le lien sera ajouté par le coach prochainement.</div>`}
       <button class="home-mc-details-btn" onclick="openMasterclassPlayer('${next.id}')">Voir le détail</button>
     </div>
   </div>`;
+}
+
+// Ouvre uniquement le lien Meet renseigné par le coach, dans une nouvelle fenêtre garantie
+function openMeetLink(mcId){
+  const m = (S.masterclasses||[]).find(x => x.id === mcId);
+  if(!m){ console.warn('[meet] masterclass introuvable', mcId); return; }
+  const link = (m.meet_link || '').trim();
+  if(!link){
+    alert("Le lien de la visioconférence n'a pas encore été renseigné par ton coach.");
+    return;
+  }
+  // Track la connexion (best-effort)
+  trackMcJoin(mcId);
+  // Ouverture dans une nouvelle fenêtre/onglet — uniquement le lien Meet, rien d'autre
+  const win = window.open(link, '_blank', 'noopener,noreferrer');
+  if(!win){
+    // Si pop-up bloqué, on tente une approche de fallback (rare)
+    const a = document.createElement('a');
+    a.href = link; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
 }
 
 // Refresh auto du countdown chaque minute
@@ -4007,6 +4031,7 @@ function openMasterclassPlayer(id){
         <h2 class="mcs-player-title">${escHtml(m.titre||'')}</h2>
         ${m.intervenant?`<div class="mcs-player-intervenant">👤 ${escHtml(m.intervenant)}${m.intervenant_role?` · ${escHtml(m.intervenant_role)}`:''}</div>`:''}
         ${m.duree?`<div class="mcs-player-duree">⏱ ${escHtml(m.duree)}</div>`:''}
+        ${m.meet_link?`<button class="mcs-player-meet-btn" onclick="openMeetLink('${m.id}')">🎬 Rejoindre via Google Meet →</button>`:''}
         ${m.description?`<div class="mcs-player-desc">${escHtml(m.description).replace(/\n/g,'<br>')}</div>`:''}
       </div>
     </div>
