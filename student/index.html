@@ -111,6 +111,13 @@ nav::-webkit-scrollbar{width:0}
 .menu-btn{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer}
 /* Streak chip in topbar */
 .streak-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#FCA5A5;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;animation:pulseStreak 3s ease infinite}
+/* Badge Jour de formation (topbar) */
+.day-chip{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(99,102,241,.14),rgba(139,92,246,.10));border:1px solid rgba(99,102,241,.3);color:#A5B4FC;font-size:12px;font-weight:700;padding:5px 12px;border-radius:99px;cursor:default;transition:all .2s}
+.day-chip:hover{background:linear-gradient(135deg,rgba(99,102,241,.22),rgba(139,92,246,.16));color:#fff;border-color:rgba(99,102,241,.5);transform:translateY(-1px)}
+.day-chip-icon{font-size:13px}
+.day-chip-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px}
+.day-chip-num{font-size:14px;font-weight:800;color:#fff;font-feature-settings:'tnum';font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.day-chip-total{font-size:11px;color:rgba(255,255,255,.45);font-weight:600}
 @keyframes pulseStreak{0%,100%{border-color:rgba(239,68,68,.2)}50%{border-color:rgba(239,68,68,.5)}}
 /* Content */
 .content-area{flex:1;overflow-y:auto}
@@ -936,6 +943,12 @@ nav::-webkit-scrollbar{width:0}
       <button class="menu-btn" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title" id="topbar-title">Accueil</div>
       <div class="topbar-actions">
+        <div class="day-chip" id="day-chip" style="display:none" data-tip="">
+          <span class="day-chip-icon">📅</span>
+          <span class="day-chip-label">Jour</span>
+          <span class="day-chip-num" id="day-chip-num">—</span>
+          <span class="day-chip-total">/ 90</span>
+        </div>
         <div class="streak-chip" id="streak-chip" style="display:none">🔥 <span id="streak-count">0</span> jours</div>
       </div>
     </div>
@@ -967,49 +980,8 @@ nav::-webkit-scrollbar{width:0}
           <!-- Prochaine Masterclass live -->
           <div id="home-mc-section"></div>
 
-          <!-- Stats -->
-          <div class="stats-row">
-            <div class="stat-card sc-modules">
-              <div class="stat-icon">📚</div>
-              <div class="stat-val" id="stat-modules-done">0</div>
-              <div class="stat-lbl">Modules complétés</div>
-              <div class="stat-sub" id="stat-modules-sub">sur 0 au total</div>
-            </div>
-            <div class="stat-card sc-score">
-              <div class="stat-icon">🏆</div>
-              <div class="stat-val" id="stat-score">—</div>
-              <div class="stat-lbl">Score moyen quiz</div>
-              <div class="stat-sub">sur les modules validés</div>
-            </div>
-            <div class="stat-card sc-days">
-              <div class="stat-icon">📅</div>
-              <div class="stat-val" id="stat-days">—</div>
-              <div class="stat-lbl">Jours de formation</div>
-              <div class="stat-sub" id="stat-days-sub">depuis le début</div>
-            </div>
-            <div class="stat-card sc-xp" data-tip="Comment gagner des XP ?&#10;+50 XP par session complétée&#10;+30 XP si quiz ≥ 90%&#10;+15 XP si quiz ≥ 80%&#10;+5 XP par jour de connexion&#10;+20 XP par badge gagné">
-              <div class="stat-icon">⚡</div>
-              <div class="stat-val" id="stat-xp">0</div>
-              <div class="stat-lbl">Points XP gagnés</div>
-              <div class="stat-sub" id="stat-level-sub">Niveau 1 — Débutant</div>
-            </div>
-          </div>
-
           <!-- RDVs de suivi -->
           <div id="home-rdv-suivi-section"></div>
-
-          <!-- Quick notes + todos -->
-          <div class="home-quick-row" id="home-quick-row">
-            <div class="quick-card" onclick="showPage('notes')" id="home-last-note">
-              <div class="quick-card-label">📝 Dernière note</div>
-              <div class="quick-card-title" style="color:rgba(255,255,255,.5);font-weight:500">Aucune note pour l'instant</div>
-              <div class="quick-card-cta">Prendre une note →</div>
-            </div>
-            <div class="quick-card" onclick="showPage('notes')">
-              <div class="quick-card-label">✅ Mes tâches du jour</div>
-              <div id="home-todos-preview"><div style="font-size:12px;color:rgba(255,255,255,.4)">Aucune tâche — Ajouter →</div></div>
-            </div>
-          </div>
 
           <!-- Next step -->
           <div id="next-step-section"></div>
@@ -1368,12 +1340,7 @@ auth.onAuthStateChanged(async user=>{
     if(appDoc)S.apprenant={id:appDoc.id,...appDoc.data()};
 
     if(S.apprenant){
-      const start=S.apprenant.date_debut?new Date(S.apprenant.date_debut):null;
-      if(start){
-        const days=Math.floor((Date.now()-start)/86400000)+1;
-        document.getElementById("stat-days").textContent=`J${Math.min(days,90)}`;
-        document.getElementById("stat-days-sub").textContent=`depuis le ${start.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}`;
-      }
+      // Le badge Jour de formation est désormais dans la topbar (updateDayChip)
       S.xp=S.apprenant.xp||0;
       S.badges=Array.isArray(S.apprenant.badges)?S.apprenant.badges:[];
       S.streak=S.apprenant.streak||0;
@@ -1492,13 +1459,7 @@ function loadData(){
       if(!d.exists)return;
       const prev=S.apprenant;
       S.apprenant={id:d.id,...d.data()};
-      // Update day counter if date_debut changed
-      const start=S.apprenant.date_debut?new Date(S.apprenant.date_debut):null;
-      if(start){
-        const days=Math.floor((Date.now()-start)/86400000)+1;
-        const el=document.getElementById("stat-days");
-        if(el)el.textContent=`J${Math.min(days,90)}`;
-      }
+      // Le compteur de jour est désormais dans la topbar via updateDayChip()
       // Refresh streak/badges si modifiés
       if(S.apprenant.streak !== prev.streak) S.streak = S.apprenant.streak || 0;
       if(Array.isArray(S.apprenant.badges)) S.badges = S.apprenant.badges;
@@ -1507,6 +1468,7 @@ function loadData(){
       updateProgress();
       renderPhaseMini();
       updateStreakChip();
+      updateDayChip();
       renderHomePage();
     });
     // Pre-load unread message badge without subscribing to all messages
@@ -1566,6 +1528,7 @@ function renderAll(){
   renderHomeRdv();
   renderRdvSuivi();
   renderHomeMasterclass();
+  updateDayChip();
 }
 
 // ── PROGRESS ──
@@ -1574,12 +1537,14 @@ function updateProgress(){
   const done=Object.values(S.progressions).filter(p=>p.statut==="termine"||p.statut==="completed").length;
   const pct=Math.round((done/total)*100);
   const allDone=done>=total;
-  document.getElementById("suc-fill").style.width=pct+"%";
-  document.getElementById("suc-pct").textContent=pct+"%";
-  document.getElementById("stat-modules-done").textContent=done;
-  document.getElementById("stat-modules-sub").textContent=`sur ${total} au total`;
+  const sucFill=document.getElementById("suc-fill"); if(sucFill) sucFill.style.width=pct+"%";
+  const sucPct=document.getElementById("suc-pct"); if(sucPct) sucPct.textContent=pct+"%";
+  // Les anciennes stat-cards ont été retirées de l'accueil — on évite les erreurs si absentes
+  const stMod=document.getElementById("stat-modules-done"); if(stMod) stMod.textContent=done;
+  const stModSub=document.getElementById("stat-modules-sub"); if(stModSub) stModSub.textContent=`sur ${total} au total`;
   const scores=Object.values(S.progressions).filter(p=>p.score_quiz!=null).map(p=>p.score_quiz);
-  document.getElementById("stat-score").textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+"%":"—";
+  const stScore=document.getElementById("stat-score");
+  if(stScore) stScore.textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+"%":"—";
   // Mise à jour du badge statut hero
   const badge=document.getElementById("hero-status-badge");
   const dot=document.getElementById("hero-status-dot");
@@ -1676,6 +1641,28 @@ function updateXPUI(){
 function getLevel(xp){
   for(let i=LEVELS.length-1;i>=0;i--){if(xp>=LEVELS[i].min)return LEVELS[i];}
   return LEVELS[0];
+}
+
+// ── DAY CHIP (Jour de formation / 90) ──
+function updateDayChip(){
+  const chip = document.getElementById("day-chip");
+  if(!chip) return;
+  const start = S.apprenant?.date_debut ? new Date(S.apprenant.date_debut) : null;
+  if(!start || isNaN(start.getTime())){
+    chip.style.display = 'none';
+    return;
+  }
+  const today = new Date();
+  // Calcul du jour de formation (J1 = jour de démarrage)
+  const days = Math.floor((today - start)/86400000) + 1;
+  const displayDay = Math.min(90, Math.max(1, days));
+  const numEl = document.getElementById("day-chip-num");
+  if(numEl) numEl.textContent = `J${displayDay}`;
+  // Tooltip avec la date de démarrage formatée
+  const formatted = start.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+  chip.setAttribute('data-tip', `Formation démarrée le ${formatted}\n${displayDay} / 90 jours${days>90?'\n✓ Programme terminé':''}`);
+  chip.title = `Démarrée le ${formatted} · ${displayDay}/90 jours`;
+  chip.style.display = 'inline-flex';
 }
 
 // ── STREAK CHIP ──
