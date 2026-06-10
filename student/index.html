@@ -325,6 +325,12 @@ nav::-webkit-scrollbar{width:0}
 .option input[type=radio]{display:none}
 .opt-badge{width:26px;height:26px;border-radius:7px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;opacity:.7}
 .option.selected .opt-badge,.option.correct .opt-badge,.option.wrong .opt-badge{opacity:1}
+/* Justification "Pourquoi cette réponse" — révélée après validation */
+.q-pourquoi{margin-top:14px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.25);border-radius:11px;padding:14px 16px;animation:fadeUp .35s ease}
+.q-pourquoi.q-pourquoi-wrong{background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(245,158,11,.04));border-color:rgba(245,158,11,.3)}
+.q-pourquoi-head{font-size:11px;font-weight:800;color:#34D399;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.q-pourquoi.q-pourquoi-wrong .q-pourquoi-head{color:#FCD34D}
+.q-pourquoi-body{font-size:13px;color:rgba(255,255,255,.78);line-height:1.6}
 .quiz-footer{padding:0 24px 24px}
 .btn-quiz-submit{width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.2px}
 .btn-quiz-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.4)}
@@ -1814,7 +1820,14 @@ function renderQuizHTML(m,isDone,prog){
         <span>${opt}</span>
       </label>`;
     });
-    html+=`</div></div>`;
+    // Bloc "Pourquoi" — masqué jusqu'à validation du quiz
+    const pourquoi = (q.pourquoi||'').trim();
+    html+=`</div>
+      <div class="q-pourquoi" id="pourquoi-${qi}" style="display:none">
+        <div class="q-pourquoi-head">💡 Pourquoi cette réponse</div>
+        <div class="q-pourquoi-body">${pourquoi ? pourquoi.replace(/\n/g,'<br>') : '<em style="color:rgba(255,255,255,.5)">(Aucune justification fournie pour cette question.)</em>'}</div>
+      </div>
+    </div>`;
   });
   html+=`</div>
     <div class="quiz-footer">
@@ -1848,6 +1861,12 @@ async function submitQuiz(moduleId){
       if(oi===q.correct)el.classList.add('correct');
       else if(oi===ua&&!ok)el.classList.add('wrong');
     });
+    // Affiche la justification "Pourquoi" pour chaque question
+    const pq=document.getElementById(`pourquoi-${qi}`);
+    if(pq){
+      pq.style.display='block';
+      pq.classList.toggle('q-pourquoi-wrong', !ok);
+    }
   });
   const score=Math.round((correct/m.quiz.length)*100);
   const passed=score>=(m.score_minimum||70);

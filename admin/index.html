@@ -1300,7 +1300,7 @@ document.getElementById('pdf-zone').addEventListener('drop',e=>{e.preventDefault
 
 // ─── Quiz Builder ─────────────────────────────────────────
 function addQuestion(){
-  quizQuestions.push({texte:'',options:['','','',''],correct:0});
+  quizQuestions.push({texte:'',options:['','','',''],correct:0,pourquoi:''});
   renderQuizQuestions();
 }
 
@@ -1326,6 +1326,10 @@ function renderQuizQuestions(){
             <input type="radio" name="correct-${qi}" ${q.correct===oi?'checked':''} onchange="quizQuestions[${qi}].correct=${oi}" title="Bonne réponse">
             <input type="text" value="${escHtml(opt)}" placeholder="Option ${['A','B','C','D'][oi]}…" oninput="quizQuestions[${qi}].options[${oi}]=this.value">
           </div>`).join('')}
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #E2E8F0">
+        <label style="display:block;font-size:11px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">💡 Pourquoi cette réponse est correcte <span style="color:#94A3B8;font-weight:400;font-size:11px;text-transform:none;letter-spacing:0">(visible par l'apprenant après le quiz)</span></label>
+        <textarea placeholder="Ex : Cette réponse est correcte parce que…&#10;C'est la bonne option car…" rows="2" style="width:100%;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;line-height:1.5;color:#0F172A;outline:none;resize:vertical" oninput="quizQuestions[${qi}].pourquoi=this.value">${escHtml(q.pourquoi||'')}</textarea>
       </div>
     </div>`).join('');
 }
