@@ -341,13 +341,15 @@ nav::-webkit-scrollbar{width:0}
 .option.selected{border-color:rgba(99,102,241,.5);background:rgba(99,102,241,.1);color:#A5B4FC;font-weight:500}
 .option.correct{border-color:rgba(16,185,129,.5);background:rgba(16,185,129,.08);color:#34D399;font-weight:500}
 .option.wrong{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06);color:#FCA5A5}
-.option input[type=radio],.option input[type=checkbox]{display:none}
-.opt-badge{width:26px;height:26px;border-radius:7px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;opacity:.7}
+.option{user-select:none;-webkit-tap-highlight-color:transparent}
+.option:focus{outline:2px solid rgba(99,102,241,.4);outline-offset:2px}
+.opt-badge{width:26px;height:26px;border-radius:7px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;opacity:.7;position:relative;transition:all .15s}
 .option.option-multi .opt-badge{border-radius:6px}
 .option.selected .opt-badge,.option.correct .opt-badge,.option.wrong .opt-badge{opacity:1}
-.option.option-multi.selected .opt-badge::after{content:'✓';position:absolute;font-size:14px;margin-left:-13px;color:inherit}
-.option.option-multi{position:relative}
-.option.option-multi .opt-badge{position:relative;overflow:hidden}
+.option.option-multi.selected .opt-badge{background:currentColor;color:#fff}
+.option.option-multi.selected .opt-badge::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#0F172A;font-weight:900}
+.option.option-multi.correct.selected .opt-badge::after,.option.option-multi.correct .opt-badge::after{color:#064E3B}
+.option.option-multi.wrong .opt-badge::after{color:#7F1D1D}
 .q-multi-hint{transition:color .2s}
 /* Justification "Pourquoi cette réponse" — révélée après validation */
 .q-pourquoi{margin-top:14px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.25);border-radius:11px;padding:14px 16px;animation:fadeUp .35s ease}
@@ -1881,11 +1883,10 @@ function renderQuizHTML(m,isDone,prog){
       <div class="q-text">${q.texte||q.question||""}</div>
       <div class="options">`;
     (q.options||[]).forEach((opt,oi)=>{
-      html+=`<label class="option ${isMulti?'option-multi':''}" id="opt-${qi}-${oi}" onclick="toggleAnswer(${qi},${oi},${nb})">
-        <input type="${isMulti?'checkbox':'radio'}" name="q${qi}" value="${oi}">
+      html+=`<div class="option ${isMulti?'option-multi':''}" id="opt-${qi}-${oi}" role="${isMulti?'checkbox':'radio'}" aria-checked="false" tabindex="0" onclick="toggleAnswer(${qi},${oi},${nb})" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleAnswer(${qi},${oi},${nb})}">
         <span class="opt-badge">${letters[oi]}</span>
         <span>${opt}</span>
-      </label>`;
+      </div>`;
     });
     // Bloc "Pourquoi" — masqué jusqu'à validation du quiz
     const pourquoi = (q.pourquoi||'').trim();
@@ -1914,58 +1915,61 @@ function quizCorrectArr(q){
 
 function toggleAnswer(qi, oi, nb){
   if (S.quizSubmitted) return;
+  qi = parseInt(qi,10); oi = parseInt(oi,10); nb = parseInt(nb,10) || 1;
   if (!Array.isArray(S.quizAnswers[qi])) S.quizAnswers[qi] = [];
   const arr = S.quizAnswers[qi];
-  if (nb === 1){
-    // Sélection unique : on remplace
+
+  const setSel = (i, on) => {
+    const el = document.getElementById(`opt-${qi}-${i}`);
+    if (el){ el.classList.toggle('selected', on); el.setAttribute('aria-checked', on ? 'true' : 'false'); }
+  };
+
+  if (nb <= 1){
+    // ─── Sélection unique : on remplace ───
     S.quizAnswers[qi] = [oi];
-    document.querySelectorAll(`[id^="opt-${qi}-"]`).forEach(el=>el.classList.remove('selected'));
-    document.getElementById(`opt-${qi}-${oi}`)?.classList.add('selected');
-    const cb = document.querySelector(`#opt-${qi}-${oi} input`);
-    if (cb) cb.checked = true;
+    document.querySelectorAll(`[id^="opt-${qi}-"]`).forEach(el => {
+      el.classList.remove('selected');
+      el.setAttribute('aria-checked','false');
+    });
+    setSel(oi, true);
+    return;
+  }
+
+  // ─── Multi : toggle limité à `nb` ───
+  const idx = arr.indexOf(oi);
+  if (idx >= 0){
+    // Déjà sélectionné → on retire
+    arr.splice(idx, 1);
+    setSel(oi, false);
   } else {
-    // Multi : on toggle, mais on limite à `nb` cochées
-    const idx = arr.indexOf(oi);
-    if (idx >= 0){
-      arr.splice(idx, 1);
-      document.getElementById(`opt-${qi}-${oi}`)?.classList.remove('selected');
-      const cb = document.querySelector(`#opt-${qi}-${oi} input`);
-      if (cb) cb.checked = false;
-    } else {
-      if (arr.length >= nb){
-        // Bloque le clic, message d'aide
-        const hint = document.getElementById(`hint-${qi}`);
-        if (hint){
-          hint.style.color = '#FCA5A5';
-          hint.innerHTML = `Tu as déjà coché <strong>${nb}</strong> réponses — décoches-en une pour en changer.`;
-          setTimeout(()=>{
-            if (hint && hint.style.color === 'rgb(252, 165, 165)'){
-              hint.style.color = 'rgba(255,255,255,.45)';
-              hint.innerHTML = `Coche <strong style="color:#A78BFA">${nb} réponses</strong> avant de valider.`;
-            }
-          }, 2200);
-        }
-        // Décoche visuellement la case que l'utilisateur vient de cocher (sinon l'input checkbox reste coché)
-        const cb = document.querySelector(`#opt-${qi}-${oi} input`);
-        if (cb) cb.checked = false;
-        return;
+    // Pas sélectionné → on ajoute si limite pas atteinte
+    if (arr.length >= nb){
+      const hint = document.getElementById(`hint-${qi}`);
+      if (hint){
+        hint.style.color = '#FCA5A5';
+        hint.innerHTML = `Tu as déjà coché <strong>${nb}</strong> réponses — décoches-en une pour en changer.`;
+        clearTimeout(hint._t);
+        hint._t = setTimeout(() => {
+          hint.style.color = 'rgba(255,255,255,.45)';
+          hint.innerHTML = `Coche <strong style="color:#A78BFA">${nb} réponses</strong> avant de valider.`;
+        }, 2200);
       }
-      arr.push(oi);
-      document.getElementById(`opt-${qi}-${oi}`)?.classList.add('selected');
-      const cb = document.querySelector(`#opt-${qi}-${oi} input`);
-      if (cb) cb.checked = true;
+      return;
     }
-    // Met à jour le hint avec le compteur
-    const hint = document.getElementById(`hint-${qi}`);
-    if (hint){
-      const remaining = nb - arr.length;
-      if (remaining > 0){
-        hint.style.color = 'rgba(255,255,255,.45)';
-        hint.innerHTML = `Encore <strong style="color:#A78BFA">${remaining} réponse${remaining>1?'s':''}</strong> à cocher.`;
-      } else {
-        hint.style.color = '#34D399';
-        hint.innerHTML = `✓ ${nb} réponses cochées — tu peux valider.`;
-      }
+    arr.push(oi);
+    setSel(oi, true);
+  }
+
+  // Met à jour le hint compteur
+  const hint = document.getElementById(`hint-${qi}`);
+  if (hint){
+    const remaining = nb - arr.length;
+    if (remaining > 0){
+      hint.style.color = 'rgba(255,255,255,.45)';
+      hint.innerHTML = `Encore <strong style="color:#A78BFA">${remaining} réponse${remaining>1?'s':''}</strong> à cocher.`;
+    } else {
+      hint.style.color = '#34D399';
+      hint.innerHTML = `✓ ${nb} réponses cochées — tu peux valider.`;
     }
   }
 }
