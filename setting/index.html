@@ -494,6 +494,10 @@ table.lead-table{width:100%;border-collapse:collapse}
     <div class="sb-nav-item" data-page="tous-leads" onclick="showPage('tous-leads')">
       <span class="sb-nav-icon">📊</span>Tous les leads
     </div>
+    <div class="sb-nav-item" data-page="rdv-pris" onclick="showPage('rdv-pris')">
+      <span class="sb-nav-icon">📅</span>RDVs pris
+      <span class="sb-notif-badge" id="badge-rdv-pris" style="display:none">0</span>
+    </div>
     <div class="sb-section-label" style="margin-top:8px">Outils</div>
     <div class="sb-nav-item" data-page="objectif-setting" onclick="showPage('objectif-setting')">
       <span class="sb-nav-icon">🎯</span>Objectif du Setting
@@ -650,6 +654,52 @@ table.lead-table{width:100%;border-collapse:collapse}
               </tr>
             </thead>
             <tbody id="tous-leads-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: RDV PRIS -->
+    <div id="page-rdv-pris" style="display:none">
+      <div class="section">
+        <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="section-title">📅 RDVs pris <span class="section-count" id="rdv-pris-count">0</span></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Tous les leads pour qui tu as planifié un RDV. Ils tombent en live dans le Kanban du closer.</div>
+          </div>
+          <button class="btn-add-lead" onclick="openRdvPrisModal()" style="background:var(--primary);color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer">+ Nouveau RDV pris</button>
+        </div>
+        <div class="lead-filters">
+          <input type="text" class="filter-input" id="rdv-pris-search" placeholder="Rechercher un lead…" oninput="renderRdvPris()">
+          <select class="filter-select" id="rdv-pris-quand" onchange="renderRdvPris()">
+            <option value="upcoming">À venir</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="week">Cette semaine</option>
+            <option value="past">Passés</option>
+            <option value="all">Tous</option>
+          </select>
+          <select class="filter-select" id="rdv-pris-closer" onchange="renderRdvPris()">
+            <option value="">Tous les closers</option>
+          </select>
+          <select class="filter-select" id="rdv-pris-mine" onchange="renderRdvPris()">
+            <option value="mine">Mes RDVs</option>
+            <option value="all">Tous</option>
+          </select>
+        </div>
+        <div class="lead-table-wrap">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Date RDV</th>
+                <th>Heure</th>
+                <th>Closer</th>
+                <th>Score</th>
+                <th>Conversation</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rdv-pris-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1399,6 +1449,10 @@ table.lead-table{width:100%;border-collapse:collapse}
         <label class="form-label" style="margin-bottom:6px;display:block">Note pour le closer (optionnel)</label>
         <textarea class="form-textarea" id="qualify-note" placeholder="Résumé de l'échange, budget confirmé, objectif…" style="width:100%;min-height:70px"></textarea>
       </div>
+      <div>
+        <label class="form-label" style="margin-bottom:6px;display:block">💬 Conversation WhatsApp (transmise au closer)</label>
+        <textarea class="form-textarea" id="qualify-whatsapp" placeholder="Colle ici l'extrait de la conversation WhatsApp : contexte, besoins exprimés, objections, signaux d'achat…" style="width:100%;min-height:110px;font-family:'Courier New',monospace;font-size:12px"></textarea>
+      </div>
     </div>
     <div class="confirm-btns">
       <button class="btn-cancel" onclick="closeModal('modal-qualifier')">Annuler</button>
@@ -1814,6 +1868,7 @@ function initApp() {
       }
     });
     renderCurrentPage();
+    updateRdvPrisBadge();
   }, err => {
     // Fallback sans orderBy si pas d'index
     db.collection('leads').onSnapshot(snap => {
@@ -1823,6 +1878,7 @@ function initApp() {
         if(!l.scoreQualification){const{score}=calcScore(l.reponsesQuestionnaire||{});l.scoreQualification=score;}
       });
       renderCurrentPage();
+      updateRdvPrisBadge();
     });
   });
 
@@ -1836,6 +1892,7 @@ function initApp() {
 const PAGE_TITLES = {
   'mes-leads': 'Mes leads',
   'tous-leads': 'Tous les leads',
+  'rdv-pris': '📅 RDVs pris',
   'stats': 'Dashboard',
   'script': "Script d'appel",
   'objectif-setting': '🎯 Objectif du Setting',
@@ -1861,6 +1918,7 @@ function showPage(page) {
 function renderCurrentPage() {
   if (S.currentPage === 'mes-leads') { renderKPIs(); renderPriority(); renderMesLeads(); }
   else if (S.currentPage === 'tous-leads') renderTousLeads();
+  else if (S.currentPage === 'rdv-pris') renderRdvPris();
   else if (S.currentPage === 'stats') renderStats();
   else if (S.currentPage === 'candidatures-lp') renderCandidatures();
   else if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
@@ -2354,6 +2412,280 @@ function renderTousLeads() {
 }
 
 // ══════════════════════════════════════════════
+//  RDV PRIS — leads transmis au closer (statutSetter=Qualifié + dateRDV)
+// ══════════════════════════════════════════════
+function updateRdvPrisBadge() {
+  const me = myFullName().toLowerCase();
+  const today = new Date().toISOString().slice(0,10);
+  const upcoming = (S.leads||[]).filter(l =>
+    l.statutSetter==='Qualifié' && l.dateRDV &&
+    (l.setterAssigne||'').toLowerCase()===me &&
+    l.dateRDV >= today
+  ).length;
+  const badge = document.getElementById('badge-rdv-pris');
+  if (badge) { badge.textContent = upcoming; badge.style.display = upcoming>0?'inline-block':'none'; }
+}
+
+function renderRdvPris() {
+  const me = myFullName().toLowerCase();
+  const tbody = document.getElementById('rdv-pris-tbody');
+  const search = (document.getElementById('rdv-pris-search')?.value||'').toLowerCase().trim();
+  const quand = document.getElementById('rdv-pris-quand')?.value || 'upcoming';
+  const closer = document.getElementById('rdv-pris-closer')?.value || '';
+  const mine = document.getElementById('rdv-pris-mine')?.value || 'mine';
+
+  // Tous les leads avec RDV pris
+  let list = S.leads.filter(l => l.statutSetter==='Qualifié' && l.dateRDV);
+
+  // Filtre "mes RDVs"
+  if (mine === 'mine') {
+    list = list.filter(l => (l.setterAssigne||'').toLowerCase() === me);
+  }
+  // Filtre closer
+  if (closer) list = list.filter(l => (l.closerAssigne||'') === closer);
+  // Filtre recherche
+  if (search) {
+    list = list.filter(l => `${l.prenom||''} ${l.nom||''} ${l.email||''} ${l.telephone||''}`.toLowerCase().includes(search));
+  }
+  // Filtre temporel
+  const today = new Date().toISOString().slice(0,10);
+  const now = new Date();
+  const weekEnd = new Date(now.getFullYear(),now.getMonth(),now.getDate()+7).toISOString().slice(0,10);
+  if (quand==='today') list = list.filter(l => (l.dateRDV||'') === today);
+  else if (quand==='week') list = list.filter(l => (l.dateRDV||'') >= today && (l.dateRDV||'') <= weekEnd);
+  else if (quand==='upcoming') list = list.filter(l => (l.dateRDV||'') >= today);
+  else if (quand==='past') list = list.filter(l => (l.dateRDV||'') < today);
+
+  // Tri par date + heure
+  list.sort((a,b)=>{
+    const da = (a.dateRDV||'') + (a.heureRDV||'');
+    const db_ = (b.dateRDV||'') + (b.heureRDV||'');
+    return quand==='past' ? db_.localeCompare(da) : da.localeCompare(db_);
+  });
+
+  // Remplir la liste des closers (une fois)
+  const closersSelect = document.getElementById('rdv-pris-closer');
+  if (closersSelect && closersSelect.options.length <= 1) {
+    const closers = [...new Set(S.leads.map(l=>l.closerAssigne).filter(Boolean))].sort();
+    closers.forEach(c => {
+      const opt = document.createElement('option'); opt.value = c; opt.textContent = c;
+      closersSelect.appendChild(opt);
+    });
+  }
+
+  document.getElementById('rdv-pris-count').textContent = list.length;
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Aucun RDV pris</div><div class="empty-sub">Crée un RDV ou ajuste les filtres</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(l => {
+    const score = l.scoreQualification || 0;
+    const hasWa = !!(l.conversationWhatsApp && l.conversationWhatsApp.trim());
+    const dateFr = l.dateRDV ? new Date(l.dateRDV).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) : '—';
+    const isToday = l.dateRDV === today;
+    return `<tr>
+      <td>
+        <div style="font-weight:700">${escHtml(l.prenom||'')} ${escHtml(l.nom||'')}</div>
+        <div style="font-size:11px;color:var(--muted)">${escHtml(l.email||'—')}</div>
+      </td>
+      <td><span style="${isToday?'background:#6c63ff;color:#fff;padding:3px 8px;border-radius:6px;font-weight:700':'font-weight:600'}">${isToday?"Aujourd'hui":dateFr}</span></td>
+      <td><span style="font-weight:700">${l.heureRDV||'—'}</span></td>
+      <td>${escHtml(l.closerAssigne||'—')}</td>
+      <td><span class="score-badge ${scoreClass(score)}">${score}/10</span></td>
+      <td>${hasWa?'<span title="Conversation transmise" style="color:#10b981;font-weight:700">💬 ✓</span>':'<span style="color:#ef4444">—</span>'}</td>
+      <td>
+        <button class="btn-icon btn-fiche" title="Éditer le RDV" onclick="openRdvPrisModal('${l.id}')">✏️</button>
+        <button class="btn-icon btn-fiche" title="Voir la fiche lead" onclick="openLead('${l.id}')">👤</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Badge nav
+  const upcoming = S.leads.filter(l => l.statutSetter==='Qualifié' && l.dateRDV && (l.setterAssigne||'').toLowerCase()===me && l.dateRDV >= today).length;
+  const badge = document.getElementById('badge-rdv-pris');
+  if (badge) { badge.textContent = upcoming; badge.style.display = upcoming>0?'inline-block':'none'; }
+}
+
+// ══════════════════════════════════════════════
+//  MODALE NOUVEAU RDV PRIS / ÉDITION
+// ══════════════════════════════════════════════
+function openRdvPrisModal(leadId) {
+  let m = document.getElementById('modal-rdv-pris');
+  if (!m) { buildRdvPrisModal(); m = document.getElementById('modal-rdv-pris'); }
+  const l = leadId ? S.leads.find(x=>x.id===leadId) : null;
+  S._editingRdvId = leadId || null;
+  document.getElementById('mrp-title').textContent = l ? 'Éditer le RDV pris' : 'Nouveau RDV pris';
+  document.getElementById('mrp-prenom').value = l?.prenom || '';
+  document.getElementById('mrp-nom').value = l?.nom || '';
+  document.getElementById('mrp-email').value = l?.email || '';
+  document.getElementById('mrp-tel').value = l?.telephone || '';
+  document.getElementById('mrp-source').value = l?.sourceCanal || 'WhatsApp';
+  document.getElementById('mrp-date').value = l?.dateRDV || new Date().toISOString().slice(0,10);
+  document.getElementById('mrp-heure').value = l?.heureRDV || '';
+  document.getElementById('mrp-score').value = l?.scoreQualification || 7;
+  document.getElementById('mrp-note').value = l?.noteSetter || '';
+  document.getElementById('mrp-whatsapp').value = l?.conversationWhatsApp || '';
+  // Charger closers
+  const sel = document.getElementById('mrp-closer');
+  sel.innerHTML = '<option value="">— Attribution automatique (round-robin) —</option>';
+  db.collection('users').where('role','==','closer').get().then(snap => {
+    snap.docs.forEach(d => {
+      const u = d.data();
+      const name = `${u.prenom||''} ${u.nom||''}`.trim();
+      const opt = document.createElement('option');
+      opt.value = JSON.stringify({uid:d.id, name});
+      opt.textContent = name;
+      if (l?.closerUid === d.id) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }).catch(()=>{});
+  openModal('modal-rdv-pris');
+}
+
+function buildRdvPrisModal() {
+  const div = document.createElement('div');
+  div.id = 'modal-rdv-pris';
+  div.className = 'modal-backdrop';
+  div.innerHTML = `
+    <div class="modal" style="max-width:640px">
+      <div class="modal-header">
+        <div>
+          <div class="modal-lead-name" id="mrp-title">Nouveau RDV pris</div>
+          <div class="modal-lead-sub">Renseigne les infos et l'extrait WhatsApp → tout part vers le closer</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-rdv-pris')">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="info-field"><div class="info-label">Prénom *</div><input id="mrp-prenom" class="form-input"></div>
+          <div class="info-field"><div class="info-label">Nom *</div><input id="mrp-nom" class="form-input"></div>
+          <div class="info-field"><div class="info-label">Email</div><input id="mrp-email" class="form-input" type="email"></div>
+          <div class="info-field"><div class="info-label">Téléphone</div><input id="mrp-tel" class="form-input"></div>
+          <div class="info-field"><div class="info-label">Source</div>
+            <select id="mrp-source" class="form-input">
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Meta Ads">Meta Ads</option>
+              <option value="LinkedIn">LinkedIn</option>
+              <option value="Landing Page">Landing Page</option>
+              <option value="Organique">Organique</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="info-field"><div class="info-label">Score qualification (0-10)</div><input id="mrp-score" class="form-input" type="number" min="0" max="10" value="7"></div>
+          <div class="info-field"><div class="info-label">Date RDV *</div><input id="mrp-date" class="form-input" type="date"></div>
+          <div class="info-field"><div class="info-label">Heure *</div><input id="mrp-heure" class="form-input" type="time"></div>
+        </div>
+        <div class="info-field" style="margin-top:12px">
+          <div class="info-label">Closer affecté</div>
+          <select id="mrp-closer" class="form-input"></select>
+        </div>
+        <div class="info-field" style="margin-top:12px">
+          <div class="info-label">Note pour le closer</div>
+          <textarea id="mrp-note" class="form-textarea" rows="2" placeholder="Résumé : besoin, budget, objection principale, urgence…"></textarea>
+        </div>
+        <div class="info-field" style="margin-top:12px">
+          <div class="info-label">💬 Conversation WhatsApp (intégrale ou résumé)</div>
+          <textarea id="mrp-whatsapp" class="form-textarea" rows="8" placeholder="Colle l'échange WhatsApp ici. Cette conversation sera visible par le closer dans la fiche lead." style="font-family:'Courier New',monospace;font-size:12px"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn-cancel" onclick="closeModal('modal-rdv-pris')">Annuler</button>
+        <button class="btn-confirm-ok" onclick="saveRdvPris()">📤 Envoyer au closer</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+  div.addEventListener('click', e=>{ if(e.target===div) closeModal('modal-rdv-pris'); });
+}
+
+async function saveRdvPris() {
+  const prenom = document.getElementById('mrp-prenom').value.trim();
+  const nom    = document.getElementById('mrp-nom').value.trim();
+  const date   = document.getElementById('mrp-date').value;
+  const heure  = document.getElementById('mrp-heure').value;
+  if (!prenom || !nom) { toast('Prénom et nom requis','error'); return; }
+  if (!date || !heure) { toast('Date et heure du RDV requises','error'); return; }
+
+  // Closer (manuel ou auto)
+  let closerData = null;
+  const closerVal = document.getElementById('mrp-closer').value;
+  if (closerVal) {
+    try { closerData = JSON.parse(closerVal); } catch{}
+  } else {
+    // Round-robin auto
+    try {
+      const [closerSnap, assignDoc] = await Promise.all([
+        db.collection('users').where('role','==','closer').get(),
+        db.collection('config').doc('assignment').get()
+      ]);
+      const closers = closerSnap.docs.map(d=>({uid:d.id, name:`${d.data().prenom||''} ${d.data().nom||''}`.trim()})).filter(c=>c.name);
+      if (closers.length) {
+        const lastUid = assignDoc.exists ? assignDoc.data().lastCloserUid : null;
+        const idx = lastUid ? closers.findIndex(c=>c.uid===lastUid) : -1;
+        closerData = closers[(idx+1) % closers.length];
+      }
+    } catch(e){ console.error(e); }
+  }
+  if (!closerData) { toast('Aucun closer disponible — vérifie les comptes closers','error'); return; }
+
+  const payload = {
+    prenom, nom,
+    email: document.getElementById('mrp-email').value.trim(),
+    telephone: document.getElementById('mrp-tel').value.trim(),
+    sourceCanal: document.getElementById('mrp-source').value,
+    scoreQualification: parseInt(document.getElementById('mrp-score').value||'0',10),
+    statutSetter: 'Qualifié',
+    statutCloser: 'RDV planifié',
+    dateRDV: date,
+    heureRDV: heure,
+    closerAssigne: closerData.name,
+    closerUid: closerData.uid,
+    setterAssigne: myFullName(),
+    setterUid: S.userData?.uid || null,
+    noteSetter: document.getElementById('mrp-note').value.trim(),
+    conversationWhatsApp: document.getElementById('mrp-whatsapp').value.trim(),
+    dateLastContactSetter: TS(),
+    updatedAt: TS()
+  };
+
+  try {
+    if (S._editingRdvId) {
+      await db.collection('leads').doc(S._editingRdvId).update(payload);
+      toast(`RDV mis à jour — ${closerData.name}`,'success');
+    } else {
+      payload.dateCreation = TS();
+      payload.createdBy = 'setter';
+      const ref = await db.collection('leads').add(payload);
+      // Avancer round-robin
+      await db.collection('config').doc('assignment').set({
+        lastCloserUid: closerData.uid,
+        lastCloserName: closerData.name,
+        updatedAt: TS()
+      });
+      // Notification closer
+      await db.collection('notifications').add({
+        type: 'rdv_planifie',
+        message: `Nouveau RDV : ${prenom} ${nom} — ${date} à ${heure} — Score ${payload.scoreQualification}/10 — Setter : ${myFullName()}`,
+        destinataireRole: 'closer',
+        destinataireUid: closerData.uid,
+        destinataire: closerData.name,
+        lu: false,
+        timestamp: TS(),
+        leadId: ref.id,
+        leadNom: `${prenom} ${nom}`,
+      });
+      toast(`✅ RDV créé → ${closerData.name}`,'success');
+    }
+    closeModal('modal-rdv-pris');
+    S._editingRdvId = null;
+  } catch(e) {
+    console.error(e);
+    toast('Erreur lors de la sauvegarde','error');
+  }
+}
+
+// ══════════════════════════════════════════════
 //  STATS
 // ══════════════════════════════════════════════
 function renderStats() {
@@ -2621,9 +2953,11 @@ async function saveNote(id) {
 async function openQualify(id) {
   S.pendingQualifyId = id;
   S._nextCloser = null;
-  document.getElementById('qualify-note').value = '';
-  document.getElementById('qualify-date').value = new Date().toISOString().slice(0,10);
-  document.getElementById('qualify-heure').value = '';
+  const l = S.leads.find(x=>x.id===id);
+  document.getElementById('qualify-note').value = l?.noteSetter || '';
+  document.getElementById('qualify-whatsapp').value = l?.conversationWhatsApp || '';
+  document.getElementById('qualify-date').value = l?.dateRDV || new Date().toISOString().slice(0,10);
+  document.getElementById('qualify-heure').value = l?.heureRDV || '';
   document.getElementById('qualify-closer-preview').textContent = '🔄 Attribution automatique en cours…';
   openModal('modal-qualifier');
   // Round-robin : charger closers + dernier assigné
@@ -2658,6 +2992,7 @@ async function confirmQualify() {
   const date = document.getElementById('qualify-date').value;
   const heure = document.getElementById('qualify-heure').value;
   const note = document.getElementById('qualify-note').value.trim();
+  const whatsapp = document.getElementById('qualify-whatsapp').value.trim();
   if (!date || !heure) { toast('Veuillez choisir une date et une heure pour le RDV','error'); return; }
   const l = S.leads.find(x=>x.id===id);
   const btn = document.getElementById('btn-confirm-qualify');
@@ -2674,6 +3009,7 @@ async function confirmQualify() {
       setterAssigne: myFullName(),
       dateLastContactSetter: TS(),
       noteSetter: note || (l?.noteSetter||''),
+      conversationWhatsApp: whatsapp || (l?.conversationWhatsApp||''),
       updatedAt: TS()
     });
     // Avancer le round-robin
