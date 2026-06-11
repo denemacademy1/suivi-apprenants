@@ -153,6 +153,52 @@ table.lead-table{width:100%;border-collapse:collapse}
 .funnel-step-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
 .funnel-bar{height:28px;background:var(--bg);border-radius:6px;overflow:hidden}
 .funnel-fill{height:100%;border-radius:6px;transition:width .6s}
+/* DASHBOARD CLOSING */
+.dash-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.dash-hdr-title{font-size:22px;font-weight:900;color:var(--text);text-transform:capitalize}
+.dash-hdr-sub{font-size:13px;color:var(--muted);margin-top:2px}
+.dash-btn-primary{background:linear-gradient(135deg,#6c63ff,#4f46e5);color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(108,99,255,.35);transition:transform .15s}
+.dash-btn-primary:hover{transform:translateY(-2px)}
+.dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.dash-kpi{background:var(--surface);border-radius:14px;padding:18px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.dash-kpi-label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.dash-kpi-val{font-size:28px;font-weight:900;color:var(--primary);margin:6px 0 4px}
+.dash-kpi-delta{font-size:12px;font-weight:600;color:var(--muted)}
+.dash-kpi-delta.up{color:#10b981}
+.dash-kpi-delta.down{color:#ef4444}
+.dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:980px){.dash-grid{grid-template-columns:1fr}}
+.dash-card{background:var(--surface);border-radius:14px;padding:18px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.dash-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.dash-card-title{font-size:14px;font-weight:800;color:var(--text)}
+.dash-card-sub{font-size:12px;color:var(--muted)}
+.dash-card-link{font-size:12px;color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none}
+.dash-card-link:hover{text-decoration:underline}
+.dash-chart{display:flex;align-items:flex-end;gap:6px;height:200px;padding:8px 0;overflow-x:auto}
+.dash-bar{flex:1;min-width:42px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px}
+.dash-bar-val{font-size:10px;font-weight:700;color:var(--text);min-height:14px}
+.dash-bar-fill{width:100%;max-width:38px;border-radius:6px 6px 0 0;transition:height .5s}
+.dash-bar-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:capitalize}
+.dash-pipe{display:flex;flex-direction:column;gap:8px}
+.dash-pipe-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:10px 12px;background:var(--bg);border-radius:8px;transition:transform .15s}
+.dash-pipe-row:hover{transform:translateX(2px)}
+.dash-pipe-dot{width:10px;height:10px;border-radius:50%}
+.dash-pipe-label{font-size:13px;font-weight:600;color:var(--text)}
+.dash-pipe-n{font-size:13px;font-weight:800;color:var(--primary);min-width:24px;text-align:right}
+.dash-pipe-ca{font-size:12px;color:var(--muted);font-weight:700;min-width:80px;text-align:right}
+.dash-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto}
+.dash-rdv{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px;background:var(--bg);border-radius:10px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.dash-rdv:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.dash-rdv-date{background:#eef2ff;border-radius:8px;padding:6px 10px;text-align:center;min-width:72px}
+.dash-rdv-date.is-today{background:linear-gradient(135deg,#6c63ff,#4f46e5);color:#fff}
+.dash-rdv-day{font-size:11px;font-weight:700;text-transform:capitalize}
+.dash-rdv-hour{font-size:13px;font-weight:800;margin-top:2px}
+.dash-rdv-name{font-size:13px;font-weight:700;color:var(--text)}
+.dash-rdv-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.dash-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;font-style:italic}
+/* Bouton "Nouvelle opportunité" dans le Kanban */
+.kanban-new-opp{background:#fff;border:2px dashed var(--primary);color:var(--primary);padding:10px 16px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:14px;transition:all .15s}
+.kanban-new-opp:hover{background:var(--primary);color:#fff}
 
 /* ─── MODAL ─── */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
@@ -282,7 +328,10 @@ table.lead-table{width:100%;border-collapse:collapse}
   </div>
   <nav class="sb-nav">
     <div class="sb-section-label">Navigation</div>
-    <div class="sb-nav-item active" data-page="mes-rdvs" onclick="showPage('mes-rdvs')">
+    <div class="sb-nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+      <span class="sb-nav-icon">📊</span>Tableau de bord
+    </div>
+    <div class="sb-nav-item" data-page="mes-rdvs" onclick="showPage('mes-rdvs')">
       <span class="sb-nav-icon">📅</span>Mes RDVs
       <span class="sb-notif-badge" id="badge-rdvs" style="display:none">0</span>
     </div>
@@ -324,6 +373,9 @@ table.lead-table{width:100%;border-collapse:collapse}
 
   <div class="content">
 
+    <!-- PAGE: TABLEAU DE BORD CLOSING -->
+    <div id="page-dashboard" style="display:none"></div>
+
     <!-- PAGE: MES RDVs -->
     <div id="page-mes-rdvs">
       <div class="kpi-row" id="kpi-row"></div>
@@ -359,11 +411,12 @@ table.lead-table{width:100%;border-collapse:collapse}
 
     <!-- PAGE: PIPELINE KANBAN -->
     <div id="page-pipeline" style="display:none">
-      <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+      <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div>
           <div style="font-size:18px;font-weight:800;margin-bottom:2px">Pipeline Kanban</div>
           <div style="font-size:13px;color:var(--muted)">Glissez les cartes pour mettre à jour le statut</div>
         </div>
+        <button class="dash-btn-primary" onclick="openNewOpportunity()">+ Nouvelle opportunité</button>
       </div>
       <div class="kanban-wrap" id="kanban-wrap"></div>
     </div>
@@ -596,7 +649,7 @@ const S = {
   user: null,
   userData: null,
   leads: [],
-  currentPage: 'mes-rdvs',
+  currentPage: 'dashboard',
   activeLead: null,
   pendingSigneId: null,
   pendingRefusId: null,
@@ -750,7 +803,7 @@ function updateNotifBadge() {
 // ══════════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════════
-const PAGE_TITLES = {'mes-rdvs':'Mes RDVs','pipeline':'Pipeline Kanban','stats':'Statistiques','script':'Script closing'};
+const PAGE_TITLES = {'dashboard':'Tableau de bord','mes-rdvs':'Mes RDVs','pipeline':'Pipeline Kanban','stats':'Statistiques','script':'Script closing'};
 
 function showPage(page) {
   S.currentPage=page;
@@ -762,9 +815,312 @@ function showPage(page) {
   closeSidebar();
 }
 function renderCurrentPage() {
-  if(S.currentPage==='mes-rdvs'){renderKPIs();renderToday();renderRdvTable();}
+  if(S.currentPage==='dashboard') renderDashboard();
+  else if(S.currentPage==='mes-rdvs'){renderKPIs();renderToday();renderRdvTable();}
   else if(S.currentPage==='pipeline')renderKanban();
   else if(S.currentPage==='stats')renderStats();
+}
+
+// ══════════════════════════════════════════════
+//  TABLEAU DE BORD CLOSING (ventes par mois + pipeline)
+// ══════════════════════════════════════════════
+function monthKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function monthLabel(d){ return d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}); }
+function getSignDate(l){
+  const t = l.dateSignature || l.updatedAt;
+  if(!t) return null;
+  try{ return t.toDate ? t.toDate() : new Date(t); } catch{ return null; }
+}
+
+function renderDashboard(){
+  const el = document.getElementById('page-dashboard');
+  if(!el) return;
+  const my = S.leads.filter(l=>isMyLead(l));
+  const now = new Date();
+  const curKey = monthKey(now);
+  const prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const prevKey = monthKey(prev);
+
+  // Signatures par mois (12 derniers)
+  const months = [];
+  for(let i=11;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({key:monthKey(d), label:monthLabel(d), ca:0, n:0});
+  }
+  const signed = my.filter(l=>l.statutCloser==='Signé');
+  signed.forEach(l=>{
+    const d = getSignDate(l); if(!d) return;
+    const k = monthKey(d);
+    const m = months.find(x=>x.key===k);
+    if(m){ m.ca += (l.montantSigne||0); m.n += 1; }
+  });
+
+  const curMonth = months.find(m=>m.key===curKey) || {ca:0,n:0};
+  const prevMonth = months.find(m=>m.key===prevKey) || {ca:0,n:0};
+  const deltaCA = prevMonth.ca ? Math.round((curMonth.ca-prevMonth.ca)/prevMonth.ca*100) : (curMonth.ca>0?100:0);
+  const deltaN  = prevMonth.n ? Math.round((curMonth.n-prevMonth.n)/prevMonth.n*100) : (curMonth.n>0?100:0);
+
+  // Pipeline (RDV planifié + RDV passé + Relance)
+  const pipelineStatuts = ['RDV planifié','RDV passé','Relance'];
+  const inPipeline = my.filter(l=>pipelineStatuts.includes(l.statutCloser||''));
+  const pipelineCA = inPipeline.reduce((s,l)=>s+(l.montantPrevisionnel||l.montantSigne||0),0);
+
+  // Taux closing global + mois
+  const rdvPasseAll = my.filter(l=>['RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||'')).length;
+  const tauxGlobal = rdvPasseAll ? Math.round(signed.length/rdvPasseAll*100) : 0;
+  const rdvPasseMois = my.filter(l=>{
+    if(!['RDV passé','Signé','Refus','Relance'].includes(l.statutCloser||'')) return false;
+    const d = getSignDate(l) || (l.dateRDV?.toDate?.()); if(!d) return false;
+    return monthKey(d)===curKey;
+  }).length;
+  const tauxMois = rdvPasseMois ? Math.round(curMonth.n/rdvPasseMois*100) : 0;
+
+  // Panier moyen
+  const panierMoyen = signed.length ? Math.round(signed.reduce((s,l)=>s+(l.montantSigne||0),0)/signed.length) : 0;
+
+  // Graph bars
+  const maxCA = Math.max(1,...months.map(m=>m.ca));
+  const chartHtml = months.map(m=>{
+    const h = Math.max(2, Math.round(m.ca/maxCA*160));
+    const isCur = m.key===curKey;
+    return `<div class="dash-bar" title="${m.label}: ${m.ca.toLocaleString('fr-FR')}€ (${m.n} ventes)">
+      <div class="dash-bar-val">${m.ca?m.ca.toLocaleString('fr-FR')+'€':''}</div>
+      <div class="dash-bar-fill" style="height:${h}px;background:${isCur?'linear-gradient(180deg,#6c63ff,#4f46e5)':'#cbd5e1'}"></div>
+      <div class="dash-bar-label">${m.label}</div>
+    </div>`;
+  }).join('');
+
+  // Répartition pipeline par statut
+  const byStatut = {};
+  KANBAN_COLS.forEach(c=>byStatut[c.id]={n:0,ca:0,color:c.color});
+  my.forEach(l=>{
+    const st = l.statutCloser||'RDV planifié';
+    if(!byStatut[st]) byStatut[st]={n:0,ca:0,color:'#94a3b8'};
+    byStatut[st].n += 1;
+    byStatut[st].ca += (l.montantPrevisionnel||l.montantSigne||0);
+  });
+  const pipelineHtml = KANBAN_COLS.map(c=>{
+    const s = byStatut[c.id];
+    return `<div class="dash-pipe-row" onclick="showPage('pipeline')" style="cursor:pointer">
+      <span class="dash-pipe-dot" style="background:${c.color}"></span>
+      <span class="dash-pipe-label">${c.label}</span>
+      <span class="dash-pipe-n">${s.n}</span>
+      <span class="dash-pipe-ca">${s.ca?s.ca.toLocaleString('fr-FR')+'€':'—'}</span>
+    </div>`;
+  }).join('');
+
+  // Prochains RDVs (les 5 plus proches)
+  const today = todayISO();
+  const upcoming = my
+    .filter(l=>l.dateRDV && fmtDateISO(l.dateRDV) >= today && (l.statutCloser==='RDV planifié'))
+    .sort((a,b)=>(fmtDateISO(a.dateRDV)+''+(a.heureRDV||'')).localeCompare(fmtDateISO(b.dateRDV)+''+(b.heureRDV||'')))
+    .slice(0,5);
+  const upcomingHtml = upcoming.length ? upcoming.map(l=>{
+    const d = fmtDateISO(l.dateRDV);
+    const dd = new Date(d);
+    const isToday = d===today;
+    const lbl = isToday?'Aujourd\'hui':dd.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+    return `<div class="dash-rdv" onclick="openLead('${l.id}','tab-rdv')">
+      <div class="dash-rdv-date ${isToday?'is-today':''}">
+        <div class="dash-rdv-day">${lbl}</div>
+        <div class="dash-rdv-hour">${l.heureRDV||'—'}</div>
+      </div>
+      <div class="dash-rdv-info">
+        <div class="dash-rdv-name">${escHtml(l.prenom||'')} ${escHtml(l.nom||'')}</div>
+        <div class="dash-rdv-sub">${escHtml(l.email||'')}</div>
+      </div>
+      <span class="score-badge ${scoreClass(l.scoreQualification||0)}">${l.scoreQualification||0}/10</span>
+    </div>`;
+  }).join('') : `<div class="dash-empty">Aucun RDV à venir</div>`;
+
+  // Dernières signatures
+  const lastSigned = signed
+    .filter(l=>getSignDate(l))
+    .sort((a,b)=>getSignDate(b)-getSignDate(a))
+    .slice(0,5);
+  const signedHtml = lastSigned.length ? lastSigned.map(l=>{
+    const d = getSignDate(l);
+    return `<div class="dash-rdv" onclick="openLead('${l.id}','tab-rdv')">
+      <div class="dash-rdv-date" style="background:#dcfce7;color:#166534">
+        <div class="dash-rdv-day">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div>
+        <div class="dash-rdv-hour" style="font-weight:800">${(l.montantSigne||0).toLocaleString('fr-FR')}€</div>
+      </div>
+      <div class="dash-rdv-info">
+        <div class="dash-rdv-name">${escHtml(l.prenom||'')} ${escHtml(l.nom||'')}</div>
+        <div class="dash-rdv-sub">${l.modePaiement||'—'}</div>
+      </div>
+      <span class="statut-badge statut-signe">Signé</span>
+    </div>`;
+  }).join('') : `<div class="dash-empty">Aucune signature pour l'instant</div>`;
+
+  el.innerHTML = `
+    <div class="dash-hdr">
+      <div>
+        <div class="dash-hdr-title">Tableau de bord — ${now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}</div>
+        <div class="dash-hdr-sub">Suivi des ventes en temps réel · ${myFullName()}</div>
+      </div>
+      <button class="dash-btn-primary" onclick="openNewOpportunity()">+ Créer une opportunité</button>
+    </div>
+
+    <div class="dash-kpis">
+      <div class="dash-kpi">
+        <div class="dash-kpi-label">CA mois en cours</div>
+        <div class="dash-kpi-val" style="color:#10b981">${curMonth.ca.toLocaleString('fr-FR')}€</div>
+        <div class="dash-kpi-delta ${deltaCA>=0?'up':'down'}">${deltaCA>=0?'▲':'▼'} ${Math.abs(deltaCA)}% vs ${prev.toLocaleDateString('fr-FR',{month:'short'})}</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-label">Signatures du mois</div>
+        <div class="dash-kpi-val" style="color:#6c63ff">${curMonth.n}</div>
+        <div class="dash-kpi-delta ${deltaN>=0?'up':'down'}">${deltaN>=0?'▲':'▼'} ${Math.abs(deltaN)}% vs ${prev.toLocaleDateString('fr-FR',{month:'short'})}</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-label">Taux closing (mois)</div>
+        <div class="dash-kpi-val" style="color:#f59e0b">${tauxMois}%</div>
+        <div class="dash-kpi-delta">${rdvPasseMois} RDV passés · ${tauxGlobal}% global</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-label">Pipeline ouvert</div>
+        <div class="dash-kpi-val" style="color:#8b5cf6">${pipelineCA.toLocaleString('fr-FR')}€</div>
+        <div class="dash-kpi-delta">${inPipeline.length} opportunités</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-label">Panier moyen</div>
+        <div class="dash-kpi-val">${panierMoyen.toLocaleString('fr-FR')}€</div>
+        <div class="dash-kpi-delta">${signed.length} signatures total</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-card-hdr">
+          <div class="dash-card-title">📈 CA mensuel — 12 derniers mois</div>
+          <div class="dash-card-sub">Total signé : ${signed.reduce((s,l)=>s+(l.montantSigne||0),0).toLocaleString('fr-FR')}€</div>
+        </div>
+        <div class="dash-chart">${chartHtml}</div>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-hdr">
+          <div class="dash-card-title">🗂️ Pipeline par stade</div>
+          <div class="dash-card-sub">Cliquer pour ouvrir le Kanban</div>
+        </div>
+        <div class="dash-pipe">${pipelineHtml}</div>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-hdr">
+          <div class="dash-card-title">📅 Prochains RDVs</div>
+          <a class="dash-card-link" onclick="showPage('mes-rdvs')">Voir tous →</a>
+        </div>
+        <div class="dash-list">${upcomingHtml}</div>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-hdr">
+          <div class="dash-card-title">💰 Dernières signatures</div>
+          <a class="dash-card-link" onclick="showPage('pipeline')">Voir tous →</a>
+        </div>
+        <div class="dash-list">${signedHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+//  CRÉER UNE OPPORTUNITÉ (depuis RDV / Dashboard / Kanban)
+// ══════════════════════════════════════════════
+function openNewOpportunity(prefill){
+  let m = document.getElementById('modal-new-opp');
+  if(!m){ buildNewOppModal(); m = document.getElementById('modal-new-opp'); }
+  const today = todayISO();
+  document.getElementById('opp-prenom').value = prefill?.prenom || '';
+  document.getElementById('opp-nom').value = prefill?.nom || '';
+  document.getElementById('opp-email').value = prefill?.email || '';
+  document.getElementById('opp-tel').value = prefill?.telephone || '';
+  document.getElementById('opp-source').value = prefill?.sourceCanal || 'Inbound RDV';
+  document.getElementById('opp-statut').value = prefill?.statutCloser || 'RDV planifié';
+  document.getElementById('opp-date').value = prefill?.dateRDV || today;
+  document.getElementById('opp-heure').value = prefill?.heureRDV || '';
+  document.getElementById('opp-montant').value = prefill?.montantPrevisionnel || '';
+  document.getElementById('opp-score').value = prefill?.scoreQualification || 7;
+  document.getElementById('opp-note').value = prefill?.noteCloser || '';
+  m.classList.add('open');
+}
+function closeNewOpportunity(){ document.getElementById('modal-new-opp')?.classList.remove('open'); }
+
+function buildNewOppModal(){
+  const tpl = document.createElement('div');
+  tpl.id = 'modal-new-opp';
+  tpl.className = 'modal-backdrop';
+  tpl.innerHTML = `
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div>
+          <div class="modal-lead-name">Créer une opportunité</div>
+          <div class="modal-lead-sub">Ajoute un lead directement dans ton Kanban</div>
+        </div>
+        <button class="modal-close" onclick="closeNewOpportunity()">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="info-field"><div class="info-label">Prénom *</div><input id="opp-prenom" class="form-input"></div>
+          <div class="info-field"><div class="info-label">Nom *</div><input id="opp-nom" class="form-input"></div>
+          <div class="info-field"><div class="info-label">Email</div><input id="opp-email" class="form-input" type="email"></div>
+          <div class="info-field"><div class="info-label">Téléphone</div><input id="opp-tel" class="form-input"></div>
+          <div class="info-field"><div class="info-label">Source</div><input id="opp-source" class="form-input" value="Inbound RDV"></div>
+          <div class="info-field"><div class="info-label">Statut</div>
+            <select id="opp-statut" class="form-input">
+              ${KANBAN_COLS.map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="info-field"><div class="info-label">Date RDV</div><input id="opp-date" class="form-input" type="date"></div>
+          <div class="info-field"><div class="info-label">Heure</div><input id="opp-heure" class="form-input" type="time"></div>
+          <div class="info-field"><div class="info-label">Montant prévisionnel (€)</div><input id="opp-montant" class="form-input" type="number" min="0"></div>
+          <div class="info-field"><div class="info-label">Score (0-10)</div><input id="opp-score" class="form-input" type="number" min="0" max="10" value="7"></div>
+        </div>
+        <div class="info-field" style="margin-top:10px">
+          <div class="info-label">Note interne</div>
+          <textarea id="opp-note" class="form-input" rows="3" placeholder="Contexte du lead, mots-clés, objections..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-prep" style="background:#e2e8f0;color:#334155" onclick="closeNewOpportunity()">Annuler</button>
+        <button class="dash-btn-primary" onclick="saveNewOpportunity()">Créer l'opportunité</button>
+      </div>
+    </div>`;
+  document.body.appendChild(tpl);
+  tpl.addEventListener('click', e=>{ if(e.target===tpl) closeNewOpportunity(); });
+}
+
+async function saveNewOpportunity(){
+  const prenom = document.getElementById('opp-prenom').value.trim();
+  const nom    = document.getElementById('opp-nom').value.trim();
+  if(!prenom || !nom){ toast('Prénom et nom requis','error'); return; }
+  const dateStr = document.getElementById('opp-date').value;
+  const dateRDV = dateStr ? firebase.firestore.Timestamp.fromDate(new Date(dateStr+'T'+(document.getElementById('opp-heure').value||'09:00'))) : null;
+  const data = {
+    prenom, nom,
+    email: document.getElementById('opp-email').value.trim(),
+    telephone: document.getElementById('opp-tel').value.trim(),
+    sourceCanal: document.getElementById('opp-source').value.trim(),
+    statutCloser: document.getElementById('opp-statut').value,
+    dateRDV,
+    heureRDV: document.getElementById('opp-heure').value,
+    montantPrevisionnel: parseInt(document.getElementById('opp-montant').value||'0',10),
+    scoreQualification: parseInt(document.getElementById('opp-score').value||'0',10),
+    noteCloser: document.getElementById('opp-note').value.trim(),
+    closerAssigne: myFullName(),
+    createdAt: TS(), updatedAt: TS(),
+    createdBy: 'closer'
+  };
+  try{
+    await db.collection('leads').add(data);
+    toast('Opportunité créée ✅','success');
+    closeNewOpportunity();
+  }catch(e){
+    console.error(e);
+    toast('Erreur lors de la création','error');
+  }
 }
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebar-overlay').classList.toggle('open');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('open');}
