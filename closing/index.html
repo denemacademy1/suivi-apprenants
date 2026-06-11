@@ -108,7 +108,12 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
 .kanban-col-dot{width:8px;height:8px;border-radius:50%}
 .kanban-col-count{font-size:11px;font-weight:700;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:1px 7px;border-radius:8px}
 .kanban-cards{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:80px}
-.kanban-card{background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border);cursor:grab;transition:all .15s;user-select:none}
+.kanban-card{background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border);cursor:grab;transition:all .15s;user-select:none;position:relative}
+.kc-del{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;border:none;background:#fee2e2;color:#991b1b;font-size:14px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;padding:0;transition:.15s}
+.kanban-card:hover .kc-del{display:flex}
+.kc-del:hover{background:#ef4444;color:#fff;transform:scale(1.1)}
+.dash-rdv-del{width:26px;height:26px;border-radius:50%;border:none;background:#fee2e2;color:#991b1b;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;transition:.15s;margin-left:6px}
+.dash-rdv-del:hover{background:#ef4444;color:#fff;transform:scale(1.1)}
 .kanban-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .kanban-card.dragging{opacity:.5;cursor:grabbing}
 .kanban-card.drag-over{border:2px dashed var(--primary)}
@@ -933,6 +938,7 @@ function renderDashboard(){
         <div class="dash-rdv-sub">${escHtml(l.email||'')}</div>
       </div>
       <span class="score-badge ${scoreClass(l.scoreQualification||0)}">${l.scoreQualification||0}/10</span>
+      <button class="dash-rdv-del" title="Supprimer" onclick="event.stopPropagation();deleteOpportunity('${l.id}')">×</button>
     </div>`;
   }).join('') : `<div class="dash-empty">Aucun RDV à venir</div>`;
 
@@ -953,6 +959,7 @@ function renderDashboard(){
         <div class="dash-rdv-sub">${l.modePaiement||'—'}</div>
       </div>
       <span class="statut-badge statut-signe">Signé</span>
+      <button class="dash-rdv-del" title="Supprimer" onclick="event.stopPropagation();deleteOpportunity('${l.id}')">×</button>
     </div>`;
   }).join('') : `<div class="dash-empty">Aucune signature pour l'instant</div>`;
 
@@ -1276,6 +1283,7 @@ function buildKanbanCard(l) {
     ondragstart="_dragId='${l.id}';this.classList.add('dragging')"
     ondragend="this.classList.remove('dragging');document.querySelectorAll('.kanban-drop-zone').forEach(z=>z.classList.remove('drag-over'))"
     onclick="openLead('${l.id}','tab-profil')">
+    <button class="kc-del" title="Supprimer l'opportunité" onclick="event.stopPropagation();deleteOpportunity('${l.id}')">×</button>
     <div class="kc-name">${escHtml(l.prenom)} ${escHtml(l.nom)}</div>
     <div class="kc-meta">
       <span class="score-badge ${scoreClass(sc)}" style="width:22px;height:22px;font-size:10px">${sc}</span>
@@ -1283,6 +1291,25 @@ function buildKanbanCard(l) {
     </div>
     ${rdvDate?`<div class="kc-rdv">📅 ${rdvDate} ${l.heureRDV||''}</div>`:''}
   </div>`;
+}
+
+async function deleteOpportunity(id, evt) {
+  if (evt) evt.stopPropagation();
+  const l = S.leads.find(x=>x.id===id);
+  const name = l ? `${l.prenom||''} ${l.nom||''}`.trim() : 'cette opportunité';
+  if (!confirm(`Supprimer l'opportunité « ${name} » ?\n\nCette action est définitive et retirera le lead du Kanban (côté setter aussi).`)) return;
+  try {
+    await db.collection('leads').doc(id).delete();
+    // Fermer la fiche si elle est ouverte sur ce lead
+    if (S.activeLead?.id === id) {
+      document.getElementById('modal-lead')?.classList.remove('open');
+      S.activeLead = null;
+    }
+    toast('Opportunité supprimée','success');
+  } catch(e) {
+    console.error(e);
+    toast('Erreur : suppression refusée (vérifie les règles Firestore)','error');
+  }
 }
 
 async function dropCard(event, newStatut) {
@@ -1427,7 +1454,9 @@ function openLead(id, tabId='tab-profil') {
   });
   document.querySelectorAll('#modal-lead .modal-tab-panel').forEach(p=>p.classList.toggle('active',p.id===tabId));
 
-  document.getElementById('modal-lead-footer').innerHTML=`<button class="btn-cancel" onclick="closeModal('modal-lead')">Fermer</button>`;
+  document.getElementById('modal-lead-footer').innerHTML=`
+    <button class="btn-refus" style="margin-right:auto" onclick="deleteOpportunity('${l.id}')">🗑️ Supprimer</button>
+    <button class="btn-cancel" onclick="closeModal('modal-lead')">Fermer</button>`;
   openModal('modal-lead');
 }
 
