@@ -801,6 +801,43 @@ tr:hover td{background:#FAFBFF}
   </div>
 </div>
 
+<!-- EDIT USER MODAL -->
+<div class="modal-backdrop" id="edit-user-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Modifier le compte</div>
+      <button class="modal-close" onclick="closeEditUserModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="edit-user-form">
+        <input type="hidden" id="edit-user-uid">
+        <input type="hidden" id="edit-user-role-current">
+        <input type="hidden" id="edit-user-email-current">
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" id="edit-user-prenom" placeholder="Camille">
+          </div>
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" id="edit-user-nom" placeholder="Dupont">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:20px">
+          <label>Email *</label>
+          <input type="email" id="edit-user-email" placeholder="camille.dupont@gmail.com">
+          <div id="edit-user-email-warn" style="display:none;margin-top:8px;padding:10px 12px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;font-size:12px;color:#92400E;line-height:1.5"></div>
+        </div>
+        <div class="alert alert-error" id="edit-user-err">❌ <span id="edit-user-err-msg"></span></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn btn-secondary" onclick="closeEditUserModal()">Annuler</button>
+          <button class="btn btn-primary" id="btn-save-edit-user" onclick="saveUserEdits()">💾 Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- USER MODAL -->
 <div class="modal-backdrop" id="user-modal">
   <div class="modal" style="max-width:480px">
@@ -1730,6 +1767,7 @@ function renderUsers(){
           <div class="user-email-row">${u.email||'—'}</div>
         </div>
         <span class="badge ${ROLE_COLORS[u.role]||'badge-gray'}">${ROLE_LABELS[u.role]||u.role}</span>
+        <button class="btn btn-secondary btn-sm" onclick="editUserAccount('${u.id}')" title="Modifier nom / prénom / email">✏️ Modifier</button>
         <button class="btn btn-secondary btn-sm" onclick="changeRole('${u.id}','${u.role}','${escHtml((u.prenom||'')+' '+(u.nom||''))}')">Changer rôle</button>
         <button class="btn btn-danger btn-sm" onclick="deleteUserAccount('${u.id}','${escHtml(u.email||'')}','${escHtml((u.prenom||'')+' '+(u.nom||''))}','${u.role||''}')" title="Supprimer ce compte">🗑</button>
       </div>
@@ -1913,6 +1951,110 @@ async function changeRole(uid,currentRole,name){
   if(!confirm(`Confirmer : ${name} → ${labels[roles.indexOf(newRole)]} ?`))return;
   await db.collection("users").doc(uid).update({role:newRole});
   showAlert(`Rôle de ${name} mis à jour → ${newRole}.`);
+}
+
+// ─── Édition d'un compte (prénom, nom, email) ───
+function editUserAccount(uid){
+  const u = users.find(x => x.id === uid);
+  if (!u) { alert('Compte introuvable'); return; }
+  document.getElementById('edit-user-uid').value = uid;
+  document.getElementById('edit-user-role-current').value = u.role || '';
+  document.getElementById('edit-user-email-current').value = u.email || '';
+  document.getElementById('edit-user-prenom').value = u.prenom || '';
+  document.getElementById('edit-user-nom').value = u.nom || '';
+  document.getElementById('edit-user-email').value = u.email || '';
+  const warn = document.getElementById('edit-user-email-warn');
+  if (!u.password_admin) {
+    warn.style.display = 'block';
+    warn.innerHTML = `⚠️ Mot de passe non enregistré pour ce compte. Si tu changes l'email, il ne sera mis à jour <strong>que côté Firestore</strong>. L'utilisateur continuera à se connecter avec l'ancien email Firebase Auth. Réinitialise d'abord le mot de passe pour permettre la mise à jour complète.`;
+  } else {
+    warn.style.display = 'none';
+  }
+  document.getElementById('edit-user-err').classList.remove('show');
+  document.getElementById('edit-user-modal').classList.add('open');
+}
+function closeEditUserModal(){ document.getElementById('edit-user-modal').classList.remove('open'); }
+
+async function saveUserEdits(){
+  const uid = document.getElementById('edit-user-uid').value;
+  const role = document.getElementById('edit-user-role-current').value;
+  const oldEmail = document.getElementById('edit-user-email-current').value.trim().toLowerCase();
+  const prenom = document.getElementById('edit-user-prenom').value.trim();
+  const nom = document.getElementById('edit-user-nom').value.trim();
+  const newEmail = document.getElementById('edit-user-email').value.trim().toLowerCase();
+  const errEl = document.getElementById('edit-user-err');
+  const errMsg = document.getElementById('edit-user-err-msg');
+  const btn = document.getElementById('btn-save-edit-user');
+
+  errEl.classList.remove('show');
+  if (!prenom || !nom) { errMsg.textContent = 'Prénom et nom requis'; errEl.classList.add('show'); return; }
+  if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { errMsg.textContent = 'Email invalide'; errEl.classList.add('show'); return; }
+
+  btn.disabled = true; btn.textContent = 'Enregistrement…';
+  const u = users.find(x => x.id === uid);
+  const emailChanged = newEmail !== oldEmail;
+  let authUpdated = false;
+  let authError = null;
+
+  try {
+    // 1) Si l'email change → tentative de mise à jour Firebase Auth via instance secondaire
+    if (emailChanged) {
+      if (!u?.password_admin) {
+        authError = "mot de passe non stocké côté admin — Firebase Auth non mis à jour";
+      } else {
+        try {
+          const secondApp = firebase.apps.find(a => a.name === 'secondary') || firebase.initializeApp(FB, 'secondary');
+          const secondAuth = secondApp.auth();
+          await secondAuth.signInWithEmailAndPassword(oldEmail, u.password_admin);
+          await secondAuth.currentUser.updateEmail(newEmail);
+          await secondAuth.signOut();
+          authUpdated = true;
+        } catch(e) {
+          console.warn('[edit] updateEmail:', e);
+          authError = e.message || e.code;
+        }
+      }
+    }
+
+    // 2) Mise à jour du doc users (toujours)
+    await db.collection('users').doc(uid).update({
+      prenom, nom, email: newEmail,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 3) Si élève → mise à jour de la fiche apprenant (par uid ou ancien email)
+    if (role === 'student') {
+      try {
+        const byUid = await db.collection('apprenants').where('uid', '==', uid).get();
+        const byMail = await db.collection('apprenants').where('email', '==', oldEmail).get();
+        const ids = new Set();
+        byUid.docs.forEach(d => ids.add(d.id));
+        byMail.docs.forEach(d => ids.add(d.id));
+        for (const aId of ids) {
+          await db.collection('apprenants').doc(aId).update({
+            prenom, nom, email: newEmail, name: `${prenom} ${nom}`.trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      } catch(e) { console.warn('[edit] apprenants:', e); }
+    }
+
+    closeEditUserModal();
+    if (emailChanged && !authUpdated) {
+      alert(`✓ Compte mis à jour côté Firestore.\n\n⚠️ Firebase Auth non mis à jour : ${authError}\n\nL'utilisateur continuera à se connecter avec :\n${oldEmail}\n\nPour synchroniser : modifie manuellement l'email dans la console Firebase Auth, ou réinitialise d'abord le mot de passe.`);
+    } else if (emailChanged) {
+      showAlert(`✓ Compte mis à jour (email + Firebase Auth synchronisés)`);
+    } else {
+      showAlert(`✓ Compte mis à jour`);
+    }
+  } catch(e) {
+    console.error(e);
+    errMsg.textContent = e.message || 'Erreur inconnue';
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Enregistrer';
+  }
 }
 
 function openUserModal(){
