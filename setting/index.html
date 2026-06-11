@@ -2748,11 +2748,17 @@ async function saveRdvPris() {
   try {
     if (S._editingRdvId) {
       await db.collection('leads').doc(S._editingRdvId).update(payload);
+      // Mise à jour optimiste locale
+      const i = S.leads?.findIndex(x=>x.id===S._editingRdvId);
+      if (S.leads && i>=0) S.leads[i] = { ...S.leads[i], ...payload };
       toast(`RDV mis à jour — ${closerData.name}`,'success');
     } else {
       payload.dateCreation = TS();
       payload.createdBy = 'setter';
       const ref = await db.collection('leads').add(payload);
+      // Injection optimiste immédiate
+      const optimistic = { id: ref.id, ...payload, dateCreation: { seconds: Date.now()/1000 } };
+      if (S.leads && !S.leads.find(x=>x.id===ref.id)) S.leads = [optimistic, ...S.leads];
       // Avancer round-robin
       await db.collection('config').doc('assignment').set({
         lastCloserUid: closerData.uid,
@@ -2775,6 +2781,9 @@ async function saveRdvPris() {
     }
     closeModal('modal-rdv-pris');
     S._editingRdvId = null;
+    // Re-render immédiat
+    renderCurrentPage();
+    updateRdvPrisBadge();
   } catch(e) {
     console.error(e);
     toast('Erreur lors de la sauvegarde','error');
@@ -3126,9 +3135,22 @@ async function confirmQualify() {
       leadId: id,
       leadNom: `${l?.prenom} ${l?.nom}`,
     });
+    // Mise à jour optimiste locale
+    const i = S.leads?.findIndex(x=>x.id===id);
+    if (S.leads && i>=0) S.leads[i] = { ...S.leads[i],
+      statutSetter: 'Qualifié', statutCloser: 'RDV planifié',
+      closerAssigne: S._nextCloser.name, closerUid: S._nextCloser.uid,
+      dateRDV: date, heureRDV: heure,
+      setterAssigne: myFullName(),
+      noteSetter: note || (l?.noteSetter||''),
+      conversationWhatsApp: whatsapp || (l?.conversationWhatsApp||'')
+    };
     closeModal('modal-qualifier');
     closeModal('modal-lead');
     toast(`✅ ${l?.prenom} ${l?.nom} → ${S._nextCloser.name} — RDV le ${date} à ${heure}`,'success');
+    // Re-render immédiat
+    renderCurrentPage();
+    updateRdvPrisBadge();
   } catch(e) { toast('Erreur lors de la qualification','error'); console.error(e); }
   finally { btn.disabled=false; btn.textContent='✅ Confirmer le RDV'; }
 }
@@ -3632,6 +3654,14 @@ async function confirmPipelineRdv() {
 
   try {
     const ref = await db.collection('leads').add(payload);
+    // Injection optimiste immédiate dans S.leads pour un live instantané
+    // (avant que le snapshot serveur ne fire)
+    const optimistic = { id: ref.id, ...payload, dateCreation: { seconds: Date.now()/1000 } };
+    if (S.leads) {
+      const exists = S.leads.find(x=>x.id===ref.id);
+      if (!exists) S.leads = [optimistic, ...S.leads];
+    }
+
     // Mise à jour du doc source (pour conserver le statut visuel et le mirror id)
     await db.collection(srcCol).doc(srcId).update({
       statutPipeline: 'rdv_pris',
@@ -3664,6 +3694,9 @@ async function confirmPipelineRdv() {
     closeModal('modal-cand');
     closeModal('modal-vsl');
     S._pendingPipeRdv = null;
+    // Re-render explicite des vues pertinentes
+    renderCurrentPage();
+    updateRdvPrisBadge();
   } catch(e) {
     console.error(e);
     toast('Erreur lors de la création du RDV','error');
