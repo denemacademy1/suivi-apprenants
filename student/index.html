@@ -3676,7 +3676,7 @@ function renderHomeMasterclass(){
       const ts = new Date(`${dateStr}T${timeStr}`).getTime();
       return { ...m, _ts: ts };
     })
-    .filter(m => !isNaN(m._ts) && m._ts >= now - 2*3600*1000) // tolérance 2h après début (encore en live)
+    .filter(m => !isNaN(m._ts) && m._ts >= now - 1.5*3600*1000) // tolérance 1h30 après début (encore en live)
     .sort((a,b) => a._ts - b._ts);
 
   const next = upcoming[0];
@@ -4063,7 +4063,6 @@ function openMasterclassPlayer(id){
         <h2 class="mcs-player-title">${escHtml(m.titre||'')}</h2>
         ${m.intervenant?`<div class="mcs-player-intervenant">👤 ${escHtml(m.intervenant)}${m.intervenant_role?` · ${escHtml(m.intervenant_role)}`:''}</div>`:''}
         ${m.duree?`<div class="mcs-player-duree">⏱ ${escHtml(m.duree)}</div>`:''}
-        ${m.meet_link?`<button class="mcs-player-meet-btn" onclick="openMeetLink('${m.id}')">🎬 Rejoindre via Google Meet →</button>`:''}
         ${m.description?`<div class="mcs-player-desc">${escHtml(m.description).replace(/\n/g,'<br>')}</div>`:''}
       </div>
     </div>
