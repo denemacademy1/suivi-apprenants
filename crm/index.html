@@ -150,6 +150,32 @@ tbody tr:last-child td{border-bottom:none}
 .panel-tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
 .panel-tab{flex:1;padding:10px 4px;border:none;background:none;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
 .panel-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.panel-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#EF4444;color:#fff;font-size:10px;font-weight:800;margin-left:4px}
+/* ── Validations panel ── */
+.pv-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.pv-card-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.pv-card-title{font-size:14px;font-weight:800;color:var(--text)}
+.pv-card-meta{font-size:11px;color:var(--muted)}
+.pv-status-badge{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.pvs-pending{background:#EEF2FF;color:#4338CA;border:1px solid #C7D2FE}
+.pvs-approved{background:#DCFCE7;color:#166534;border:1px solid #86EFAC}
+.pvs-revisions{background:#FEF3C7;color:#92400E;border:1px solid #FCD34D}
+.pvs-rejected{background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5}
+.pv-card-note{font-size:12px;color:#475569;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 10px;margin-bottom:10px;white-space:pre-wrap;line-height:1.55}
+.pv-card-show{font-size:12px;color:#64748B}
+.pv-card-show ul{margin:4px 0 0 18px;padding:0}
+.pv-card-show li{margin-bottom:2px}
+.pv-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pv-btn-act{padding:7px 12px;border-radius:7px;border:1px solid;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+.pv-btn-approve{background:#10B981;color:#fff;border-color:#10B981}
+.pv-btn-approve:hover{background:#059669}
+.pv-btn-revisions{background:#fff;color:#92400E;border-color:#FCD34D}
+.pv-btn-revisions:hover{background:#FEF3C7}
+.pv-btn-reject{background:#fff;color:#991B1B;border-color:#FCA5A5}
+.pv-btn-reject:hover{background:#FEE2E2}
+.pv-card-loom{display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-size:12px;text-decoration:none;font-weight:600;padding:6px 12px;background:#EEF2FF;border-radius:7px;border:1px solid #C7D2FE}
+.pv-card-loom:hover{background:#E0E7FF}
+.pv-feedback-area{width:100%;min-height:60px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;resize:vertical;margin-top:8px}
 .panel-body{flex:1;overflow-y:auto;padding:20px}
 
 /* MODAL */
@@ -865,6 +891,7 @@ tbody tr:last-child td{border-bottom:none}
     <button class="panel-tab" onclick="switchTab(2)">Modules</button>
     <button class="panel-tab" onclick="switchTab(3)">RDVs</button>
     <button class="panel-tab" onclick="switchTab(4)">Notes</button>
+    <button class="panel-tab" onclick="switchTab(5)">🎯 Validations <span id="panel-tab-valid-badge" class="panel-tab-badge" style="display:none">0</span></button>
   </div>
   <div class="panel-body" id="panel-body"></div>
 </div>
@@ -1101,6 +1128,7 @@ async function pickAvatarCRM(){
 }
 
 function startListeners(){
+  listenPhaseValidations();
   db.collection("apprenants").orderBy("nom").onSnapshot(snap=>{
     S.apprenants=snap.docs.map(d=>({id:d.id,...d.data()}));
     S.charges=[...new Set(S.apprenants.map(a=>a.charge))].filter(Boolean).sort();
@@ -2105,6 +2133,7 @@ function openStudentPanel(id){
   document.getElementById("p-name").textContent=`${a.prenom} ${a.nom}`;
   document.getElementById("p-meta").innerHTML=`${sBadge(a.statut)}<span>${a.cohorte||""}</span><span>·</span><span>${a.charge||""}</span>`;
   document.querySelectorAll(".panel-tab").forEach((t,i)=>t.classList.toggle("active",i===0));
+  updatePendingPhaseBadge();
   renderPanelTab();
   document.getElementById("panel-overlay").classList.add("active");
   document.getElementById("detail-panel").classList.add("open");
@@ -2122,7 +2151,7 @@ function switchTab(i){
 function renderPanelTab(){
   if(!S.student)return;
   const a=S.student,sc=stuContacts(a.id);
-  [renderPanelProfil,renderPanelParcours,renderPanelModules,renderPanelContacts,renderPanelNotes][S.panelTab](a,sc);
+  [renderPanelProfil,renderPanelParcours,renderPanelModules,renderPanelContacts,renderPanelNotes,renderPanelValidations][S.panelTab](a,sc);
 }
 function renderPanelProfil(a){
   const rdvDone=rdvSuiviCount(a.id);
@@ -2340,6 +2369,145 @@ function renderPanelNotes(a){
 function saveNotes(id){
   const notes=document.getElementById("notes-area")?.value||"";
   db.collection("apprenants").doc(id).update({notes,updatedAt:TS()}).then(()=>toast("Notes sauvegardées ✅","success")).catch(e=>toast("Erreur","error"));
+}
+
+// ══════════════════════════════════════
+//  VALIDATIONS — vidéos Loom de fin de phase
+// ══════════════════════════════════════
+S.phaseExercises = {};
+S.phaseSubmissions = []; // toutes les soumissions (toutes apprenants)
+
+function listenPhaseValidations(){
+  db.collection('phase_exercises').onSnapshot(snap => {
+    S.phaseExercises = {};
+    snap.docs.forEach(d => { S.phaseExercises[d.id] = {id:d.id, ...d.data()}; });
+    if (S.student && S.panelTab === 5) renderPanelValidations(S.student);
+  }, e => console.warn('[phase_exercises]', e));
+
+  db.collection('phase_submissions').orderBy('submitted_at','desc').onSnapshot(snap => {
+    S.phaseSubmissions = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    updatePendingPhaseBadge();
+    if (S.student && S.panelTab === 5) renderPanelValidations(S.student);
+  }, e => {
+    console.warn('[phase_submissions ordered]', e);
+    db.collection('phase_submissions').onSnapshot(snap => {
+      S.phaseSubmissions = snap.docs.map(d => ({id:d.id, ...d.data()}))
+        .sort((a,b)=>(b.submitted_at?.seconds||0)-(a.submitted_at?.seconds||0));
+      updatePendingPhaseBadge();
+      if (S.student && S.panelTab === 5) renderPanelValidations(S.student);
+    });
+  });
+}
+
+function updatePendingPhaseBadge(){
+  const badge = document.getElementById('panel-tab-valid-badge');
+  if(!badge || !S.student) return;
+  const pending = S.phaseSubmissions.filter(s => s.apprenant_id === S.student.id && s.status === 'pending').length;
+  if(pending > 0){ badge.textContent = pending; badge.style.display = ''; }
+  else { badge.style.display = 'none'; }
+}
+
+function renderPanelValidations(a){
+  const subsByPhase = {};
+  S.phaseSubmissions.filter(s => s.apprenant_id === a.id).forEach(s => {
+    if(!subsByPhase[s.phase_key]) subsByPhase[s.phase_key] = s;
+  });
+  const phases = ['p0','p1','p2','p3','p4','p5'];
+  const statusCfg = {
+    pending:{lbl:'⏳ En attente',cls:'pvs-pending'},
+    approved:{lbl:'✅ Validé',cls:'pvs-approved'},
+    revisions:{lbl:'↩️ Corrections',cls:'pvs-revisions'},
+    rejected:{lbl:'❌ Refusé',cls:'pvs-rejected'}
+  };
+
+  const html = phases.map(k => {
+    const ex = S.phaseExercises[k] || {};
+    const sub = subsByPhase[k];
+    if(!sub){
+      // Pas encore soumis — on affiche l'exercice quand même
+      return `<div class="pv-card" style="opacity:.55">
+        <div class="pv-card-hdr">
+          <div>
+            <div class="pv-card-title">${escHtml(ex.titre || `Exercice ${k}`)}</div>
+            <div class="pv-card-meta">${escHtml(ex.phase_label || k)}${ex.seances?` · Séances ${escHtml(ex.seances)}`:''}</div>
+          </div>
+          <span class="pv-status-badge pvs-pending">Pas encore soumis</span>
+        </div>
+      </div>`;
+    }
+    const st = statusCfg[sub.status] || statusCfg.pending;
+    const ts = sub.submitted_at?.toDate ? sub.submitted_at.toDate() : null;
+    const dateStr = ts ? ts.toLocaleDateString('fr-FR')+' à '+ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '—';
+    const showList = (ex.show||[]).map(s=>`<li>${escHtml(s)}</li>`).join('');
+    return `<div class="pv-card">
+      <div class="pv-card-hdr">
+        <div>
+          <div class="pv-card-title">${escHtml(ex.titre || sub.phase_label || k)}</div>
+          <div class="pv-card-meta">${escHtml(sub.phase_label || ex.phase_label || k)} · Soumis le ${dateStr}${sub.attempts>1?` · Tentative #${sub.attempts}`:''}</div>
+        </div>
+        <span class="pv-status-badge ${st.cls}">${st.lbl}</span>
+      </div>
+      ${sub.loom_url?`<a class="pv-card-loom" href="${escAttr(sub.loom_url)}" target="_blank" rel="noopener">▶ Ouvrir la vidéo Loom</a>`:''}
+      ${sub.student_note?`<div class="pv-card-note" style="margin-top:10px"><strong style="color:#0F172A">💬 Note de l'élève :</strong>\n${escHtml(sub.student_note)}</div>`:''}
+      ${showList?`<div class="pv-card-show" style="margin-top:8px"><strong>À montrer :</strong><ul>${showList}</ul></div>`:''}
+      ${ex.verify?`<div class="pv-card-show" style="margin-top:6px"><strong>À vérifier :</strong> <em>${escHtml(ex.verify)}</em></div>`:''}
+      ${sub.feedback_csm?`<div class="pv-card-note" style="margin-top:10px"><strong style="color:#0F172A">📝 Ton feedback précédent :</strong>\n${escHtml(sub.feedback_csm)}</div>`:''}
+      <textarea class="pv-feedback-area" id="pv-fb-${sub.id}" placeholder="Feedback pour l'apprenant (requis pour 'Corrections' / 'Refus')…">${escHtml(sub.feedback_csm||'')}</textarea>
+      <div class="pv-card-actions">
+        <button class="pv-btn-act pv-btn-approve" onclick="reviewPhase('${sub.id}','approved','${a.id}')">✅ Approuver</button>
+        <button class="pv-btn-act pv-btn-revisions" onclick="reviewPhase('${sub.id}','revisions','${a.id}')">↩️ Demander corrections</button>
+        <button class="pv-btn-act pv-btn-reject" onclick="reviewPhase('${sub.id}','rejected','${a.id}')">❌ Refuser</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('panel-body').innerHTML = `
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      Vidéos Loom de fin de phase soumises par <strong>${escHtml(a.prenom||a.name||'')}</strong>. Approuve, demande des corrections ou refuse — l'élève voit ton retour en temps réel sur son espace.
+    </p>
+    ${html}
+  `;
+}
+
+async function reviewPhase(submissionId, newStatus, apprenantId){
+  const fb = document.getElementById('pv-fb-'+submissionId);
+  const feedback = (fb?.value||'').trim();
+  if((newStatus==='revisions' || newStatus==='rejected') && !feedback){
+    alert("Pour demander des corrections ou refuser, ajoute un feedback explicite à l'élève.");
+    fb?.focus();
+    return;
+  }
+  if(newStatus==='rejected' && !confirm("Confirmer le refus de cette soumission ?")) return;
+  try{
+    await db.collection('phase_submissions').doc(submissionId).update({
+      status: newStatus,
+      feedback_csm: feedback,
+      reviewed_by: auth.currentUser?.uid || null,
+      reviewed_at: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Notif apprenant (best effort)
+    const sub = S.phaseSubmissions.find(s=>s.id===submissionId);
+    if(sub){
+      try{
+        await db.collection('notifications').add({
+          type:'phase_reviewed',
+          message: `Ton coach a ${newStatus==='approved'?'validé':(newStatus==='revisions'?'demandé des corrections sur':'refusé')} ta vidéo de ${sub.phase_label||sub.phase_key}`,
+          destinataireRole:'student',
+          destinataireUid: sub.apprenant_uid,
+          lu:false,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          apprenant_id: sub.apprenant_id,
+          phase_key: sub.phase_key
+        });
+      }catch(_){ }
+    }
+    const lbl = newStatus==='approved'?'Phase validée ✅':(newStatus==='revisions'?'Corrections demandées ↩️':'Soumission refusée ❌');
+    toast(lbl,'success');
+  }catch(e){
+    console.error(e);
+    toast('Erreur : '+(e.message||e.code),'error');
+  }
 }
 
 // ══════════════════════════════════════

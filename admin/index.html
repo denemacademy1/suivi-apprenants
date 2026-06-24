@@ -367,6 +367,7 @@ tr:hover td{background:#FAFBFF}
   <nav>
     <div class="nav-section">Contenu</div>
     <div class="nav-item active" onclick="showPage('modules')"><span class="icon">📚</span>Modules</div>
+    <div class="nav-item" onclick="showPage('exercises')"><span class="icon">🎯</span>Exercices fin de phase</div>
     <div class="nav-section">Utilisateurs</div>
     <div class="nav-item" onclick="showPage('users')"><span class="icon">👥</span>Comptes</div>
     <div class="nav-item" onclick="showPage('apprenants')"><span class="icon">🎯</span>Apprenants</div>
@@ -476,6 +477,28 @@ tr:hover td{background:#FAFBFF}
       <div id="modules-list">
         <div class="empty"><div class="e-icon">📚</div><div class="e-text">Aucun module</div><div class="e-sub">Créez votre premier module de formation</div></div>
       </div>
+    </div>
+  </div>
+
+  <!-- EXERCISES PAGE (validation de fin de phase) -->
+  <div class="page" id="page-exercises">
+    <div class="card" style="margin-bottom:18px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:18px;font-weight:800;margin:0 0 6px">🎯 Exercices de fin de phase</h2>
+          <p style="font-size:13px;color:#64748B;margin:0;max-width:680px">
+            6 exercices Loom — un par phase (0 → 5). Les apprenants soumettent leur lien Loom à la fin de chaque phase, les coachs valident depuis l'espace CSM.
+          </p>
+        </div>
+        <button class="btn btn-primary" onclick="seedPhaseExercises()" id="btn-seed-ex">
+          📥 (Re)Initialiser depuis la fiche PDF
+        </button>
+      </div>
+    </div>
+    <div id="exercises-list"></div>
+    <div class="card" style="margin-top:20px">
+      <h3 style="font-size:15px;font-weight:800;margin:0 0 10px">📨 Soumissions reçues</h3>
+      <div id="submissions-list" style="font-size:13px;color:#64748B">Chargement…</div>
     </div>
   </div>
 
@@ -1007,11 +1030,12 @@ function initListeners(){
     if(_adminMsgTab==='cohort')renderAdminCohortList();
     renderApprenants();
   });
+  listenPhaseExercises();
 }
 
 // ─── Navigation ───────────────────────────────────────────
-const pageTitles={modules:'Modules de formation',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales',conv:'Conversations',tracking:'Tracking LP VSL'};
-const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../crm/','_blank')"},stats:{text:'',fn:''},conv:{text:'',fn:''},tracking:{text:'',fn:''}};
+const pageTitles={modules:'Modules de formation',exercises:'Exercices de fin de phase',users:'Comptes utilisateurs',apprenants:'Fiches apprenants',stats:'Statistiques globales',conv:'Conversations',tracking:'Tracking LP VSL'};
+const pageBtn={modules:{text:'+ Nouveau module',fn:'openModuleModal()'},exercises:{text:'',fn:''},users:{text:'+ Nouveau compte',fn:'openUserModal()'},apprenants:{text:'→ Dashboard CSM',fn:"window.open('../crm/','_blank')"},stats:{text:'',fn:''},conv:{text:'',fn:''},tracking:{text:'',fn:''}};
 
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
@@ -1139,6 +1163,240 @@ async function initProgramOfficiel(){
 }
 
 // ─── Import des quizz séances 1-23 ───
+// ══════════════════════════════════════════════
+//  EXERCICES DE FIN DE PHASE (CRUD + SOUMISSIONS)
+// ══════════════════════════════════════════════
+const PHASE_EXERCISES_DEFAULT = {
+  p0: { order:0, phase_key:'p0', phase_label:'Phase 0 — Socle outils', seances:'01 à 05',
+        titre:"Présente ton QG IA",
+        show:['Ton dossier de travail (architecture, nommage)','Claude Code / Codex installé et fonctionnel','n8n (workflow ou interface ouverte)','Cowork (organisation projet)','Un petit fichier que tu as créé ou modifié'],
+        verify:"Il sait quel outil sert à quoi et il travaille dans un dossier propre.",
+        published:true },
+  p1: { order:1, phase_key:'p1', phase_label:'Phase 1 — Positionnement', seances:'06 à 07',
+        titre:"Présente ton positionnement",
+        show:['Tes concurrents identifiés','Ton client cible','Ta promesse','Le nom ou la direction de marque','Un logo ou une piste visuelle'],
+        verify:"Il comprend son marché, sa cible et son angle.",
+        published:true },
+  p2: { order:2, phase_key:'p2', phase_label:'Phase 2 — Vitrine', seances:'08 à 11',
+        titre:"Présente ta vitrine d'acquisition",
+        show:['Ton site ou la structure WordPress','Un audit SEO/GEO','Le blog','Un article prêt ou publié'],
+        verify:"La vitrine sert à rassurer, attirer et convertir.",
+        published:true },
+  p3: { order:3, phase_key:'p3', phase_label:'Phase 3 — LinkedIn', seances:'12 à 14',
+        titre:"Présente ton système LinkedIn",
+        show:['Ton profil','Ton accroche','Ton lead magnet','La mécanique pour le récupérer','Quelques posts ou idées'],
+        verify:"Profil, contenu et lead magnet racontent la même histoire.",
+        published:true },
+  p4: { order:4, phase_key:'p4', phase_label:'Phase 4 — Leads', seances:'15 à 19',
+        titre:"Présente ta base de prospection",
+        show:['Ta petite base de leads','Les sources utilisées',"L'enrichissement et le nettoyage","Le score et la priorité",'Un message exemple'],
+        verify:"Il sait trouver, qualifier et prioriser avant de contacter.",
+        published:true },
+  p5: { order:5, phase_key:'p5', phase_label:'Phase 5 — Delivery', seances:'20 à 23',
+        titre:"Présente ton mini projet client",
+        show:['Le cas client','Le problème identifié','Un mini audit','Une recommandation',"L'organisation projet",'Une mini démo si possible'],
+        verify:"Il part d'un vrai besoin et sait structurer une livraison.",
+        published:true }
+};
+
+let phaseExercises = {};
+let phaseSubmissions = [];
+
+function listenPhaseExercises(){
+  db.collection('phase_exercises').onSnapshot(snap=>{
+    phaseExercises = {};
+    snap.docs.forEach(d => { phaseExercises[d.id] = {id:d.id, ...d.data()}; });
+    renderPhaseExercises();
+  }, e=>console.warn('[phase_exercises]', e));
+  db.collection('phase_submissions').orderBy('submitted_at','desc').onSnapshot(snap=>{
+    phaseSubmissions = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderPhaseSubmissions();
+  }, e=>{
+    console.warn('[phase_submissions ordered]', e);
+    db.collection('phase_submissions').onSnapshot(snap=>{
+      phaseSubmissions = snap.docs.map(d=>({id:d.id, ...d.data()}))
+        .sort((a,b)=>(b.submitted_at?.seconds||0)-(a.submitted_at?.seconds||0));
+      renderPhaseSubmissions();
+    });
+  });
+}
+
+async function seedPhaseExercises(){
+  const btn = document.getElementById('btn-seed-ex');
+  if(!confirm("Initialiser (ou réinitialiser) les 6 exercices avec le contenu du PDF ?\n\nLes définitions existantes seront écrasées.")) return;
+  if(btn){ btn.disabled = true; btn.textContent = 'Création…'; }
+  try{
+    const batch = db.batch();
+    Object.entries(PHASE_EXERCISES_DEFAULT).forEach(([key, data]) => {
+      batch.set(db.collection('phase_exercises').doc(key), {
+        ...data,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: auth.currentUser?.uid || null
+      });
+    });
+    await batch.commit();
+    showAlert("✓ Les 6 exercices ont été initialisés/réinitialisés.");
+  }catch(e){
+    console.error(e);
+    showAlertErr("Erreur : "+(e.message||e.code));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '📥 (Re)Initialiser depuis la fiche PDF'; }
+  }
+}
+
+function renderPhaseExercises(){
+  const el = document.getElementById('exercises-list');
+  if(!el) return;
+  const keys = ['p0','p1','p2','p3','p4','p5'];
+  const hasAny = Object.keys(phaseExercises).length > 0;
+  if(!hasAny){
+    el.innerHTML = `<div class="empty" style="padding:32px;text-align:center;background:#fff;border-radius:12px;border:1px solid #E2E8F0">
+      <div style="font-size:42px;margin-bottom:10px">🎯</div>
+      <div style="font-size:15px;font-weight:700;color:#1E293B;margin-bottom:6px">Pas encore d'exercices configurés</div>
+      <div style="font-size:13px;color:#64748B;margin-bottom:14px">Clique sur le bouton "Initialiser depuis la fiche PDF" pour créer les 6 exercices.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = keys.map(k => {
+    const ex = phaseExercises[k] || {};
+    const showList = (ex.show||[]).map(s=>`<li style="margin-bottom:2px">${escHtml(s)}</li>`).join('') || '<li style="color:#94A3B8;font-style:italic">— Aucun élément défini —</li>';
+    const subs = phaseSubmissions.filter(s => s.phase_key === k);
+    const pending = subs.filter(s => s.status==='pending').length;
+    return `<div class="card" style="margin-bottom:14px;padding:18px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="flex:1;min-width:240px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+            <span class="badge badge-purple">${escHtml(ex.phase_label||k)}</span>
+            ${ex.seances?`<span style="font-size:11px;color:#64748B">Séances ${escHtml(ex.seances)}</span>`:''}
+            ${pending>0?`<span class="badge badge-yellow">${pending} en attente</span>`:''}
+          </div>
+          <div style="font-size:15px;font-weight:800;color:#1E293B">${escHtml(ex.titre||'(sans titre)')}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openEditPhaseExercise('${k}')">✏️ Modifier</button>
+      </div>
+      <div style="font-size:12px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Ce qu'il doit montrer</div>
+      <ul style="font-size:13px;color:#334155;margin:0 0 12px 16px;padding:0">${showList}</ul>
+      <div style="font-size:12px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Ce qu'on vérifie</div>
+      <div style="font-size:13px;color:#334155;font-style:italic">${escHtml(ex.verify||'—')}</div>
+    </div>`;
+  }).join('');
+}
+
+function openEditPhaseExercise(key){
+  const ex = phaseExercises[key] || PHASE_EXERCISES_DEFAULT[key] || {};
+  let modal = document.getElementById('edit-exercise-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'edit-exercise-modal';
+    modal.className = 'modal-backdrop';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e=>{ if(e.target===modal) closeEditPhaseExercise(); });
+  }
+  modal.innerHTML = `
+    <div class="modal" style="max-width:620px">
+      <div class="modal-header">
+        <div class="modal-title">Modifier l'exercice — ${escHtml(ex.phase_label||key)}</div>
+        <button class="modal-close" onclick="closeEditPhaseExercise()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ex-key" value="${key}">
+        <div class="form-row cols-2">
+          <div class="form-group"><label>Libellé phase</label><input id="ex-phase-label" value="${escAttr(ex.phase_label||'')}"></div>
+          <div class="form-group"><label>Séances</label><input id="ex-seances" value="${escAttr(ex.seances||'')}" placeholder="01 à 05"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Titre de l'exercice *</label><input id="ex-titre" value="${escAttr(ex.titre||'')}" placeholder="Présente ton ..."></div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Ce qu'il doit montrer (une ligne par item)</label>
+          <textarea id="ex-show" rows="6" style="font-family:inherit">${escHtml((ex.show||[]).join('\n'))}</textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Ce qu'on vérifie</label><textarea id="ex-verify" rows="3">${escHtml(ex.verify||'')}</textarea></div>
+        <div class="form-group" style="margin-bottom:18px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="ex-published" ${ex.published!==false?'checked':''} style="width:auto"> Publié (visible côté apprenant)
+          </label>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn btn-secondary" onclick="closeEditPhaseExercise()">Annuler</button>
+          <button class="btn btn-primary" id="btn-save-ex" onclick="savePhaseExercise()">💾 Enregistrer</button>
+        </div>
+      </div>
+    </div>`;
+  modal.classList.add('open');
+}
+function closeEditPhaseExercise(){ document.getElementById('edit-exercise-modal')?.classList.remove('open'); }
+
+async function savePhaseExercise(){
+  const key = document.getElementById('ex-key').value;
+  const titre = document.getElementById('ex-titre').value.trim();
+  if(!titre){ alert('Le titre est requis'); return; }
+  const show = document.getElementById('ex-show').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const payload = {
+    phase_key: key,
+    order: PHASE_EXERCISES_DEFAULT[key]?.order ?? 0,
+    phase_label: document.getElementById('ex-phase-label').value.trim(),
+    seances: document.getElementById('ex-seances').value.trim(),
+    titre,
+    show,
+    verify: document.getElementById('ex-verify').value.trim(),
+    published: document.getElementById('ex-published').checked,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedBy: auth.currentUser?.uid || null
+  };
+  const btn = document.getElementById('btn-save-ex');
+  if(btn){ btn.disabled=true; btn.textContent='Enregistrement…'; }
+  try{
+    await db.collection('phase_exercises').doc(key).set(payload, {merge:true});
+    closeEditPhaseExercise();
+    showAlert('✓ Exercice mis à jour');
+  }catch(e){
+    console.error(e);
+    showAlertErr('Erreur : '+(e.message||e.code));
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='💾 Enregistrer'; }
+  }
+}
+
+function renderPhaseSubmissions(){
+  const el = document.getElementById('submissions-list');
+  if(!el) return;
+  if(!phaseSubmissions.length){
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:#94A3B8;font-style:italic">Aucune soumission pour le moment.</div>`;
+    return;
+  }
+  const statusCfg = {
+    pending:{lbl:'⏳ En attente',cls:'badge-yellow'},
+    approved:{lbl:'✅ Validé',cls:'badge-green'},
+    revisions:{lbl:'↩️ Corrections',cls:'badge-purple'},
+    rejected:{lbl:'❌ Refusé',cls:'badge-red'}
+  };
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="background:#F8FAFC;text-align:left">
+      <th style="padding:9px 10px;font-weight:700;color:#475569">Apprenant</th>
+      <th style="padding:9px 10px;font-weight:700;color:#475569">Phase</th>
+      <th style="padding:9px 10px;font-weight:700;color:#475569">Soumis le</th>
+      <th style="padding:9px 10px;font-weight:700;color:#475569">Statut</th>
+      <th style="padding:9px 10px;font-weight:700;color:#475569">Vidéo</th>
+    </tr></thead>
+    <tbody>
+    ${phaseSubmissions.slice(0,50).map(s=>{
+      const ts = s.submitted_at?.toDate ? s.submitted_at.toDate() : null;
+      const dateStr = ts ? ts.toLocaleDateString('fr-FR')+' '+ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '—';
+      const st = statusCfg[s.status] || statusCfg.pending;
+      return `<tr style="border-top:1px solid #E2E8F0">
+        <td style="padding:9px 10px">
+          <div style="font-weight:600;color:#0F172A">${escHtml(s.apprenant_name||'—')}</div>
+          <div style="font-size:11px;color:#94A3B8">${escHtml(s.apprenant_email||'')}</div>
+        </td>
+        <td style="padding:9px 10px;color:#475569">${escHtml(s.phase_label||s.phase_key||'')}</td>
+        <td style="padding:9px 10px;color:#475569;font-size:12px">${dateStr}</td>
+        <td style="padding:9px 10px"><span class="badge ${st.cls}">${st.lbl}</span></td>
+        <td style="padding:9px 10px">${s.loom_url?`<a href="${escAttr(s.loom_url)}" target="_blank" style="color:#6366F1;font-size:12px">▶ Ouvrir</a>`:'—'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table>
+    ${phaseSubmissions.length>50?`<div style="text-align:center;padding:12px;color:#94A3B8;font-size:12px">… et ${phaseSubmissions.length-50} autres. Validation détaillée via l'espace CSM.</div>`:''}`;
+}
+
 async function seedQuizzes1to23(){
   if (!window.QUIZ_SEED_1_23){
     alert("⚠️ Fichier seed-quizzes-1-23.js non chargé.\n\n1. Vérifie que tu as bien rechargé la page (Cmd+Maj+R)\n2. Ouvre la console (F12) pour voir s'il y a une erreur de chargement");
@@ -1683,6 +1941,7 @@ function renderQuizQuestions(){
 }
 
 function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escAttr(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
 // ─── Users ────────────────────────────────────────────────
 const ROLE_LABELS={student:'👤 Apprenant',csm:'🎯 Chargé suivi',setter:'🎯 Setter',closer:'🤝 Closer',admin:'⚙️ Admin'};

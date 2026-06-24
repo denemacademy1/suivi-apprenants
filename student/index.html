@@ -283,6 +283,58 @@ nav::-webkit-scrollbar{width:0}
 .parcours-mod.active .parcours-mod-title{color:#fff;font-weight:600}
 .parcours-mod-tag{font-size:9px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
 .parcours-mod-score{font-size:10px;font-weight:700;color:#6EE7B7;background:rgba(16,185,129,.12);padding:1px 6px;border-radius:4px;flex-shrink:0}
+/* ── Validation de fin de phase (sidebar) ── */
+.parcours-valid{display:flex;align-items:center;gap:11px;padding:11px 12px;margin:8px 8px 4px;border-radius:10px;background:linear-gradient(135deg,rgba(99,102,241,.10),rgba(99,102,241,.04));border:1px solid rgba(99,102,241,.18);transition:.15s;cursor:default}
+.parcours-valid.unlocked{cursor:pointer;border-color:var(--mc-color,#6366F1);box-shadow:0 4px 14px rgba(99,102,241,.18)}
+.parcours-valid.unlocked:hover{transform:translateY(-1px);background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(99,102,241,.08))}
+.parcours-valid.locked{opacity:.5}
+.parcours-valid-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;background:rgba(255,255,255,.06);flex-shrink:0}
+.parcours-valid-body{flex:1;min-width:0}
+.parcours-valid-title{font-size:12px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.parcours-valid-meta{font-size:11px;color:rgba(255,255,255,.65);line-height:1.3}
+.parcours-valid-go{font-size:14px;color:var(--mc-color,#A5B4FC);font-weight:700}
+.parcours-valid-lock{font-size:13px;opacity:.5}
+.parcours-valid.vc-approved{border-color:#10B981;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.04))}
+.parcours-valid.vc-approved .parcours-valid-go{color:#6EE7B7}
+.parcours-valid.vc-revisions{border-color:#F59E0B;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.03))}
+.parcours-valid.vc-rejected{border-color:#EF4444;background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.03))}
+.parcours-valid.vc-waiting{border-color:#6366F1;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(99,102,241,.03))}
+/* ── Modal de validation ── */
+.pv-modal{position:fixed;inset:0;background:rgba(8,8,18,.85);z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}
+.pv-modal.open{display:flex}
+.pv-modal-content{background:#16142a;border:1px solid rgba(255,255,255,.1);border-radius:18px;max-width:680px;width:100%;max-height:92vh;overflow-y:auto;padding:28px;color:#fff;position:relative}
+.pv-modal-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.pv-modal-close:hover{background:rgba(255,255,255,.15)}
+.pv-hdr-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);border-radius:99px;font-size:11px;font-weight:700;color:#A5B4FC;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.pv-title{font-family:'Syne','Poppins',sans-serif;font-size:24px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.pv-sub{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:18px}
+.pv-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.pv-box-label{font-size:11px;font-weight:700;color:#A5B4FC;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.pv-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px}
+.pv-list li{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:rgba(255,255,255,.88);line-height:1.5}
+.pv-list li::before{content:'•';color:#6366F1;font-weight:900;flex-shrink:0}
+.pv-verify{font-size:13px;color:rgba(255,255,255,.85);font-style:italic;line-height:1.5}
+.pv-consigne{font-size:12px;color:rgba(255,255,255,.65);line-height:1.5;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.18);border-radius:10px;padding:11px 14px;margin-bottom:14px}
+.pv-input-group{margin-bottom:14px}
+.pv-input-label{display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:6px}
+.pv-input,.pv-textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 14px;color:#fff;font-family:inherit;font-size:13px;outline:none;transition:.15s}
+.pv-input:focus,.pv-textarea:focus{border-color:#6366F1;background:rgba(255,255,255,.08)}
+.pv-textarea{resize:vertical;min-height:70px}
+.pv-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.pv-btn{padding:11px 22px;border-radius:10px;border:none;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.pv-btn-primary{background:linear-gradient(135deg,#6B5BFF,#A855F7);color:#fff;box-shadow:0 6px 18px rgba(107,91,255,.4)}
+.pv-btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(107,91,255,.55)}
+.pv-btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.pv-btn-ghost{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.12)}
+.pv-btn-ghost:hover{background:rgba(255,255,255,.12)}
+.pv-status-box{padding:14px 16px;border-radius:12px;margin-bottom:14px;border:1px solid}
+.pv-status-pending{background:rgba(99,102,241,.10);border-color:rgba(99,102,241,.35);color:#A5B4FC}
+.pv-status-approved{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.35);color:#6EE7B7}
+.pv-status-revisions{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#FCD34D}
+.pv-status-rejected{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#FCA5A5}
+.pv-status-title{font-size:13px;font-weight:800;margin-bottom:4px}
+.pv-status-msg{font-size:12px;line-height:1.5;color:rgba(255,255,255,.78)}
+.pv-feedback{font-size:13px;color:#fff;background:rgba(255,255,255,.05);padding:10px 12px;border-radius:8px;margin-top:8px;white-space:pre-wrap;line-height:1.55}
 .parcours-locked-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 12px 32px rgba(0,0,0,.4);z-index:9999;opacity:0;transition:.25s;pointer-events:none;border:1px solid rgba(99,102,241,.4);display:flex;align-items:center;gap:10px}
 .parcours-locked-toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
 
@@ -1171,6 +1223,95 @@ const PHASE_PROGRAM = [
   { key:'pb', label:'Vidéos bonus',                     category:'Bonus',      catKey:'bonus',icon:'🎁', color:'#EC4899', range:[101,9999], isBonus:true },
 ];
 
+// ── Exercices Loom de fin de phase (référence par défaut, surcharge possible côté admin via Firestore) ──
+const PHASE_EXERCISES = {
+  p0: {
+    phase_label: 'Phase 0 — Socle outils', seances:'01 à 05',
+    titre:"Présente ton QG IA",
+    show: [
+      'Ton dossier de travail (architecture, nommage)',
+      'Claude Code / Codex installé et fonctionnel',
+      'n8n (workflow ou interface ouverte)',
+      'Cowork (organisation projet)',
+      'Un petit fichier que tu as créé ou modifié'
+    ],
+    verify: "Il sait quel outil sert à quoi et il travaille dans un dossier propre."
+  },
+  p1: {
+    phase_label: 'Phase 1 — Positionnement', seances:'06 à 07',
+    titre:"Présente ton positionnement",
+    show: [
+      'Tes concurrents identifiés',
+      'Ton client cible',
+      'Ta promesse',
+      'Le nom ou la direction de marque',
+      'Un logo ou une piste visuelle'
+    ],
+    verify: "Il comprend son marché, sa cible et son angle."
+  },
+  p2: {
+    phase_label: 'Phase 2 — Vitrine', seances:'08 à 11',
+    titre:"Présente ta vitrine d'acquisition",
+    show: [
+      'Ton site ou la structure WordPress',
+      'Un audit SEO/GEO',
+      'Le blog',
+      'Un article prêt ou publié'
+    ],
+    verify: "La vitrine sert à rassurer, attirer et convertir."
+  },
+  p3: {
+    phase_label: 'Phase 3 — LinkedIn', seances:'12 à 14',
+    titre:"Présente ton système LinkedIn",
+    show: [
+      'Ton profil',
+      'Ton accroche',
+      'Ton lead magnet',
+      'La mécanique pour le récupérer',
+      'Quelques posts ou idées'
+    ],
+    verify: "Profil, contenu et lead magnet racontent la même histoire."
+  },
+  p4: {
+    phase_label: 'Phase 4 — Leads', seances:'15 à 19',
+    titre:"Présente ta base de prospection",
+    show: [
+      'Ta petite base de leads',
+      'Les sources utilisées',
+      "L'enrichissement et le nettoyage",
+      "Le score et la priorité",
+      'Un message exemple'
+    ],
+    verify: "Il sait trouver, qualifier et prioriser avant de contacter."
+  },
+  p5: {
+    phase_label: 'Phase 5 — Delivery', seances:'20 à 23',
+    titre:"Présente ton mini projet client",
+    show: [
+      'Le cas client',
+      'Le problème identifié',
+      'Un mini audit',
+      'Une recommandation',
+      "L'organisation projet",
+      'Une mini démo si possible'
+    ],
+    verify: "Il part d'un vrai besoin et sait structurer une livraison."
+  }
+};
+const EXERCISE_CONSIGNE = "Pas besoin d'une vidéo parfaite. Montre ton écran, explique tes choix, et termine par ce qui est prêt, ce qui manque, et la prochaine étape.";
+const EXERCISE_FORMAT = "Vidéo Loom (ou équivalent) — écran filmé + voix — 15 min max — montre ta tête en bulle si possible.";
+
+// État des soumissions de l'apprenant (live)
+S.phaseSubmissions = {};
+
+function getPhaseExercise(phaseKey){
+  // Surcharge éventuelle depuis Firestore (S.phaseExercises), sinon défaut
+  return (S.phaseExercises && S.phaseExercises[phaseKey]) || PHASE_EXERCISES[phaseKey] || null;
+}
+function getPhaseSubmission(phaseKey){
+  return S.phaseSubmissions[phaseKey] || null;
+}
+
 function getProgramPhase(m){
   // 1. Priorité au champ phase_id si c'est l'une des nouvelles clés (p0-p6)
   if(m?.phase_id){
@@ -1486,6 +1627,19 @@ function loadData(){
       checkInitialBadges();
       if(S.currentModule)renderModuleContent(S.currentModule);
     });
+    // ── Soumissions vidéo Loom de fin de phase ──
+    db.collection("phase_submissions").where("apprenant_id","==",S.apprenant.id).onSnapshot(snap=>{
+      S.phaseSubmissions = {};
+      snap.docs.forEach(d => { const v = d.data(); S.phaseSubmissions[v.phase_key] = {id:d.id, ...v}; });
+      renderModulesSidebar();
+      if(S.currentPage==='home') renderHomePage();
+    }, e => console.warn('[phase_submissions] listener:', e));
+    // ── Définitions d'exercices (surcharge admin) ──
+    db.collection("phase_exercises").onSnapshot(snap=>{
+      S.phaseExercises = {};
+      snap.docs.forEach(d => { S.phaseExercises[d.id] = d.data(); });
+      renderModulesSidebar();
+    }, e => console.warn('[phase_exercises] listener:', e));
     db.collection("notes").onSnapshot(snap=>{
       S.notes=snap.docs
         .map(d=>({id:d.id,...d.data()}))
@@ -1981,6 +2135,30 @@ function renderModulesSidebar(){
         ${score!=null?`<span class="parcours-mod-score">${score}%</span>`:''}
       </div>`;
     });
+
+    // ── Carte "Validation de fin de phase" (Phases 0 à 5) ──
+    if(!phase.isBonus && phase.key !== 'p6' && PHASE_EXERCISES[phase.key]){
+      const ex = getPhaseExercise(phase.key);
+      const sub = getPhaseSubmission(phase.key);
+      const unlocked = allDone; // tous les modules de la phase terminés
+      let statusLabel = '', statusCls = 'vc-pending', icon = '🎯';
+      if(sub){
+        if(sub.status==='approved'){ statusLabel = '✅ Phase validée par ton coach'; statusCls = 'vc-approved'; icon = '🏆'; }
+        else if(sub.status==='revisions'){ statusLabel = '↩️ Corrections demandées'; statusCls = 'vc-revisions'; icon = '↩️'; }
+        else if(sub.status==='rejected'){ statusLabel = '❌ Soumission refusée'; statusCls = 'vc-rejected'; icon = '❌'; }
+        else { statusLabel = '⏳ Soumis · En attente du coach'; statusCls = 'vc-waiting'; icon = '⏳'; }
+      } else {
+        statusLabel = unlocked ? '🎯 Valide ta phase pour passer à la suivante' : 'Termine les modules pour débloquer';
+      }
+      html += `<div class="parcours-valid ${unlocked?'unlocked':'locked'} ${statusCls}" onclick="${unlocked?`openPhaseValidation('${phase.key}')`:''}" style="--mc-color:${phase.color}">
+        <div class="parcours-valid-icon">${icon}</div>
+        <div class="parcours-valid-body">
+          <div class="parcours-valid-title">Validation — ${escHtml(ex.titre||'Présente ton avancement')}</div>
+          <div class="parcours-valid-meta">${statusLabel}</div>
+        </div>
+        ${unlocked?'<span class="parcours-valid-go">→</span>':'<span class="parcours-valid-lock">🔒</span>'}
+      </div>`;
+    }
 
     html += `</div></div>`;
   });
@@ -4069,6 +4247,150 @@ function openMasterclassPlayer(id){
   `;
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+// ══════════════════════════════════════════════
+//  VALIDATION DE FIN DE PHASE (Loom)
+// ══════════════════════════════════════════════
+function openPhaseValidation(phaseKey){
+  const ex = getPhaseExercise(phaseKey);
+  if(!ex){ alert('Cet exercice n\'est pas encore configuré.'); return; }
+  const sub = getPhaseSubmission(phaseKey);
+  let modal = document.getElementById('pv-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'pv-modal';
+    modal.className = 'pv-modal';
+    modal.onclick = (e)=>{ if(e.target===modal) closePhaseValidation(); };
+    document.body.appendChild(modal);
+  }
+
+  const canSubmit = !sub || ['revisions','rejected'].includes(sub.status);
+  const showList = (ex.show||[]).map(s=>`<li>${escHtml(s)}</li>`).join('');
+  let statusBlock = '';
+  if(sub){
+    let title='', cls='pv-status-pending', msg='';
+    if(sub.status==='approved'){ title='✅ Phase validée'; cls='pv-status-approved'; msg='Bravo, ton coach a validé cette phase. Tu peux passer à la suivante 🚀'; }
+    else if(sub.status==='revisions'){ title='↩️ Corrections demandées'; cls='pv-status-revisions'; msg='Ton coach a relu et te demande des ajustements. Lis le feedback ci-dessous et renvoie une nouvelle version.'; }
+    else if(sub.status==='rejected'){ title='❌ Soumission refusée'; cls='pv-status-rejected'; msg='Ton coach a refusé la soumission. Reprends l\'exercice avec son feedback.'; }
+    else { title='⏳ En attente de relecture'; cls='pv-status-pending'; msg='Ton coach va regarder ta vidéo et te donner un retour dès que possible.'; }
+    statusBlock = `<div class="pv-status-box ${cls}">
+      <div class="pv-status-title">${title}</div>
+      <div class="pv-status-msg">${msg}</div>
+      ${sub.feedback_csm?`<div class="pv-feedback"><strong>💬 Feedback coach :</strong>\n${escHtml(sub.feedback_csm)}</div>`:''}
+      ${sub.loom_url?`<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:8px">Vidéo soumise : <a href="${escAttr(sub.loom_url)}" target="_blank" style="color:#A5B4FC">${escHtml(sub.loom_url)}</a></div>`:''}
+    </div>`;
+  }
+
+  modal.innerHTML = `
+    <div class="pv-modal-content">
+      <button class="pv-modal-close" onclick="closePhaseValidation()">✕</button>
+      <span class="pv-hdr-pill">🎯 ${escHtml(ex.phase_label||phaseKey)}</span>
+      <h2 class="pv-title">${escHtml(ex.titre||'')}</h2>
+      <div class="pv-sub">${escHtml(ex.seances?`Séances ${ex.seances} · `:'')}${EXERCISE_FORMAT}</div>
+
+      ${statusBlock}
+
+      <div class="pv-box">
+        <div class="pv-box-label">📋 Ce que tu dois montrer</div>
+        <ul class="pv-list">${showList}</ul>
+      </div>
+      <div class="pv-box">
+        <div class="pv-box-label">🔍 Ce qu'on vérifie</div>
+        <div class="pv-verify">${escHtml(ex.verify||'')}</div>
+      </div>
+      <div class="pv-consigne">💡 ${EXERCISE_CONSIGNE}</div>
+
+      ${canSubmit ? `
+        <div class="pv-input-group">
+          <label class="pv-input-label">Lien Loom de ta vidéo <span style="color:#FCA5A5">*</span></label>
+          <input type="url" id="pv-loom" class="pv-input" placeholder="https://www.loom.com/share/..." value="${sub?escAttr(sub.loom_url||''):''}">
+        </div>
+        <div class="pv-input-group">
+          <label class="pv-input-label">Note pour ton coach (optionnel)</label>
+          <textarea id="pv-note" class="pv-textarea" placeholder="Ce qui est prêt, ce qui manque, la prochaine étape...">${sub?escHtml(sub.student_note||''):''}</textarea>
+        </div>
+        <div class="pv-actions">
+          <button class="pv-btn pv-btn-ghost" onclick="closePhaseValidation()">Annuler</button>
+          <button class="pv-btn pv-btn-primary" id="pv-submit-btn" onclick="submitPhaseValidation('${phaseKey}')">${sub?'📤 Renvoyer la vidéo':'📤 Soumettre ma vidéo'}</button>
+        </div>
+      ` : ''}
+    </div>`;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePhaseValidation(){
+  const m = document.getElementById('pv-modal');
+  if(!m) return;
+  m.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function submitPhaseValidation(phaseKey){
+  const loomEl = document.getElementById('pv-loom');
+  const noteEl = document.getElementById('pv-note');
+  const btn = document.getElementById('pv-submit-btn');
+  if(!loomEl) return;
+  const loom = (loomEl.value||'').trim();
+  const note = (noteEl?.value||'').trim();
+  if(!loom){ alert('Colle ton lien Loom (ou équivalent) avant d\'envoyer.'); loomEl.focus(); return; }
+  if(!/^https?:\/\//i.test(loom)){ alert("L'URL doit commencer par https:// — copie le lien depuis Loom."); loomEl.focus(); return; }
+
+  if(btn){ btn.disabled = true; btn.textContent = 'Envoi…'; }
+
+  const existing = getPhaseSubmission(phaseKey);
+  const payload = {
+    apprenant_id: S.apprenant.id,
+    apprenant_uid: auth.currentUser?.uid || null,
+    apprenant_name: `${S.apprenant.prenom||''} ${S.apprenant.nom||''}`.trim() || S.apprenant.name || '',
+    apprenant_email: S.apprenant.email || S.userData?.email || '',
+    csm_id: S.apprenant.csm_id || S.apprenant.charge_suivi_id || S.apprenant.charge || null,
+    phase_key: phaseKey,
+    phase_label: getPhaseExercise(phaseKey)?.phase_label || phaseKey,
+    loom_url: loom,
+    student_note: note,
+    submitted_at: firebase.firestore.FieldValue.serverTimestamp(),
+    status: 'pending',
+    feedback_csm: existing?.feedback_csm || '',
+    reviewed_by: null,
+    reviewed_at: null,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  try{
+    if(existing?.id){
+      // Renvoi : on garde l'historique des reviews mais on repasse en pending
+      await db.collection('phase_submissions').doc(existing.id).update({
+        ...payload,
+        attempts: firebase.firestore.FieldValue.increment(1)
+      });
+    } else {
+      payload.created_at = firebase.firestore.FieldValue.serverTimestamp();
+      payload.attempts = 1;
+      await db.collection('phase_submissions').add(payload);
+    }
+    // Notification au CSM (best effort)
+    try{
+      await db.collection('notifications').add({
+        type:'phase_submission',
+        message: `${payload.apprenant_name} a soumis sa vidéo de fin de ${payload.phase_label}`,
+        destinataireRole:'csm',
+        destinataireUid: payload.csm_id,
+        lu:false,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        apprenant_id: payload.apprenant_id,
+        phase_key: phaseKey
+      });
+    }catch(_){ }
+    closePhaseValidation();
+    if(typeof toast === 'function') toast('Vidéo envoyée à ton coach ✨','success');
+    else alert('Vidéo envoyée à ton coach ✨');
+  }catch(e){
+    console.error(e);
+    alert("Impossible d'enregistrer la soumission : " + (e.message||e.code||'erreur'));
+    if(btn){ btn.disabled = false; btn.textContent = '📤 Soumettre ma vidéo'; }
+  }
 }
 
 function closeMasterclassPlayer(){
