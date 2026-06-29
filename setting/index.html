@@ -1092,10 +1092,13 @@ table.lead-table{width:100%;border-collapse:collapse}
       <div class="tpl-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
         <div>
           <div class="tpl-title">💬 Templates de messages</div>
-          <div class="tpl-sub">Messages prêts à copier-coller pour relancer tes leads — WhatsApp, SMS, Instagram DM</div>
+          <div class="tpl-sub">Messages partagés entre tous les setters — toute modification est visible par l'équipe en temps réel</div>
         </div>
         <button class="btn-add-lead" onclick="openCustomTpl()" style="background:var(--primary);flex-shrink:0">＋ Nouveau template</button>
       </div>
+
+      <!-- Bannière migration (visible si l'utilisateur a des templates persos non publiés) -->
+      <div id="tpl-migration-banner" style="display:none;background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:14px 18px;margin:14px 0"></div>
 
       <!-- 2 colonnes : À envoyer (gauche) / Réponses (droite) -->
       <div class="tpl-two-col">
@@ -2103,17 +2106,28 @@ function renderCurrentPage() {
 //  CUSTOM TEMPLATES (Firestore)
 // ══════════════════════════════════════════════
 S.customTpls = [];
+S._personalTpls = []; // templates persos (legacy) — utilisés pour la migration vers le partagé
 let _customTplsUnsub = null;
+let _personalTplsUnsub = null;
 function listenCustomTpls() {
-  if (_customTplsUnsub || !S.user) return;
-  // Stockage dans users/{uid}.message_templates (rules ouvertes pour self-write)
-  _customTplsUnsub = db.collection('users').doc(S.user.uid).onSnapshot(snap => {
-    const d = snap.data() || {};
-    S.customTpls = Array.isArray(d.message_templates) ? [...d.message_templates] : [];
-    // Tri par createdAt desc
-    S.customTpls.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
-    renderCustomTpls();
-  }, err => { console.warn('Templates listener error:', err); });
+  if (!S.user) return;
+  // Source de vérité partagée : config/setter_templates (tous les setters voient la même liste)
+  if (!_customTplsUnsub){
+    _customTplsUnsub = db.collection('config').doc('setter_templates').onSnapshot(snap => {
+      const d = snap.exists ? (snap.data()||{}) : {};
+      S.customTpls = Array.isArray(d.templates) ? [...d.templates] : [];
+      S.customTpls.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+      renderCustomTpls();
+    }, err => { console.warn('Templates partagés listener:', err); });
+  }
+  // Lecture des templates persos de l'utilisateur connecté (pour proposer la migration)
+  if (!_personalTplsUnsub){
+    _personalTplsUnsub = db.collection('users').doc(S.user.uid).onSnapshot(snap => {
+      const d = snap.data() || {};
+      S._personalTpls = Array.isArray(d.message_templates) ? [...d.message_templates] : [];
+      renderCustomTpls();
+    }, err => { console.warn('Templates persos listener:', err); });
+  }
 }
 function renderCustomTpls() {
   const listEnvoi = document.getElementById('custom-tpls-list-envoi');
@@ -2187,6 +2201,54 @@ function renderCustomTpls() {
   };
   listEnvoi.innerHTML = renderCol(envoi);
   listRep.innerHTML   = renderCol(reponse);
+
+  // ── Bannière migration : si l'utilisateur a des templates persos non encore publiés ──
+  renderTplMigrationBanner();
+}
+
+function renderTplMigrationBanner(){
+  const wrap = document.getElementById('tpl-migration-banner');
+  if (!wrap) return;
+  const persoIds = new Set((S._personalTpls||[]).map(t => t.id));
+  const sharedIds = new Set((S.customTpls||[]).map(t => t.id));
+  const missing = (S._personalTpls||[]).filter(t => !sharedIds.has(t.id));
+  if (!missing.length){ wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  wrap.style.display = '';
+  wrap.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+      <div style="font-size:22px">📤</div>
+      <div style="flex:1;min-width:240px">
+        <div style="font-size:14px;font-weight:800;color:#92400e;margin-bottom:4px">Tu as ${missing.length} template${missing.length>1?'s':''} perso${missing.length>1?'s':''} non partagé${missing.length>1?'s':''}</div>
+        <div style="font-size:12px;color:#78350f;line-height:1.5">
+          Les templates sont maintenant <strong>communs à tous les setters</strong>. Publie tes templates personnels pour que toute l'équipe en profite. Aucun template existant ne sera écrasé — on ajoute uniquement ceux qui manquent.
+        </div>
+      </div>
+      <button onclick="publishPersonalTemplates()" id="btn-publish-tpls" style="background:#92400e;color:#fff;border:none;padding:10px 18px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer">📤 Publier mes ${missing.length} template${missing.length>1?'s':''}</button>
+    </div>
+  `;
+}
+
+async function publishPersonalTemplates(){
+  const btn = document.getElementById('btn-publish-tpls');
+  const sharedIds = new Set((S.customTpls||[]).map(t => t.id));
+  const missing = (S._personalTpls||[]).filter(t => !sharedIds.has(t.id));
+  if (!missing.length){ alert('Tout est déjà publié.'); return; }
+  if (!confirm(`Publier ${missing.length} template${missing.length>1?'s':''} pour tous les setters ?\n\nIls seront visibles immédiatement sur tous les comptes setter.`)) return;
+  if (btn){ btn.disabled = true; btn.textContent = '⏳ Publication…'; }
+  try {
+    // On fusionne : partagés actuels + templates persos manquants
+    S.customTpls = [...missing, ...S.customTpls];
+    // Tri par createdAt desc
+    S.customTpls.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+    await _persistTemplates();
+    if (typeof toast === 'function') toast(`${missing.length} template${missing.length>1?'s':''} publié${missing.length>1?'s':''} ✨`,'success');
+    else alert(`✓ ${missing.length} template${missing.length>1?'s':''} publié${missing.length>1?'s':''}`);
+  } catch(e){
+    console.error(e);
+    alert('Erreur : '+(e.message||e.code));
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = '📤 Publier'; }
+  }
 }
 
 function selectTplKind(kind){
@@ -2220,8 +2282,14 @@ function editCustomTpl(id) {
 }
 async function _persistTemplates() {
   if (!S.user) throw new Error('Pas connecté');
-  await db.collection('users').doc(S.user.uid).set(
-    { message_templates: S.customTpls, updatedAt: TS() },
+  // Stockage partagé : tous les setters lisent et écrivent sur le même doc
+  await db.collection('config').doc('setter_templates').set(
+    {
+      templates: S.customTpls,
+      updatedAt: TS(),
+      updatedBy: S.user.uid,
+      updatedByName: `${S.userData?.prenom||''} ${S.userData?.nom||''}`.trim()
+    },
     { merge: true }
   );
 }
