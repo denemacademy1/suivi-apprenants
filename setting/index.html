@@ -349,6 +349,36 @@ table.lead-table{width:100%;border-collapse:collapse}
 .objection-card{background:var(--bg);border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid var(--border)}
 .objection-q{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .objection-a{font-size:13px;line-height:1.7;color:var(--text)}
+.script-objective{background:linear-gradient(135deg,rgba(108,99,255,.08),rgba(108,99,255,.02));border:1px solid rgba(108,99,255,.25);border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start}
+.script-objective-icon{font-size:22px;flex-shrink:0}
+.script-objective-text{font-size:13px;line-height:1.7;color:var(--text)}
+.script-objective-text strong{color:var(--primary)}
+.script-version{margin-bottom:12px}
+.script-version-label{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:4px 10px;border-radius:99px;background:rgba(108,99,255,.12);color:var(--primary);margin-bottom:6px}
+.script-version-label.recommended{background:rgba(16,185,129,.12);color:var(--success)}
+.script-block-title{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 8px;padding-left:2px}
+.script-bullets{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.script-bullets li{font-size:13px;line-height:1.6;color:var(--text);background:#f8f7ff;border-radius:8px;padding:11px 14px;border-left:3px solid var(--primary)}
+.script-arrow-list{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding-left:0}
+.script-arrow-list li{list-style:none;font-size:13px;line-height:1.65;color:var(--text);padding-left:22px;position:relative}
+.script-arrow-list li::before{content:'→';position:absolute;left:0;top:0;font-weight:800;color:var(--primary)}
+.script-warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:600;margin:10px 0;display:flex;gap:8px;align-items:center}
+.script-callout{background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;text-align:center;margin:12px 0;letter-spacing:.3px}
+.script-signals{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+@media(max-width:760px){.script-signals{grid-template-columns:1fr}}
+.script-signal-card{border-radius:10px;padding:14px 16px;border:1px solid}
+.script-signal-green{background:#ecfdf5;border-color:#86efac}
+.script-signal-red{background:#fef2f2;border-color:#fca5a5}
+.script-signal-title{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.script-signal-green .script-signal-title{color:#166534}
+.script-signal-red .script-signal-title{color:#991b1b}
+.script-signal-list{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.6;display:flex;flex-direction:column;gap:4px}
+.script-signal-list li::before{content:'☐';margin-right:6px;color:inherit;opacity:.6}
+.script-signal-green .script-signal-list li{color:#166534}
+.script-signal-red .script-signal-list li{color:#991b1b}
+.script-rules-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.script-rules-list li{font-size:13px;line-height:1.6;color:var(--text);padding-left:24px;position:relative}
+.script-rules-list li::before{content:'✓';position:absolute;left:0;top:0;color:var(--success);font-weight:900}
 
 /* ─── TOAST ─── */
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
@@ -1209,59 +1239,218 @@ table.lead-table{width:100%;border-collapse:collapse}
     <!-- PAGE: SCRIPT -->
     <div id="page-script" style="display:none">
       <div class="script-page-header">
-        <div class="script-page-title">📝 Script d'appel complet</div>
-        <div class="script-page-sub">Guide de conversation pour qualifier les leads Denem Academy</div>
+        <div class="script-page-title">📝 Script Setting — DENEM Academy</div>
+        <div class="script-page-sub">Warm Call · Leads ayant rempli leurs coordonnées</div>
       </div>
 
-      <div class="script-section">
-        <div class="script-section-title">1️⃣ Ouverture <small style="font-weight:400;color:var(--muted)">(30 sec)</small></div>
-        <div class="script-section-sub">Créer la connexion et valider le contexte</div>
-        <div class="script-p">« Bonjour <strong>[Prénom]</strong>, je vous contacte de DENEM Academy. Vous avez répondu à notre questionnaire récemment. Je voulais juste m'assurer que votre situation est toujours la même et voir si je peux vous aider. Vous avez 2 minutes ? »</div>
-        <div class="script-p">Si pas disponible : « Pas de souci, quand est-ce que je peux vous rappeler ? Demain matin ça vous va ? »</div>
+      <!-- Objectif -->
+      <div class="script-objective">
+        <div class="script-objective-icon">🎯</div>
+        <div class="script-objective-text">
+          <strong>OBJECTIF DE L'APPEL</strong><br>
+          Valider l'envie de lancer son agence IA et obtenir un <strong>RDV ferme avec Axel</strong> + engagement à regarder la VSL avant.
+        </div>
       </div>
 
+      <!-- Phase 1 -->
       <div class="script-section">
-        <div class="script-section-title">2️⃣ Qualification <small style="font-weight:400;color:var(--muted)">(2 min)</small></div>
-        <div class="script-section-sub">Valider les 3 critères clés : projet, budget, timing</div>
-        <div class="script-p">« Vous nous avez indiqué être <strong>[situation]</strong>. Votre objectif c'est de pouvoir générer des revenus en freelance ou de créer une activité ? »</div>
-        <div class="script-p">« Et côté timing, vous souhaitez démarrer plutôt rapidement, ou c'est quelque chose que vous envisagez sur les prochains mois ? »</div>
-        <div class="script-p">« On a des parcours à partir de <strong>X€</strong>, est-ce que c'est quelque chose que vous pouvez envisager maintenant, ou vous avez besoin d'un accompagnement pour le financement ? »</div>
+        <div class="script-section-title">1️⃣ Ouverture warm call <small style="font-weight:400;color:var(--muted)">(30 sec)</small></div>
+        <div class="script-section-sub">3 versions au choix selon ton style</div>
+
+        <div class="script-version">
+          <span class="script-version-label recommended">Version A — Directe et confiante · Recommandée</span>
+          <div class="script-p">« <strong>[Prénom]</strong> ? Salut, c'est <strong>[Nom]</strong>, l'associé d'Axel DENEM, à qui tu viens de voir la publicité.<br>Tu viens de remplir tes coordonnées pour te lancer dans l'IA — je t'appelle directement comme prévu.<br>Tu es bien dispo là pour qu'on échange 10 minutes sur ton projet ? »</div>
+        </div>
+
+        <div class="script-version">
+          <span class="script-version-label">Version B — Chaleureuse et complice</span>
+          <div class="script-p">« <strong>[Prénom]</strong> ? Hello, c'est <strong>[Nom]</strong>, l'associé d'Axel DENEM, expert IA.<br>Tu viens de remplir tes coordonnées, je t'appelle à chaud parce que ton profil m'a interpellé.<br>Tu es bien dispo 10 minutes là pour qu'on en parle ? »</div>
+        </div>
+
+        <div class="script-version">
+          <span class="script-version-label">Version C — Orientée valeur</span>
+          <div class="script-p">« <strong>[Prénom]</strong> ? Salut, <strong>[Nom]</strong> de DENEM Academy.<br>Tu viens de nous dire que tu voulais te lancer dans l'IA via tes coordonnées sur la publicité que tu viens de voir. Je t'appelle pour qu'on regarde ensemble si on peut t'aider concrètement.<br>10 minutes ça te va ? »</div>
+        </div>
       </div>
 
+      <!-- Phase 2 -->
       <div class="script-section">
-        <div class="script-section-title">3️⃣ Pitch &amp; transfert <small style="font-weight:400;color:var(--muted)">(1 min)</small></div>
-        <div class="script-section-sub">Présenter la prochaine étape</div>
-        <div class="script-p">« Très bien, sur la base de ce que vous m'avez dit, votre profil correspond vraiment à ce qu'on accompagne. Je vais vous proposer un rendez-vous de 20 minutes avec notre fondateur. Ce n'est pas un cours magistral, c'est un échange pour valider ensemble si on peut vous aider à atteindre votre objectif. Vous seriez disponible <strong>[jour]</strong> ou <strong>[autre jour]</strong> ? »</div>
+        <div class="script-section-title">2️⃣ Découverte qualifiante <small style="font-weight:400;color:var(--muted)">(5-6 min)</small></div>
+        <div class="script-section-sub">Comprendre où il en est et ce qu'il vise</div>
+
+        <div class="script-block-title">Bloc A — Situation actuelle</div>
+        <ul class="script-bullets">
+          <li>Pour bien partir, raconte-moi en 2 phrases : <strong>tu fais quoi aujourd'hui professionnellement</strong> ?</li>
+          <li>Ça fait combien de temps que tu es sur ce poste / dans cette activité ?</li>
+          <li>Dans ce que tu fais, qu'est-ce qui te plaît plus et qu'est-ce qui te plaît moins ?</li>
+        </ul>
+
+        <div class="script-block-title">Bloc B — Pourquoi l'IA</div>
+        <ul class="script-bullets">
+          <li>Parle-moi de l'IA. <strong>Pourquoi tu as cliqué sur notre vidéo</strong> ? Qu'est-ce qui t'attire dans ce milieu ?</li>
+          <li>Tu utilises déjà des outils au quotidien ? ChatGPT, Claude, n8n ? À quelle fréquence ?</li>
+          <li>Tu t'es déjà formé à l'IA quelque part ? Cursus, vidéos YouTube, autre accompagnement ?</li>
+        </ul>
+
+        <div class="script-block-title">Bloc C — Vision et objectifs</div>
+        <ul class="script-bullets">
+          <li>Si <strong>dans 6 à 12 mois</strong> tu as vraiment lancé ton agence IA, ça ressemble à quoi pour toi concrètement ?</li>
+          <li>Tu te vois faire quoi ? Combien tu voudrais gagner ?</li>
+          <li>Niveau timing, <strong>tu veux démarrer quand</strong> ? Dans le mois ? D'ici 3 mois ?</li>
+        </ul>
+
+        <div class="script-block-title">Bloc D — Réalisme et engagement</div>
+        <ul class="script-bullets">
+          <li>Combien d'heures par semaine tu peux consacrer à ce projet en plus de ton activité actuelle ?</li>
+          <li>Niveau vente / commercial, tu en es où ? Tu as déjà vendu des prestations à des entreprises ?</li>
+        </ul>
       </div>
 
+      <!-- Phase 3 -->
       <div class="script-section">
-        <div class="script-section-title">🛡️ Objections &amp; réponses</div>
-        <div class="script-section-sub">Gérer les blocages les plus fréquents</div>
+        <div class="script-section-title">3️⃣ Apport de valeur <small style="font-weight:400;color:var(--muted)">(2 min)</small></div>
+        <div class="script-section-sub">Tu démontres pourquoi c'est le bon moment</div>
+        <div class="script-p">
+          « OK <strong>[Prénom]</strong>, je vois bien ton profil. Je vais te dire <strong>pourquoi tu as raison de t'intéresser à ce marché maintenant</strong> :
+        </div>
+        <ul class="script-arrow-list">
+          <li>Aujourd'hui en France, <strong>4,2 millions de TPE/PME</strong>. 74% n'utilisent pas encore l'IA. C'est <strong>3 millions d'entreprises</strong> qui cherchent quelqu'un pour les accompagner.</li>
+          <li>Les dirigeants veulent passer à l'IA mais ne savent pas comment. <strong>Plus de 2/3</strong> ne savent même pas identifier les cas d'usage rentables.</li>
+          <li>Résultat : un Expert IA freelance facture entre <strong>3 000€ et 8 000€ par projet</strong>, et des retainers mensuels de <strong>1 500€ à 3 000€</strong>.</li>
+          <li>Sur le réseau DENEM aujourd'hui : <strong>Baptiste 35k€/mois</strong>, <strong>Joseph 25k€/mois</strong>, <strong>Othmane 50k€/mois</strong>. Tous lancés avec la méthode BTD. »</li>
+        </ul>
+      </div>
+
+      <!-- Phase 4 -->
+      <div class="script-section">
+        <div class="script-section-title">4️⃣ Pré-closing du RDV <small style="font-weight:400;color:var(--muted)">(2 min)</small></div>
+        <div class="script-section-sub">Tu valides l'engagement avant de proposer le créneau</div>
+        <div class="script-p">« <strong>[Prénom]</strong>, je dois te poser une question importante.<br><br>D'après ce que tu m'as dit, j'ai l'impression que tu as un vrai profil pour te lancer dans l'IA. Tu as <strong>[reprendre 2 éléments précis qu'il a dits]</strong>.<br><br>Tu confirmes que c'est sérieux pour toi ? Tu veux vraiment te lancer dans les prochaines semaines ? »</div>
+        <div class="script-callout">⏸️ ATTENDRE LE OUI — CAPITAL</div>
+        <div class="script-p">« OK super. Voilà ce que je te propose.<br><br>Je vais te caler un <strong>bilan de carrière avec Axel</strong>, notre fondateur. C'est un échange d'environ <strong>45 minutes en visio, gratuit</strong>, où il va :</div>
+        <ul class="script-arrow-list">
+          <li>Reprendre ta situation en profondeur</li>
+          <li>Te montrer la méthode DENEM en détail (la méthode BTD)</li>
+          <li>Te construire un plan personnalisé pour lancer ton agence IA</li>
+          <li>Te dire honnêtement si oui ou non on peut t'accompagner</li>
+        </ul>
+        <div class="script-p">Ça t'intéresse de caler ça ? »</div>
+      </div>
+
+      <!-- Phase 5 -->
+      <div class="script-section">
+        <div class="script-section-title">5️⃣ Prise de RDV ferme <small style="font-weight:400;color:var(--muted)">(2 min)</small></div>
+        <div class="script-section-sub">Tu cales 2 créneaux précis</div>
+        <div class="script-p">« Super. Je regarde l'agenda d'Axel…<br><br>Cette semaine je vois <strong>[proposer 2 créneaux précis : ex jeudi 14h ou vendredi 10h]</strong>. Qu'est-ce qui te va le mieux entre les deux ? »</div>
+        <div class="script-warn">⚠️ RÈGLE : toujours proposer 2 créneaux, jamais « quand es-tu dispo ».</div>
+        <div class="script-p" style="font-style:italic;background:transparent;border-left:none;padding-left:0">[Le prospect choisit]</div>
+        <div class="script-p">« Parfait, <strong>[jour] à [heure]</strong> avec Axel. Je te confirme l'invitation Calendly avec le lien Zoom <strong>par mail et par SMS dans les minutes qui viennent</strong>.<br><br>Note bien le créneau dans ton agenda là maintenant pour pas qu'il bouge. C'est noté de ton côté ? »</div>
+      </div>
+
+      <!-- Phase 6 -->
+      <div class="script-section">
+        <div class="script-section-title">6️⃣ Envoi VSL WhatsApp <small style="font-weight:400;color:var(--muted)">(1 min)</small></div>
+        <div class="script-section-sub">Tu engages à regarder la VSL avant le RDV</div>
+        <div class="script-p">« Avant qu'on raccroche, dernière chose importante.<br><br>Pour qu'Axel puisse aller vite et profond avec toi lors du bilan, <strong>il faut que tu aies vu une courte vidéo de formation avant</strong>.<br><br>C'est 12 minutes. Tu y découvres :</div>
+        <ul class="script-arrow-list">
+          <li>Le marché de l'IA aujourd'hui</li>
+          <li>Comment fonctionne une agence IA concrètement</li>
+          <li>La méthode BTD qu'on enseigne</li>
+        </ul>
+        <div class="script-p">Je te l'envoie sur WhatsApp dans les 10 minutes qui suivent. Tu pourras la regarder ce soir ou demain — <strong>l'important c'est avant ton RDV avec Axel</strong>. Ça te va ? »</div>
+        <div class="script-p">« Top. Tu vas recevoir la vidéo dans les minutes qui viennent. <strong>Tu me confirmes quand tu l'as bien reçue avec un petit 👍 ?</strong> »</div>
+      </div>
+
+      <!-- Phase 7 -->
+      <div class="script-section">
+        <div class="script-section-title">7️⃣ Clôture <small style="font-weight:400;color:var(--muted)">(30 sec)</small></div>
+        <div class="script-section-sub">Tu récapitules clairement</div>
+        <div class="script-p">« Parfait <strong>[Prénom]</strong>. Donc on récapitule :</div>
+        <ul class="script-arrow-list">
+          <li>Tu reçois la vidéo de formation sur WhatsApp dans 10 minutes</li>
+          <li>Tu la regardes avant ton RDV</li>
+          <li>On se retrouve <strong>[jour] à [heure]</strong> avec Axel pour ton bilan stratégique »</li>
+        </ul>
+      </div>
+
+      <!-- Objections -->
+      <div class="script-section">
+        <div class="script-section-title">🚨 Gestion des objections courantes</div>
+        <div class="script-section-sub">Reformuler, rassurer, reposer la question</div>
 
         <div class="objection-card">
-          <div class="objection-q">❌ « Je n'ai pas le budget »</div>
-          <div class="objection-a">« Je comprends tout à fait. C'est justement pour ça que j'appelle avant de vous inviter à un rendez-vous. On a mis en place des solutions de financement : paiement en 3x, 10x, et des partenaires CPF/financement pro pour certains profils. La question c'est : est-ce que votre projet vous tient à cœur ? Parce que si oui, on trouve toujours une solution. »</div>
+          <div class="objection-q">❌ « Je veux juste avoir des infos pour l'instant »</div>
+          <div class="objection-a">« C'est exactement le bon état d'esprit. Le bilan avec Axel sert précisément à ça : te donner toutes les infos pour que <strong>TU décides ensuite</strong>. On ne te vend rien — Axel te montre la méthode, te construit un plan, et tu repars libre. Ça te va ? »</div>
         </div>
 
         <div class="objection-card">
-          <div class="objection-q">❌ « Je ne suis pas technique »</div>
-          <div class="objection-a">« C'est exactement le profil de 90% de nos apprenants au départ. Baptiste est arrivé sans aucune expérience tech — il génère 35k€/mois aujourd'hui. Joseph pareil. Notre méthode est justement conçue pour les profils non techniques. On part de zéro avec vous. »</div>
+          <div class="objection-q">❌ « Je suis pas sûr d'avoir le temps cette semaine »</div>
+          <div class="objection-a">« Je comprends, t'as ton activité actuelle. Pour ça que le RDV fait 45 minutes — c'est calibré pour les gens occupés. Si je te trouve un créneau soit <strong>tôt le matin (8h-9h)</strong> soit en <strong>fin de journée (18h-19h)</strong>, ça t'arrange mieux ? »</div>
         </div>
 
         <div class="objection-card">
-          <div class="objection-q">❌ « J'ai déjà essayé des formations »</div>
-          <div class="objection-a">« Je vous entends, et c'est une vraie question. La différence avec DENEM, c'est qu'on n'est pas une formation à regarder seul dans son coin. Vous avez un coach dédié, des sessions live, et on ne lâche pas tant que vous n'avez pas vos premiers clients. Ce n'est pas un cours — c'est un accompagnement à résultats. »</div>
+          <div class="objection-q">❌ « C'est quoi le prix ? »</div>
+          <div class="objection-a">« Bonne question — c'est exactement ce qu'Axel va aborder avec toi dans le bilan, parce que ça dépend du programme exact qui te correspond. <strong>Mon job c'est de m'assurer qu'il y a un fit avant de te caler avec lui.</strong> Dans ce qu'on s'est dit, je pense que oui. On cale le RDV ? »</div>
         </div>
 
         <div class="objection-card">
-          <div class="objection-q">❌ « Je n'ai pas le temps »</div>
-          <div class="objection-a">« Je comprends. À quelle heure vous dormez le soir ? … Et vous vous levez à quelle heure ? Souvent nos apprenants dégagent 1h le matin ou le soir. 5h par semaine suffisent pour avancer sérieusement. Et dans 6 mois, ce temps investi vous libère du temps de façon permanente. »</div>
+          <div class="objection-q">❌ « Je vais réfléchir avant de prendre le RDV »</div>
+          <div class="objection-a">« <strong>Réfléchir à quoi exactement ?</strong> Le RDV est gratuit et sans engagement. À pire tu repars avec un plan d'action clair sur l'IA même si tu ne fais rien avec nous. Qu'est-ce qui te fait hésiter concrètement ? »</div>
         </div>
 
         <div class="objection-card">
-          <div class="objection-q">❌ « Je dois réfléchir »</div>
-          <div class="objection-a">« Bien sûr. À quoi en particulier ? [Écouter]. Je vous propose ça : on fixe un appel J+3 avec notre fondateur, juste pour répondre à vos questions, sans engagement. Si après ça vous avez encore besoin de temps, on respecte ça. Vous êtes disponible jeudi ou vendredi ? »</div>
+          <div class="objection-q">❌ « Je dois en parler à mon conjoint »</div>
+          <div class="objection-a">« Parfaitement légitime. Le RDV avec Axel justement, c'est ce qui te donnera les éléments précis pour en parler avec lui/elle. <strong>Tu peux même intégrer ton/ta conjoint(e) au RDV avec Axel</strong> si tu veux. On cale ? »</div>
         </div>
+      </div>
+
+      <!-- Grille qualification -->
+      <div class="script-section">
+        <div class="script-section-title">📋 Grille de qualification rapide</div>
+        <div class="script-section-sub">À remplir mentalement (ou dans la note) à la fin du call</div>
+        <div class="script-signals">
+          <div class="script-signal-card script-signal-green">
+            <div class="script-signal-title">🟢 Signaux verts</div>
+            <ul class="script-signal-list">
+              <li>Situation pro stable (peut investir)</li>
+              <li>Frustration claire dans situation actuelle</li>
+              <li>Utilise déjà ChatGPT / Claude</li>
+              <li>Vision claire à 6-12 mois</li>
+              <li>10h+/semaine de dispo</li>
+              <li>Veut démarrer dans les 3 mois</li>
+              <li>Pas d'objection finance bloquante</li>
+              <li>RDV ferme calé</li>
+            </ul>
+          </div>
+          <div class="script-signal-card script-signal-red">
+            <div class="script-signal-title">🔴 Signaux rouges (alerter Axel)</div>
+            <ul class="script-signal-list">
+              <li>Pas de revenus stables</li>
+              <li>Situation perso instable</li>
+              <li>Aucune utilisation de l'IA</li>
+              <li>Veut juste « voir »</li>
+              <li>Moins de 5h/sem dispo</li>
+              <li>Conjoint réticent</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rappels pro -->
+      <div class="script-section">
+        <div class="script-section-title">✅ Rappels pro pour le setter</div>
+        <div class="script-section-sub">Les règles non-négociables</div>
+        <ul class="script-rules-list">
+          <li><strong>Appel dans les 5 minutes</strong> après le quiz si possible. Max 24h.</li>
+          <li>Tu écoutes <strong>80%</strong> / parles <strong>20%</strong>.</li>
+          <li>Tu reformules : <em>« Donc si je comprends bien, tu me dis que… »</em></li>
+          <li>Tu ne vends jamais. Tu qualifies et tu projettes.</li>
+          <li>Tu ne donnes jamais le prix. <strong>C'est le job d'Axel.</strong></li>
+          <li>Le silence après une objection est ton meilleur allié.</li>
+          <li>Tu fixes <strong>TOUJOURS un créneau ferme</strong> avant de raccrocher.</li>
+          <li>Tu envoies la VSL <strong>dans les 10 minutes</strong> après le call.</li>
+          <li>Rappel WhatsApp la veille du RDV : <em>« Hello [Prénom], demain à [heure] avec Axel. T'as bien vu la vidéo ? Hâte de l'échange 🚀 »</em></li>
+        </ul>
       </div>
     </div>
 
