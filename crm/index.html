@@ -1034,7 +1034,7 @@ const PAGE_INFO={
   rapports:{title:"Rapports & Analyses",sub:"Statistiques de la formation",action:null},
   reglages:{title:"Réglages",sub:"Configuration du dashboard",action:null},
   cohortes:{title:"Cohortes",sub:"Groupes d'apprenants — 8 membres max",action:"+ Cohorte"},
-  masterclass:{title:"Masterclass",sub:"Vidéos thématiques visibles par tous les apprenants",action:"+ Masterclass"},
+  masterclass:{title:"Masterclass",sub:"Vidéos et lives — ciblables par apprenant ou visibles par tous",action:"+ Masterclass"},
   messages:{title:"Messages",sub:"Conversations avec les apprenants",action:null},
 };
 
@@ -2880,6 +2880,11 @@ function renderMasterclassPage(){
         const pubBadge = m.published===false
           ? `<span class="mc-card-badge mc-card-draft">🔒 Brouillon</span>`
           : `<span class="mc-card-badge mc-card-pub">✓ Publié</span>`;
+        // Badge d'audience : ciblée (avec nb) vs tous
+        const isTargeted = m.audience_type === 'targeted' && Array.isArray(m.audience_ids);
+        const audienceBadge = isTargeted
+          ? `<span class="mc-card-badge" style="background:#DBEAFE;color:#1D4ED8;border:1px solid #BFDBFE" title="Visible par ${m.audience_ids.length} apprenant(s) ciblé(s)">🎯 ${m.audience_ids.length} ciblé${m.audience_ids.length>1?'s':''}</span>`
+          : `<span class="mc-card-badge" style="background:#F1F5F9;color:#475569;border:1px solid #E2E8F0" title="Visible par tous les apprenants">🌐 Tous</span>`;
         // Détermination Live vs Replay
         let liveBadge = '';
         let liveInfo = '';
@@ -2908,8 +2913,9 @@ function renderMasterclassPage(){
           <div class="mc-card-body">
             <div class="mc-card-head">
               <span class="mc-card-theme">${th.icon} ${th.label}</span>
-              <div style="display:flex;gap:5px">
+              <div style="display:flex;gap:5px;flex-wrap:wrap">
                 ${liveBadge}
+                ${audienceBadge}
                 ${pubBadge}
               </div>
             </div>
@@ -2946,6 +2952,23 @@ function openMasterclassModal(id){
   S._mcEditing = id || null;
   const m = id ? S.masterclasses.find(x => x.id === id) : null;
   const themesOpts = MASTERCLASS_THEMES.map(t => `<option value="${t.key}" ${m?.theme===t.key?'selected':''}>${t.icon} ${t.label}</option>`).join('');
+
+  // Liste des apprenants pour le ciblage
+  const audienceType = m?.audience_type === 'targeted' ? 'targeted' : 'all';
+  const targetedIds  = Array.isArray(m?.audience_ids) ? m.audience_ids : [];
+  const apprenantsSorted = [...(S.apprenants||[])].sort((a,b) => {
+    const na = ((a.prenom||'')+' '+(a.nom||'')).trim().toLowerCase();
+    const nb = ((b.prenom||'')+' '+(b.nom||'')).trim().toLowerCase();
+    return na.localeCompare(nb);
+  });
+  const apprenantChecks = apprenantsSorted.map(a => {
+    const label = ((a.prenom||'')+' '+(a.nom||'')).trim() || a.email || a.id;
+    const checked = targetedIds.includes(a.id) ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:#0F172A" onmouseover="this.style.background='#F1F5F9'" onmouseout="this.style.background='transparent'">
+      <input type="checkbox" class="mc-audience-check" value="${escAttr(a.id)}" ${checked} style="width:auto;margin:0">
+      <span>${escHtml(label)}</span>
+    </label>`;
+  }).join('') || '<div style="font-size:12px;color:#94A3B8;padding:6px">Aucun apprenant disponible</div>';
 
   const modal = document.getElementById('mc-modal') || (() => {
     const d = document.createElement('div');
@@ -3015,10 +3038,28 @@ function openMasterclassModal(id){
             <label>Description</label>
             <textarea id="mc-desc" rows="3" placeholder="Ce que les apprenants vont apprendre…">${escHtml(m?.description||'')}</textarea>
           </div>
+          <!-- 🎯 AUDIENCE — tous ou apprenants spécifiques -->
+          <div class="form-group form-full" style="padding:14px 16px;background:linear-gradient(135deg,#EFF6FF,#F0F9FF);border:1px solid #BFDBFE;border-radius:10px">
+            <div style="font-size:11px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">🎯 Audience</div>
+            <div style="display:flex;gap:20px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#0F172A;font-weight:500">
+                <input type="radio" name="mc-audience" value="all" ${audienceType==='all'?'checked':''} onchange="document.getElementById('mc-audience-list').style.display='none'" style="width:auto;margin:0">
+                <span>Tous les apprenants</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#0F172A;font-weight:500">
+                <input type="radio" name="mc-audience" value="targeted" ${audienceType==='targeted'?'checked':''} onchange="document.getElementById('mc-audience-list').style.display='block'" style="width:auto;margin:0">
+                <span>Apprenants spécifiques</span>
+              </label>
+            </div>
+            <div id="mc-audience-list" style="display:${audienceType==='targeted'?'block':'none'};margin-top:12px;padding:10px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;max-height:220px;overflow-y:auto">
+              ${apprenantChecks}
+            </div>
+            <div style="font-size:11.5px;color:#64748B;margin-top:10px;line-height:1.5">💡 Choisis « Apprenants spécifiques » pour rendre cette masterclass <strong>visible uniquement</strong> par les personnes cochées.</div>
+          </div>
           <div class="form-group form-full">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#0F172A;font-weight:500;font-size:13px">
               <input type="checkbox" id="mc-pub" ${m?.published!==false?'checked':''} style="width:auto;margin:0">
-              <span><strong>Publié</strong> <span style="color:#64748B;font-weight:400;font-size:12px">(visible par tous les apprenants)</span></span>
+              <span><strong>Publié</strong> <span style="color:#64748B;font-weight:400;font-size:12px">(masque la masterclass tant qu'elle est décochée)</span></span>
             </label>
           </div>
         </div>
@@ -3062,6 +3103,15 @@ async function saveMasterclass(){
     toast("Renseigne au moins l'URL vidéo (replay) OU le lien Google Meet","error");
     return;
   }
+  const audienceRadio = document.querySelector('input[name="mc-audience"]:checked');
+  const audience_type = audienceRadio ? audienceRadio.value : 'all';
+  const audience_ids = audience_type === 'targeted'
+    ? Array.from(document.querySelectorAll('.mc-audience-check:checked')).map(c => c.value)
+    : [];
+  if(audience_type === 'targeted' && audience_ids.length === 0){
+    toast("Sélectionne au moins un apprenant ou choisis « Tous »","error");
+    return;
+  }
   const data = {
     titre, theme, video_url, meet_link, date_event, heure,
     thumbnail_url: normalizeUrlCsm(document.getElementById('mc-thumb').value),
@@ -3070,6 +3120,8 @@ async function saveMasterclass(){
     intervenant_role: document.getElementById('mc-role').value.trim(),
     description: document.getElementById('mc-desc').value.trim(),
     published: document.getElementById('mc-pub').checked,
+    audience_type,
+    audience_ids,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
   try{

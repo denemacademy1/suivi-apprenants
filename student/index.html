@@ -1584,9 +1584,17 @@ function loadData(){
   });
   // ─── Masterclass (live sync depuis CSM) ───
   db.collection("masterclass").onSnapshot(snap=>{
+    const myId = S.apprenant?.id;
     S.masterclasses = snap.docs
       .map(d => ({ id:d.id, ...d.data() }))
       .filter(m => m.published !== false)
+      // 🎯 Audience : 'all' (défaut/legacy) → visible par tous ;
+      //              'targeted' → visible seulement si mon id est dans audience_ids.
+      .filter(m => {
+        if (m.audience_type !== 'targeted') return true;
+        if (!Array.isArray(m.audience_ids) || m.audience_ids.length === 0) return false;
+        return !!myId && m.audience_ids.includes(myId);
+      })
       .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
     const badge = document.getElementById('nav-badge-masterclass');
     if (badge){
