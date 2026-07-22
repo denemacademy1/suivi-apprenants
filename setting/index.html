@@ -1604,8 +1604,8 @@ table.lead-table{width:100%;border-collapse:collapse}
           <input class="form-input" id="add-motivation" placeholder="Ex: Générer un revenu complémentaire">
         </div>
         <div class="form-group full">
-          <label class="form-label">Commentaire libre</label>
-          <textarea class="form-textarea" id="add-commentaire" placeholder="Notes issues du questionnaire…"></textarea>
+          <label class="form-label">Commentaire libre <span style="font-weight:400;color:var(--muted);font-size:11px">(pas de limite de longueur)</span></label>
+          <textarea class="form-textarea" id="add-commentaire" rows="8" placeholder="Notes issues du questionnaire — tout ce que tu veux garder en mémoire sur ce lead. Aucune limite de caractères." style="min-height:180px;line-height:1.5"></textarea>
         </div>
       </div>
     </div>
@@ -3167,6 +3167,45 @@ function startEditLeadField(leadId, field) {
   inp.focus(); inp.select();
 }
 
+function startEditLeadComment(leadId) {
+  const l = S.leads.find(x=>x.id===leadId);
+  if (!l) return;
+  const wrap = document.getElementById('lead-comment-wrap');
+  if (!wrap) return;
+  const cur = l.reponsesQuestionnaire?.commentaireLibre || '';
+  wrap.innerHTML = `
+    <textarea id="lead-comment-input" class="form-textarea" rows="8" placeholder="Ajoute autant de texte que tu veux — aucune limite." style="width:100%;min-height:180px;line-height:1.55;padding:10px 12px;font-size:13px">${escHtml(cur)}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+      <button class="btn-icon" style="background:#e2e8f0;color:#334155;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600" onclick="openLead('${leadId}')">Annuler</button>
+      <button class="btn-icon" style="background:#10b981;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600" onclick="saveLeadComment('${leadId}')">💾 Enregistrer</button>
+    </div>`;
+  const ta = document.getElementById('lead-comment-input');
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+
+async function saveLeadComment(leadId) {
+  const ta = document.getElementById('lead-comment-input');
+  if (!ta) return;
+  const val = ta.value; // pas de trim() → on garde retours à la ligne intentionnels
+  try {
+    await db.collection('leads').doc(leadId).update({
+      'reponsesQuestionnaire.commentaireLibre': val,
+      updatedAt: TS()
+    });
+    const l = S.leads.find(x=>x.id===leadId);
+    if (l) {
+      l.reponsesQuestionnaire = l.reponsesQuestionnaire || {};
+      l.reponsesQuestionnaire.commentaireLibre = val;
+    }
+    toast('Commentaire mis à jour', 'success');
+    openLead(leadId);
+  } catch(e) {
+    console.error('[saveLeadComment]', e);
+    toast('Erreur : '+(e.message||e.code||'inconnue'), 'error');
+  }
+}
+
 async function saveLeadField(leadId, field) {
   const inp = document.getElementById('lead-inline-input');
   if (!inp) return;
@@ -3240,7 +3279,13 @@ function openLead(id) {
     <div class="q-item"><div class="q-label">Disponibilité</div><div class="q-value">${escHtml(q.disponibiliteHebdo||'Non renseigné')}</div></div>
     <div class="q-item"><div class="q-label">Délai de lancement</div><div class="q-value">${escHtml(q.delaiLancement||'Non renseigné')}</div></div>
     <div class="q-item"><div class="q-label">Motivation</div><div class="q-value">${escHtml(q.motivationPrincipale||'Non renseigné')}</div></div>
-    ${q.commentaireLibre?`<div class="q-item"><div class="q-label">Commentaire</div><div class="q-value">${escHtml(q.commentaireLibre)}</div></div>`:''}`;
+    <div class="q-item" id="lead-comment-item">
+      <div class="q-label" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span>Commentaire</span>
+        <button class="btn-edit-inline" onclick="startEditLeadComment('${l.id}')" title="Modifier le commentaire">✏️ Modifier</button>
+      </div>
+      <div class="q-value" id="lead-comment-wrap" style="white-space:pre-wrap;line-height:1.55">${q.commentaireLibre?escHtml(q.commentaireLibre):'<em style="color:var(--muted);font-weight:400">Aucun commentaire — clique sur ✏️ pour en ajouter.</em>'}</div>
+    </div>`;
 
   // TAB SCORE
   const scoreClass2 = scoreClass(score);
