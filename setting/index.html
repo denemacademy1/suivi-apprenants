@@ -257,7 +257,9 @@ table.lead-table{width:100%;border-collapse:collapse}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
 .info-field{background:var(--bg);border-radius:8px;padding:12px}
 .info-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.info-value{font-size:13px;font-weight:600;color:var(--text)}
+.info-value{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.btn-edit-inline{background:transparent;border:1px solid transparent;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:12px;opacity:.45;transition:.15s;color:inherit}
+.btn-edit-inline:hover{opacity:1;background:rgba(107,91,255,.08);border-color:rgba(107,91,255,.2)}
 .info-value a{color:var(--primary);text-decoration:none}
 .questionnaire-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .q-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
@@ -1862,6 +1864,9 @@ function isMyLead(lead) {
 function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+function escAttr(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 // ══════════════════════════════════════════════
 //  SCORING AUTOMATIQUE
@@ -3141,6 +3146,52 @@ function renderStats() {
 }
 
 // ══════════════════════════════════════════════
+//  ÉDITION INLINE — Email / Téléphone d'un lead
+// ══════════════════════════════════════════════
+function startEditLeadField(leadId, field) {
+  const l = S.leads.find(x=>x.id===leadId);
+  if (!l) return;
+  const wrapId = field==='email' ? 'lead-email-wrap' : 'lead-tel-wrap';
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  const cur = field==='email' ? (l.email||'') : (l.telephone||'');
+  const inputType = field==='email' ? 'email' : 'tel';
+  const placeholder = field==='email' ? 'exemple@domaine.com' : '+33 6 12 34 56 78';
+  wrap.innerHTML = `
+    <div style="display:flex;gap:6px;align-items:center;width:100%">
+      <input id="lead-inline-input" class="form-input" type="${inputType}" value="${escAttr(cur)}" placeholder="${placeholder}" style="flex:1;padding:6px 10px;font-size:13px" onkeydown="if(event.key==='Enter')saveLeadField('${leadId}','${field}');if(event.key==='Escape')openLead('${leadId}')">
+      <button class="btn-icon" style="background:#10b981;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px" onclick="saveLeadField('${leadId}','${field}')" title="Enregistrer">✓</button>
+      <button class="btn-icon" style="background:#e2e8f0;color:#334155;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px" onclick="openLead('${leadId}')" title="Annuler">✕</button>
+    </div>`;
+  const inp = document.getElementById('lead-inline-input');
+  inp.focus(); inp.select();
+}
+
+async function saveLeadField(leadId, field) {
+  const inp = document.getElementById('lead-inline-input');
+  if (!inp) return;
+  const raw = inp.value.trim();
+  if (field==='email' && raw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) {
+    toast("Email invalide", "error"); inp.focus(); return;
+  }
+  try {
+    const val = field==='email' ? raw.toLowerCase() : raw;
+    await db.collection('leads').doc(leadId).update({
+      [field]: val,
+      updatedAt: TS()
+    });
+    // Mise à jour optimiste locale (le onSnapshot suivra)
+    const l = S.leads.find(x=>x.id===leadId);
+    if (l) l[field] = val;
+    toast(field==='email' ? 'Email mis à jour' : 'Téléphone mis à jour', 'success');
+    openLead(leadId); // recharge la fiche
+  } catch(e) {
+    console.error('[saveLeadField]', e);
+    toast('Erreur : '+(e.message||e.code||'inconnue'), 'error');
+  }
+}
+
+// ══════════════════════════════════════════════
 //  FICHE LEAD (MODAL)
 // ══════════════════════════════════════════════
 function openLead(id) {
@@ -3165,8 +3216,20 @@ function openLead(id) {
   document.getElementById('tab-profil').innerHTML = `
     <div class="info-grid">
       <div class="info-field"><div class="info-label">Prénom & Nom</div><div class="info-value">${escHtml(l.prenom)} ${escHtml(l.nom)}</div></div>
-      <div class="info-field"><div class="info-label">Email</div><div class="info-value"><a href="mailto:${l.email}">${escHtml(l.email||'—')}</a></div></div>
-      <div class="info-field"><div class="info-label">Téléphone</div><div class="info-value">${phone?`<a href="tel:${phone}">${escHtml(l.telephone)}</a>`:'—'}</div></div>
+      <div class="info-field">
+        <div class="info-label">Email</div>
+        <div class="info-value" id="lead-email-wrap">
+          ${l.email?`<a href="mailto:${escAttr(l.email)}">${escHtml(l.email)}</a>`:'—'}
+          <button class="btn-edit-inline" onclick="startEditLeadField('${l.id}','email')" title="Modifier l'email">✏️</button>
+        </div>
+      </div>
+      <div class="info-field">
+        <div class="info-label">Téléphone</div>
+        <div class="info-value" id="lead-tel-wrap">
+          ${phone?`<a href="tel:${escAttr(phone)}">${escHtml(l.telephone)}</a>`:'—'}
+          <button class="btn-edit-inline" onclick="startEditLeadField('${l.id}','telephone')" title="Modifier le téléphone">✏️</button>
+        </div>
+      </div>
       <div class="info-field"><div class="info-label">Source</div><div class="info-value">${l.sourceCanal||'—'}</div></div>
       <div class="info-field"><div class="info-label">Date de contact</div><div class="info-value">${fmtDate(l.dateCreation)}${da!==null?` (il y a ${da} j)`:''}</div></div>
       <div class="info-field"><div class="info-label">Setter assigné</div><div class="info-value">${l.setterAssigne||'Non assigné'}</div></div>
