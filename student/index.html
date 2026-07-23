@@ -2607,13 +2607,15 @@ async function addTodoForModule(moduleId){
 }
 
 function renderQuizHTML(m,isDone,prog){
-  if(isDone&&prog){
+  const retaking = S._retakeQuizId === m.id;
+  if(isDone && prog && !retaking){
     return`<div class="quiz-wrap">
       <div class="quiz-header"><div class="quiz-header-title">📝 Quiz de validation</div></div>
       <div class="quiz-done-banner"><div class="qdb">
         <div class="qdb-icon">🏆</div>
         <div><div class="qdb-title">Quiz réussi — ${prog.score_quiz}%</div><div class="qdb-sub">Module validé avec succès</div></div>
       </div></div>
+      <button class="btn-quiz-retake" onclick="retakeQuiz('${m.id}')" style="margin-top:14px;width:100%;padding:14px;background:transparent;border:1px solid rgba(99,102,241,.4);color:#A5B4FC;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.2px" onmouseover="this.style.background='rgba(99,102,241,.1)';this.style.borderColor='rgba(99,102,241,.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(99,102,241,.4)'">🔁 Refaire le quiz</button>
     </div>`;
   }
   const letters=['A','B','C','D'];
@@ -2830,10 +2832,31 @@ async function submitQuiz(moduleId){
 
 function retryQuiz(mid){S.quizAnswers={};S.quizSubmitted=false;const m=S.modules.find(x=>x.id===mid);if(m)renderModuleContent(m);}
 
+// Refaire le quiz d'un module déjà complété — passe temporairement en mode interactif
+function retakeQuiz(mid){
+  S._retakeQuizId = mid;
+  S.quizAnswers = {};
+  S.quizSubmitted = false;
+  const m = S.modules.find(x => x.id === mid);
+  if (m) {
+    renderModuleContent(m);
+    // Scroll vers le quiz après le rerender
+    setTimeout(() => {
+      const quizEl = document.querySelector('.quiz-wrap');
+      quizEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+}
+
 async function completeModule(moduleId,score){
   if(!S.apprenant){alert("Dossier non lié. Contactez votre chargé de suivi.");return;}
+  const wasRetake = S._retakeQuizId === moduleId;
+  S._retakeQuizId = null; // fin du mode "refaire"
   const progId=`${S.apprenant.id}_${moduleId}`;
-  const progData={apprenant_id:S.apprenant.id,module_id:moduleId,statut:"completed",score_quiz:score,completed_at:TS(),updatedAt:TS()};
+  // En cas de retake, on garde le meilleur score
+  const prevScore = S.progressions[moduleId]?.score_quiz || 0;
+  const bestScore = wasRetake ? Math.max(prevScore, score) : score;
+  const progData={apprenant_id:S.apprenant.id,module_id:moduleId,statut:"completed",score_quiz:bestScore,completed_at:TS(),updatedAt:TS()};
   await db.collection("progressions").doc(progId).set(progData,{merge:true});
   S.progressions[moduleId]=progData;
   // Calcul XP gagnés (pour le toast). Le total est recalculé par computeTotalXP via updateXPUI.
@@ -2845,7 +2868,7 @@ async function completeModule(moduleId,score){
   const m=S.modules.find(x=>x.id===moduleId);
   if(m&&S.apprenant){
     const scores=[...(S.apprenant.modules_scores||Array(9).fill(null))];
-    const idx=S.modules.indexOf(m);if(idx>=0)scores[idx]=score;
+    const idx=S.modules.indexOf(m);if(idx>=0)scores[idx]=bestScore;
     await db.collection("apprenants").doc(S.apprenant.id).update({
       modules_scores:scores,
       jour:Math.min(90,Math.max(S.apprenant.jour||1,m.jour_fin||S.apprenant.jour||1)),
