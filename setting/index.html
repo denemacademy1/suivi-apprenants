@@ -551,6 +551,10 @@ table.lead-table{width:100%;border-collapse:collapse}
       <span class="sb-nav-icon">ℹ️</span>Infos DENEM Academy
     </div>
     <div class="sb-section-label" style="margin-top:8px">Landing Page</div>
+    <div class="sb-nav-item" data-page="rdv-bookes" onclick="showPage('rdv-bookes')">
+      <span class="sb-nav-icon">🗓</span>RDVs Bookés
+      <span class="sb-notif-badge" id="badge-rdv-bookes" style="display:none;background:linear-gradient(135deg,#6B5BFF,#EC4899);color:#fff">0</span>
+    </div>
     <div class="sb-nav-item" data-page="candidatures-lp" onclick="showPage('candidatures-lp')">
       <span class="sb-nav-icon">🎯</span>Candidatures LP
       <span class="sb-notif-badge" id="badge-candidatures-lp" style="display:none">0</span>
@@ -925,6 +929,71 @@ table.lead-table{width:100%;border-collapse:collapse}
     </div>
 
     <!-- PAGE: LEADS VSL -->
+    <!-- PAGE: RDVs BOOKÉS (via denemacademy.com/rdv.html) -->
+    <div id="page-rdv-bookes" style="display:none">
+      <div class="kpi-row">
+        <div class="kpi-card accent">
+          <div class="kpi-label">Total RDVs bookés</div>
+          <div class="kpi-value" id="rb-kpi-total">—</div>
+          <div class="kpi-sub"><span class="cand-live-dot"></span>Temps réel</div>
+        </div>
+        <div class="kpi-card success">
+          <div class="kpi-label">🔥 À venir</div>
+          <div class="kpi-value" id="rb-kpi-upcoming">—</div>
+          <div class="kpi-sub">RDVs planifiés</div>
+        </div>
+        <div class="kpi-card warning">
+          <div class="kpi-label">📅 Aujourd'hui</div>
+          <div class="kpi-value" id="rb-kpi-today">—</div>
+          <div class="kpi-sub">RDVs du jour</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">📆 Cette semaine</div>
+          <div class="kpi-value" id="rb-kpi-week">—</div>
+          <div class="kpi-sub">7 prochains jours</div>
+        </div>
+      </div>
+
+      <div class="cand-card">
+        <div class="section-header">
+          <div class="section-title">🗓 RDVs bookés via <span style="color:var(--primary)">denemacademy.com/rdv.html</span> <span class="section-count" id="rb-table-count">0</span></div>
+        </div>
+        <div class="lead-filters">
+          <input type="text" class="filter-input" id="rb-search" placeholder="Rechercher par nom, email…" oninput="renderRdvBookes()">
+          <select class="filter-select" id="rb-filter-when" onchange="renderRdvBookes()">
+            <option value="">Tous les RDVs</option>
+            <option value="upcoming">🔥 À venir</option>
+            <option value="today">📅 Aujourd'hui</option>
+            <option value="week">📆 Cette semaine</option>
+            <option value="past">✅ Passés</option>
+          </select>
+          <select class="filter-select" id="rb-filter-statut" onchange="renderRdvBookes()">
+            <option value="">Statut closer</option>
+            <option value="RDV planifié">📅 RDV planifié</option>
+            <option value="RDV effectué">✅ RDV effectué</option>
+            <option value="Vendu">🎉 Vendu</option>
+            <option value="Perdu">❌ Perdu</option>
+            <option value="No-show">👻 No-show</option>
+          </select>
+        </div>
+        <div class="lead-table-wrap">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Contact</th>
+                <th>Date &amp; heure RDV</th>
+                <th>Closer</th>
+                <th>Statut</th>
+                <th>Meet</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rb-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="page-leads-vsl" style="display:none">
       <div class="kpi-row">
         <div class="kpi-card accent">
@@ -2080,6 +2149,7 @@ const PAGE_TITLES = {
   'objectif-setting': '🎯 Objectif du Setting',
   'templates': '💬 Templates messages',
   'infos-denem': 'ℹ️ Infos DENEM Academy',
+  'rdv-bookes': '🗓 RDVs Bookés (site public)',
   'candidatures-lp': '🎯 Candidatures LP',
   'candidatures-yt': '▶️ Candidatures LP - Youtube',
   'leads-vsl': '🎬 Leads VSL',
@@ -2105,6 +2175,7 @@ function renderCurrentPage() {
   else if (S.currentPage === 'candidatures-lp') renderCandidatures();
   else if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
   else if (S.currentPage === 'leads-vsl') renderLeadsVsl();
+  else if (S.currentPage === 'rdv-bookes') renderRdvBookes();
 }
 
 // ══════════════════════════════════════════════
@@ -2671,6 +2742,12 @@ function updateRdvPrisBadge() {
   ).length;
   const badge = document.getElementById('badge-rdv-pris');
   if (badge) { badge.textContent = upcoming; badge.style.display = upcoming>0?'inline-block':'none'; }
+  // Badge RDVs bookés (site public denemacademy.com/rdv.html)
+  const upcomingBookes = (S.leads||[]).filter(l =>
+    l.sourceCanal === 'Booking' && l.dateRDV && l.dateRDV >= today
+  ).length;
+  const badgeB = document.getElementById('badge-rdv-bookes');
+  if (badgeB) { badgeB.textContent = upcomingBookes; badgeB.style.display = upcomingBookes>0?'inline-block':'none'; }
 }
 
 S.rdvPrisView = 'list';
@@ -3756,6 +3833,99 @@ function renderCandidaturesYt() {
 // ══════════════════════════════════════════════
 //  LEADS VSL
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  RDVs BOOKÉS (site public denemacademy.com/rdv.html)
+// ══════════════════════════════════════════════
+function renderRdvBookes() {
+  const all = (S.leads || []).filter(l => l.sourceCanal === 'Booking');
+  const search = (document.getElementById('rb-search')?.value || '').toLowerCase();
+  const fWhen  = document.getElementById('rb-filter-when')?.value || '';
+  const fStat  = document.getElementById('rb-filter-statut')?.value || '';
+
+  const today = new Date().toISOString().slice(0,10);
+  const weekLater = new Date(Date.now() + 7*86400000).toISOString().slice(0,10);
+
+  const filtered = all.filter(l => {
+    const txt = `${l.prenom||''} ${l.nom||''} ${l.email||''} ${l.telephone||''}`.toLowerCase();
+    if (search && !txt.includes(search)) return false;
+    if (fStat && (l.statutCloser||'') !== fStat) return false;
+    if (fWhen && l.dateRDV) {
+      if (fWhen === 'today'    && l.dateRDV !== today) return false;
+      if (fWhen === 'upcoming' && l.dateRDV < today) return false;
+      if (fWhen === 'week'     && (l.dateRDV < today || l.dateRDV > weekLater)) return false;
+      if (fWhen === 'past'     && l.dateRDV >= today) return false;
+    }
+    return true;
+  });
+
+  // Trier par date+heure de RDV (asc pour les à venir, desc pour les passés)
+  filtered.sort((a,b) => {
+    const dateA = `${a.dateRDV||'9999'} ${a.heureRDV||'23:59'}`;
+    const dateB = `${b.dateRDV||'9999'} ${b.heureRDV||'23:59'}`;
+    return dateA.localeCompare(dateB);
+  });
+
+  // KPIs
+  document.getElementById('rb-kpi-total').textContent    = all.length;
+  document.getElementById('rb-kpi-upcoming').textContent = all.filter(l => l.dateRDV && l.dateRDV >= today).length;
+  document.getElementById('rb-kpi-today').textContent    = all.filter(l => l.dateRDV === today).length;
+  document.getElementById('rb-kpi-week').textContent     = all.filter(l => l.dateRDV && l.dateRDV >= today && l.dateRDV <= weekLater).length;
+  document.getElementById('rb-table-count').textContent  = filtered.length;
+
+  const tbody = document.getElementById('rb-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🗓</div><div class="empty-text">Aucun RDV booké</div><div class="empty-sub">Les RDVs pris via <strong>denemacademy.com/rdv.html</strong> apparaîtront ici en temps réel.</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(l => {
+    const tel = (l.telephone||'').replace(/\s/g,'');
+    const dt = l.dateRDV ? new Date(`${l.dateRDV}T${l.heureRDV||'00:00'}`) : null;
+    const dateLabel = dt ? dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) : '—';
+    const timeLabel = l.heureRDV || '—';
+    const isPast = l.dateRDV && l.dateRDV < today;
+    const isToday = l.dateRDV === today;
+    const dateClass = isToday ? 'style="color:#EC4899;font-weight:700"' : (isPast ? 'style="color:var(--muted)"' : '');
+    const meetLink = l.booking_meet_link || '';
+    return `
+    <tr style="cursor:pointer" onclick="openLead('${l.id}')">
+      <td>
+        <div class="lead-name">${escHtml(l.prenom||'')} ${escHtml(l.nom||'')}</div>
+        <div class="lead-email">${escHtml(l.email||'—')}</div>
+        ${l.telephone ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">📞 ${escHtml(l.telephone)}</div>` : ''}
+      </td>
+      <td ${dateClass}>
+        <div style="font-weight:600">${dateLabel}${isToday?' <span style="color:#EC4899;font-size:10px;font-weight:800">· AUJOURD\\'HUI</span>':''}</div>
+        <div style="font-size:12px;color:var(--muted)">${timeLabel}</div>
+      </td>
+      <td style="font-size:13px">${escHtml(l.closerAssigne||'—')}</td>
+      <td>${pipeBadge(pipeFromStatut(l.statutCloser))}</td>
+      <td onclick="event.stopPropagation()">
+        ${meetLink ? `<a href="${escAttr(meetLink)}" target="_blank" rel="noopener" class="btn-icon" style="background:linear-gradient(135deg,#6B5BFF,#EC4899);color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:600">🎥 Meet</a>` : '<span style="color:var(--muted);font-size:11px">—</span>'}
+      </td>
+      <td>
+        <div class="actions-cell">
+          ${tel ? `<a class="btn-icon btn-call" href="tel:${escHtml(tel)}" onclick="event.stopPropagation()" title="Appeler">📞</a>` : ''}
+          ${tel ? `<a class="btn-icon btn-wa" href="https://wa.me/${tel.replace('+','')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp">💬</a>` : ''}
+          <button class="btn-icon btn-fiche" onclick="event.stopPropagation();openLead('${l.id}')" title="Voir fiche complète">👁️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Mapper statutCloser (texte) → pipe key
+function pipeFromStatut(s) {
+  const m = {
+    'RDV planifié': 'rdv_pris',
+    'RDV effectué': 'rdv_passe',
+    'Vendu':        'signe',
+    'Perdu':        'refus',
+    'No-show':      'refus'
+  };
+  return m[s] || 'rdv_pris';
+}
+
 function renderLeadsVsl() {
   const list      = S.leadsVsl || [];
   const search    = (document.getElementById('vsl-search')?.value || '').toLowerCase();
