@@ -3273,18 +3273,35 @@ function openLead(id) {
       <div class="info-field"><div class="info-label">Date de contact</div><div class="info-value">${fmtDate(l.dateCreation)}${da!==null?` (il y a ${da} j)`:''}</div></div>
       <div class="info-field"><div class="info-label">Setter assigné</div><div class="info-value">${l.setterAssigne||'Non assigné'}</div></div>
     </div>
-    <div class="questionnaire-title">📋 Réponses au questionnaire</div>
-    <div class="q-item"><div class="q-label">Situation actuelle</div><div class="q-value">${escHtml(q.situationActuelle||'Non renseigné')}</div></div>
-    <div class="q-item"><div class="q-label">Budget</div><div class="q-value">${escHtml(q.budgetDisponible||'Non renseigné')}</div></div>
-    <div class="q-item"><div class="q-label">Disponibilité</div><div class="q-value">${escHtml(q.disponibiliteHebdo||'Non renseigné')}</div></div>
-    <div class="q-item"><div class="q-label">Délai de lancement</div><div class="q-value">${escHtml(q.delaiLancement||'Non renseigné')}</div></div>
-    <div class="q-item"><div class="q-label">Motivation</div><div class="q-value">${escHtml(q.motivationPrincipale||'Non renseigné')}</div></div>
+    ${l.booking_meet_link ? `
+    <div class="q-item" style="background:linear-gradient(135deg,rgba(107,91,255,.08),rgba(236,72,153,.05));border:1px solid rgba(107,91,255,.2);border-radius:10px;padding:12px 14px">
+      <div class="q-label">🎥 Google Meet</div>
+      <div class="q-value"><a href="${escAttr(l.booking_meet_link)}" target="_blank" rel="noopener" style="color:#6B5BFF;text-decoration:none;font-weight:600">${escHtml(l.booking_meet_link)} ↗</a></div>
+    </div>` : ''}
+    ${(() => {
+      const answersFull = Array.isArray(q._answers_full) ? q._answers_full : null;
+      if (answersFull && answersFull.length) {
+        return `<div class="questionnaire-title">📋 Questionnaire (${answersFull.length} réponses)</div>
+          ${answersFull.map((a, i) => `
+            <div class="q-item">
+              <div class="q-label" style="font-size:11px;line-height:1.5;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500">${escHtml(a.question||'')}</div>
+              <div class="q-value" style="white-space:pre-wrap;line-height:1.5;margin-top:4px">${a.answer ? escHtml(a.answer) : '<em style="color:var(--muted);font-weight:400">—</em>'}</div>
+            </div>`).join('')}`;
+      }
+      // Fallback ancien format (Meta Ads / manuel)
+      return `<div class="questionnaire-title">📋 Réponses au questionnaire</div>
+        <div class="q-item"><div class="q-label">Situation actuelle</div><div class="q-value">${escHtml(q.situationActuelle||'Non renseigné')}</div></div>
+        <div class="q-item"><div class="q-label">Budget</div><div class="q-value">${escHtml(q.budgetDisponible||'Non renseigné')}</div></div>
+        <div class="q-item"><div class="q-label">Disponibilité</div><div class="q-value">${escHtml(q.disponibiliteHebdo||'Non renseigné')}</div></div>
+        <div class="q-item"><div class="q-label">Délai de lancement</div><div class="q-value">${escHtml(q.delaiLancement||'Non renseigné')}</div></div>
+        <div class="q-item"><div class="q-label">Motivation</div><div class="q-value">${escHtml(q.motivationPrincipale||'Non renseigné')}</div></div>`;
+    })()}
     <div class="q-item" id="lead-comment-item">
       <div class="q-label" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <span>Commentaire</span>
-        <button class="btn-edit-inline" onclick="startEditLeadComment('${l.id}')" title="Modifier le commentaire">✏️ Modifier</button>
+        <span>💬 Notes du setter</span>
+        <button class="btn-edit-inline" onclick="startEditLeadComment('${l.id}')" title="Modifier">✏️ Modifier</button>
       </div>
-      <div class="q-value" id="lead-comment-wrap" style="white-space:pre-wrap;line-height:1.55">${q.commentaireLibre?escHtml(q.commentaireLibre):'<em style="color:var(--muted);font-weight:400">Aucun commentaire — clique sur ✏️ pour en ajouter.</em>'}</div>
+      <div class="q-value" id="lead-comment-wrap" style="white-space:pre-wrap;line-height:1.55">${q.commentaireLibre?escHtml(q.commentaireLibre):'<em style="color:var(--muted);font-weight:400">Aucune note — clique sur ✏️ pour en ajouter.</em>'}</div>
     </div>`;
 
   // TAB SCORE
