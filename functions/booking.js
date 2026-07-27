@@ -22,9 +22,12 @@ const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { google } = require('googleapis');
+const nodemailer = require('nodemailer');
 
 const GOOGLE_OAUTH_CLIENT_ID     = defineSecret('GOOGLE_OAUTH_CLIENT_ID');
 const GOOGLE_OAUTH_CLIENT_SECRET = defineSecret('GOOGLE_OAUTH_CLIENT_SECRET');
+const SMTP_USER                  = defineSecret('SMTP_USER'); // ex: contact@denemacademy.com
+const SMTP_PASS                  = defineSecret('SMTP_PASS'); // Gmail App Password (16 caractères)
 
 const REGION       = 'europe-west1';
 const PROJECT_ID   = 'denem-academy-5de41';
@@ -119,6 +122,92 @@ function corsHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Email de notification à chaque nouvelle réservation
+// (best effort — jamais bloquant pour la création du lead)
+// ─────────────────────────────────────────────────────────────
+async function sendBookingNotificationEmail({
+  toEmail, prenom, nom, email, telephone, message, date, time, endTime, meetLink, eventId
+}) {
+  if (!toEmail) { console.warn('[booking] pas d\'adresse notif → skip email'); return; }
+  const smtpUser = SMTP_USER.value();
+  const smtpPass = SMTP_PASS.value();
+  if (!smtpUser || !smtpPass) {
+    console.warn('[booking] SMTP_USER / SMTP_PASS non configurés → skip email');
+    return;
+  }
+
+  const [y, m, d] = date.split('-').map(n => parseInt(n, 10));
+  const dt = new Date(Date.UTC(y, m-1, d, 12));
+  const dateLabel = dt.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone: 'UTC' });
+
+  const html = `
+  <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:auto;background:#0D0C14;color:#fff;padding:32px 28px;border-radius:16px">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(107,91,255,.15);border:1px solid rgba(107,91,255,.3);padding:6px 14px;border-radius:99px;font-size:12px;color:#A5B4FC;font-weight:600;text-transform:uppercase;letter-spacing:.5px">📅 Nouveau RDV réservé</div>
+    </div>
+    <h1 style="font-size:22px;font-weight:800;margin:0 0 6px;text-align:center">${escapeHtml(prenom)} ${escapeHtml(nom)}</h1>
+    <p style="text-align:center;color:rgba(255,255,255,.6);font-size:14px;margin:0 0 24px">a réservé un bilan sur denemacademy.com</p>
+
+    <div style="background:rgba(107,91,255,.08);border:1px solid rgba(107,91,255,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+      <div style="display:flex;gap:12px;margin:6px 0;font-size:14px"><span style="color:rgba(255,255,255,.5);min-width:88px">📅 Date</span><span style="color:#fff;font-weight:600">${dateLabel}</span></div>
+      <div style="display:flex;gap:12px;margin:6px 0;font-size:14px"><span style="color:rgba(255,255,255,.5);min-width:88px">🕐 Heure</span><span style="color:#fff;font-weight:600">${time} – ${endTime} (Paris)</span></div>
+      <div style="display:flex;gap:12px;margin:6px 0;font-size:14px"><span style="color:rgba(255,255,255,.5);min-width:88px">💬 Format</span><span style="color:#fff;font-weight:600">Google Meet</span></div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+      <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-weight:600">Coordonnées prospect</div>
+      <div style="display:flex;gap:12px;margin:6px 0;font-size:14px"><span style="color:rgba(255,255,255,.5);min-width:88px">📧 Email</span><a href="mailto:${escapeAttr(email)}" style="color:#A5B4FC;text-decoration:none">${escapeHtml(email)}</a></div>
+      ${telephone ? `<div style="display:flex;gap:12px;margin:6px 0;font-size:14px"><span style="color:rgba(255,255,255,.5);min-width:88px">📞 Tél</span><a href="tel:${escapeAttr(telephone)}" style="color:#A5B4FC;text-decoration:none">${escapeHtml(telephone)}</a></div>` : ''}
+    </div>
+
+    ${message ? `
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+      <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;font-weight:600">Message du prospect</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.85);line-height:1.55;white-space:pre-wrap">${escapeHtml(message)}</div>
+    </div>` : ''}
+
+    <div style="text-align:center;margin-top:22px">
+      ${meetLink ? `<a href="${escapeAttr(meetLink)}" style="display:inline-block;background:linear-gradient(135deg,#6B5BFF,#EC4899);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">🎥 Rejoindre le Meet</a>` : ''}
+    </div>
+
+    <p style="text-align:center;color:rgba(255,255,255,.3);font-size:11px;margin-top:24px">
+      Le lead est déjà créé dans <a href="https://denem.academy/setting" style="color:rgba(255,255,255,.5)">denem.academy/setting</a> avec sourceCanal=Booking.
+    </p>
+  </div>`;
+
+  const text = `
+Nouveau RDV réservé sur denemacademy.com
+
+Prospect : ${prenom} ${nom}
+Email    : ${email}
+${telephone ? `Téléphone: ${telephone}\n` : ''}Date     : ${dateLabel}
+Heure    : ${time} - ${endTime} (Europe/Paris)
+${meetLink ? `Meet     : ${meetLink}\n` : ''}${message ? `\nMessage:\n${message}\n` : ''}
+Lead visible dans denem.academy/setting (sourceCanal=Booking)`;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: smtpUser, pass: smtpPass }
+  });
+
+  await transporter.sendMail({
+    from: `"DENEM Booking" <${smtpUser}>`,
+    to: toEmail,
+    subject: `📅 Nouveau RDV: ${prenom} ${nom} — ${date} ${time}`,
+    text,
+    html,
+    replyTo: email // répondre = répondre au prospect
+  });
+}
+
+function escapeHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeAttr(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ─────────────────────────────────────────────────────────────
 // 1) OAuth start
 // ─────────────────────────────────────────────────────────────
 exports.googleOAuthStart = onRequest(
@@ -130,7 +219,9 @@ exports.googleOAuthStart = onRequest(
         access_type: 'offline',
         prompt: 'consent', // force le refresh_token même si l'app était déjà autorisée
         scope: [
-          'https://www.googleapis.com/auth/calendar',
+          // Scopes SENSITIVE (pas RESTRICTED) — évitent le blocage Google pour app non vérifiée
+          'https://www.googleapis.com/auth/calendar.events',   // créer / modifier des events
+          'https://www.googleapis.com/auth/calendar.readonly', // lire freebusy
           'https://www.googleapis.com/auth/userinfo.email'
         ]
       });
@@ -303,7 +394,7 @@ exports.bookingConfig = onRequest(
 // 4) Créer la réservation
 // ─────────────────────────────────────────────────────────────
 exports.bookingCreate = onRequest(
-  { region: REGION, secrets: [GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET], maxInstances: 20 },
+  { region: REGION, secrets: [GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, SMTP_USER, SMTP_PASS], maxInstances: 20 },
   async (req, res) => {
     corsHeaders(res);
     if (req.method === 'OPTIONS') return res.status(204).send('');
@@ -436,6 +527,30 @@ exports.bookingCreate = onRequest(
         createdBy: 'booking'
       };
       const leadRef = await db().collection('leads').add(leadDoc);
+
+      // Notification email à l'organisateur — best effort, jamais bloquant
+      try {
+        const cfgDoc = await db().collection('config').doc('booking').get();
+        const notifyList = (cfgDoc.data()?.notification_emails || [cfgDoc.data()?.google_email])
+          .filter(Boolean);
+        const toEmail = notifyList.join(',');
+        if (toEmail) {
+          await sendBookingNotificationEmail({
+            toEmail,
+            prenom: leadDoc.prenom,
+            nom: leadDoc.nom,
+            email: leadDoc.email,
+            telephone: leadDoc.telephone,
+            message: leadDoc.reponsesQuestionnaire.commentaireLibre,
+            date, time, endTime,
+            meetLink,
+            eventId: evt.data.id
+          });
+          console.log('[booking] email notif envoyé à', toEmail);
+        }
+      } catch (mailErr) {
+        console.error('[booking] envoi email notif échoué (booking OK malgré tout)', mailErr);
+      }
 
       // Log de la réservation
       await db().collection('bookings').add({
