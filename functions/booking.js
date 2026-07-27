@@ -45,7 +45,27 @@ const DEFAULT_CONFIG = {
   slot_interval_min:  30,
   timezone:           'Europe/Paris',
   event_title:        'RDV Bilan — DENEM Academy',
-  calendar_id:        'primary'
+  calendar_id:        'primary',
+  event_description_intro:
+`Une poignée de Français, sans background technique, sont en ce moment même en train de faire leur place dans le secteur de l'IA grâce à ce métier d'Expert IA pour les entreprises, grâce à notre méthode DENEM.
+
+Pourquoi pas toi ?
+
+Dans ce RDV d'onboarding orienté IA, on fait le point sur :
+
+-> Ta situation actuelle (Freelance, Salarié, Reconversion...). On te challenge et on t'aide à avoir une vision claire pour te lancer sur cette opportunité.
+
+-> Ta motivation pour te lancer
+
+-> Si tu es le bon profil pour ce métier, afin que tu réussisses à 100%, que tu décroches tes premiers clients rapidement, même sans background technique
+
+Fais comme Baptiste, Ugo, Othmane, Joseph, Grégoire, Enzo, Julie, Alexis... et des dizaines d'autres qui génèrent déjà entre 5 000€ et +50 000€ par mois.
+
+🧑‍💻 Pas de panique, ce n'est pas un appel de vente. C'est un moment d'échange qui t'est dédié pour voir où tu en es et si tu es prêt à te lancer, si toutes les étoiles sont alignées.
+
+⚠️ On ne valide que 10 RDV par semaine sur sélection des candidats, alors complète-le avec sérieux et je te dis à très vite.
+
+🏝️ C'est le moment pour toi de te lancer sur une opportunité concrète et révolutionnaire, pour obtenir liberté et épanouissement au quotidien.`
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -440,6 +460,8 @@ exports.bookingCreate = onRequest(
 
       const summary = `${cfg.event_title} — ${prenom} ${nom}`;
       const description = [
+        cfg.event_description_intro ? cfg.event_description_intro : null,
+        cfg.event_description_intro ? '\n———————————————\n' : null,
         `Prospect : ${prenom} ${nom}`,
         `Email : ${email}`,
         telephone ? `Téléphone : ${telephone}` : null,
