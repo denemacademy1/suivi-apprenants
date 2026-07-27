@@ -28,6 +28,16 @@ const META_VERIFY_TOKEN = defineSecret('META_VERIFY_TOKEN');
 const META_APP_SECRET = defineSecret('META_APP_SECRET');
 const META_PAGE_ACCESS_TOKEN = defineSecret('META_PAGE_ACCESS_TOKEN');
 
+// ─────────────────────────────────────────────────────────────
+// Booking DENEM (Google Calendar) — délégué au module booking.js
+// ─────────────────────────────────────────────────────────────
+const booking = require('./booking');
+exports.googleOAuthStart    = booking.googleOAuthStart;
+exports.googleOAuthCallback = booking.googleOAuthCallback;
+exports.bookingSlots        = booking.bookingSlots;
+exports.bookingConfig       = booking.bookingConfig;
+exports.bookingCreate       = booking.bookingCreate;
+
 exports.metaLeadsWebhook = onRequest(
   {
     secrets: [META_VERIFY_TOKEN, META_APP_SECRET, META_PAGE_ACCESS_TOKEN],
