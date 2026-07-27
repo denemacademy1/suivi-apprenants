@@ -4249,6 +4249,12 @@ function setMcStudentFilter(key){
 function openMasterclassPlayer(id){
   const m = (S.masterclasses||[]).find(x => x.id === id);
   if(!m) return;
+  // Fathom ne peut pas être embarqué en iframe (X-Frame-Options) — on ouvre directement dans un nouvel onglet
+  const rawUrl = (m.video_url||'').trim();
+  if(rawUrl && /fathom\.video/i.test(rawUrl)){
+    window.open(rawUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
   const embed = getVideoEmbed(m.video_url);
   const th = mcThemeCfgStudent(m.theme);
   let modal = document.getElementById('mcs-player-modal');
