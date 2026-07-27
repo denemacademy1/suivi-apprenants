@@ -146,7 +146,7 @@ function corsHeaders(res) {
 // (best effort — jamais bloquant pour la création du lead)
 // ─────────────────────────────────────────────────────────────
 async function sendBookingNotificationEmail({
-  toEmail, prenom, nom, email, telephone, message, date, time, endTime, meetLink, eventId
+  toEmail, prenom, nom, email, telephone, message, answers, date, time, endTime, meetLink, eventId
 }) {
   if (!toEmail) { console.warn('[booking] pas d\'adresse notif → skip email'); return; }
   const smtpUser = SMTP_USER.value();
@@ -186,6 +186,16 @@ async function sendBookingNotificationEmail({
       <div style="font-size:14px;color:rgba(255,255,255,.85);line-height:1.55;white-space:pre-wrap">${escapeHtml(message)}</div>
     </div>` : ''}
 
+    ${Array.isArray(answers) && answers.length ? `
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+      <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-weight:600">📋 Réponses au questionnaire</div>
+      ${answers.map((a,i) => `
+        <div style="margin-bottom:14px;padding-bottom:14px;${i < answers.length-1 ? 'border-bottom:1px solid rgba(255,255,255,.06);' : ''}">
+          <div style="font-size:12px;color:rgba(255,255,255,.55);margin-bottom:6px;line-height:1.4">${escapeHtml(a.question)}</div>
+          <div style="font-size:14px;color:#fff;font-weight:500;line-height:1.5;white-space:pre-wrap">${escapeHtml(a.answer || '—')}</div>
+        </div>`).join('')}
+    </div>` : ''}
+
     <div style="text-align:center;margin-top:22px">
       ${meetLink ? `<a href="${escapeAttr(meetLink)}" style="display:inline-block;background:linear-gradient(135deg,#6B5BFF,#EC4899);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">🎥 Rejoindre le Meet</a>` : ''}
     </div>
@@ -195,6 +205,10 @@ async function sendBookingNotificationEmail({
     </p>
   </div>`;
 
+  const answersText = Array.isArray(answers) && answers.length
+    ? '\n\n📋 QUESTIONNAIRE\n' + answers.map((a,i) => `\n${i+1}. ${a.question}\n→ ${a.answer || '(pas de réponse)'}`).join('\n')
+    : '';
+
   const text = `
 Nouveau RDV réservé sur denemacademy.com
 
@@ -202,7 +216,7 @@ Prospect : ${prenom} ${nom}
 Email    : ${email}
 ${telephone ? `Téléphone: ${telephone}\n` : ''}Date     : ${dateLabel}
 Heure    : ${time} - ${endTime} (Europe/Paris)
-${meetLink ? `Meet     : ${meetLink}\n` : ''}${message ? `\nMessage:\n${message}\n` : ''}
+${meetLink ? `Meet     : ${meetLink}\n` : ''}${message ? `\nMessage:\n${message}\n` : ''}${answersText}
 Lead visible dans denem.academy/setting (sourceCanal=Booking)`;
 
   const transporter = nodemailer.createTransport({
@@ -421,10 +435,18 @@ exports.bookingCreate = onRequest(
     if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
     try {
-      const { prenom, nom, email, telephone, message, date, time } = req.body || {};
+      const { prenom, nom, email, telephone, message, date, time, answers } = req.body || {};
       if (!prenom || !nom || !email || !date || !time) {
         return res.status(400).json({ error: 'Champs requis : prenom, nom, email, date, time' });
       }
+      // Normalise les answers : soit array [{id,question,answer}], soit undefined
+      const answersArr = Array.isArray(answers)
+        ? answers.filter(a => a && a.question).map(a => ({
+            id: String(a.id||''),
+            question: String(a.question||'').trim(),
+            answer: String(a.answer||'').trim()
+          }))
+        : [];
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({ error: 'Email invalide' });
       }
@@ -459,6 +481,11 @@ exports.bookingCreate = onRequest(
       const endTime = fmtTime(Math.floor(endMin / 60), endMin % 60);
 
       const summary = `${cfg.event_title} — ${prenom} ${nom}`;
+      const answersBlock = answersArr.length
+        ? '\n———————————————\n📋 QUESTIONNAIRE\n' + answersArr.map((a,i) =>
+            `\n${i+1}. ${a.question}\n→ ${a.answer || '(pas de réponse)'}`
+          ).join('\n')
+        : '';
       const description = [
         cfg.event_description_intro ? cfg.event_description_intro : null,
         cfg.event_description_intro ? '\n———————————————\n' : null,
@@ -466,6 +493,7 @@ exports.bookingCreate = onRequest(
         `Email : ${email}`,
         telephone ? `Téléphone : ${telephone}` : null,
         message ? `\nMessage :\n${message}` : null,
+        answersBlock || null,
         `\n— Réservé via denemacademy.com`
       ].filter(Boolean).join('\n');
 
@@ -537,7 +565,9 @@ exports.bookingCreate = onRequest(
         setterAssigne: 'Système (Booking)',
         setterUid: null,
         reponsesQuestionnaire: {
-          commentaireLibre: String(message || '').trim()
+          commentaireLibre: String(message || '').trim(),
+          ...answersArr.reduce((acc, a) => { if (a.id) acc[a.id] = a.answer; return acc; }, {}),
+          _answers_full: answersArr // liste complète pour le setter
         },
         booking_google_event_id: evt.data.id,
         booking_meet_link: meetLink,
@@ -564,6 +594,7 @@ exports.bookingCreate = onRequest(
             email: leadDoc.email,
             telephone: leadDoc.telephone,
             message: leadDoc.reponsesQuestionnaire.commentaireLibre,
+            answers: answersArr,
             date, time, endTime,
             meetLink,
             eventId: evt.data.id
