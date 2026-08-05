@@ -2382,14 +2382,12 @@ function renderModuleContent(m){
     html+=`<div class="sec">
       <div class="sec-head"><div class="sec-icon" style="background:rgba(234,88,12,.15);color:#F97316">📊</div><div class="sec-title">Présentation PowerPoint</div></div>
       <div class="sec-body">
-        <div class="pdf-row" onclick="window.open('${viewerUrl}','_blank')" style="background:linear-gradient(135deg,rgba(234,88,12,.06),rgba(234,88,12,.02));border-color:rgba(234,88,12,.25)">
-          <div class="pdf-ico" style="background:linear-gradient(135deg,#EA580C,#F97316)">PPTX</div>
-          <div><div class="pdf-name">${escHtml(m.pptx_nom||"Présentation")}</div><div class="pdf-hint">Ouvrir dans Microsoft Office Online (visionnage)</div></div>
-          <button class="pdf-open-btn" style="background:linear-gradient(135deg,#EA580C,#F97316)">Voir →</button>
+        <div style="width:100%;aspect-ratio:16/9;border:1px solid rgba(234,88,12,.25);border-radius:14px;overflow:hidden;background:#0F0E1A;margin-bottom:14px;box-shadow:0 12px 32px rgba(0,0,0,.35)">
+          <iframe src="${escAttr(viewerUrl)}" style="width:100%;height:100%;border:none;display:block" allowfullscreen title="${escAttr(m.pptx_nom||'Présentation')}"></iframe>
         </div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-          <a href="${escAttr(m.pptx_url)}" download class="pdf-open-btn" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none;font-size:12px;display:inline-flex;align-items:center;gap:6px">⬇ Télécharger le .pptx</a>
-        </div>
+        <a href="${escAttr(m.pptx_url)}" download style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 20px;background:linear-gradient(135deg,#EA580C,#F97316);color:#fff;border-radius:14px;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:.3px;transition:.2s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 32px rgba(234,88,12,.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          ⬇ Télécharger la présentation${m.pptx_nom?` — ${escHtml(m.pptx_nom)}`:''}
+        </a>
       </div>
     </div>`;
   }
