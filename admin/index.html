@@ -792,6 +792,18 @@ tr:hover td{background:#FAFBFF}
           <input type="hidden" id="m-pdf-url">
           <input type="hidden" id="m-pdf-nom">
         </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Présentation PowerPoint <span style="color:#94A3B8;font-weight:400;font-size:12px">(.pptx)</span></label>
+          <div class="upload-zone" id="pptx-zone" onclick="document.getElementById('pptx-input').click()">
+            <div class="uz-icon">📊</div>
+            <div class="uz-text" id="pptx-zone-text">Cliquez ou glissez un fichier PowerPoint</div>
+            <div class="uz-hint">PPTX · PPT · Max 50 Mo</div>
+            <div class="upload-progress" id="pptx-progress"><div class="upload-progress-bar" id="pptx-progress-bar"></div></div>
+          </div>
+          <input type="file" id="pptx-input" accept=".pptx,.ppt,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint" style="display:none" onchange="uploadPPTX(this.files[0])">
+          <input type="hidden" id="m-pptx-url">
+          <input type="hidden" id="m-pptx-nom">
+        </div>
         <div class="form-group">
           <label>Contenu texte (HTML simple)</label>
           <textarea id="m-contenu-text" rows="6" placeholder="<p>Bienvenue dans ce module…</p>&#10;<ul><li>Point 1</li><li>Point 2</li></ul>"></textarea>
@@ -1142,6 +1154,8 @@ async function initProgramOfficiel(){
         video_url:'',
         pdf_url:'',
         pdf_nom:'',
+        pptx_url:'',
+        pptx_nom:'',
         contenu:'',
         quiz:[],
         score_minimum:70,
@@ -1630,6 +1644,7 @@ function renderModules(){
     const pub=m.published?'<span class="badge badge-green">Publié</span>':'<span class="badge badge-gray">Brouillon</span>';
     const hasVideo=m.video_url?'🎬':'';
     const hasPDF=m.pdf_url?'📄':'';
+    const hasPPTX=m.pptx_url?'📊':'';
     const hasQuiz=m.quiz&&m.quiz.length?`✅ ${m.quiz.length}Q`:'';
     const hasSupport=m.support_technique?'📚':'';
     const catBadge=phInfo.catKey?`<span class="cat-badge cat-${phInfo.catKey}">${phInfo.cat}</span>`:'';
@@ -1646,6 +1661,7 @@ function renderModules(){
           ${hasVideo?`<span style="font-size:11px">${hasVideo} Vidéo</span>`:''}
           ${hasSupport?`<span style="font-size:11px;color:#6366F1;font-weight:600">${hasSupport} Support</span>`:''}
           ${hasPDF?`<span style="font-size:11px">${hasPDF} PDF</span>`:''}
+          ${hasPPTX?`<span style="font-size:11px;color:#EA580C;font-weight:600">${hasPPTX} PPTX</span>`:''}
           ${hasQuiz?`<span style="font-size:11px">${hasQuiz}</span>`:''}
           ${m.duree_estimee?`<span style="font-size:11px">⏱ ${m.duree_estimee}</span>`:''}
         </div>
@@ -1697,6 +1713,9 @@ function openModuleModal(id){
   document.getElementById('m-pdf-url').value='';
   document.getElementById('m-pdf-nom').value='';
   document.getElementById('pdf-zone-text').textContent='Cliquez ou glissez un fichier PDF';
+  document.getElementById('m-pptx-url').value='';
+  document.getElementById('m-pptx-nom').value='';
+  document.getElementById('pptx-zone-text').textContent='Cliquez ou glissez un fichier PowerPoint';
   selectPhase(defaultPhase,document.querySelector(`.phase-chip[data-phase="${defaultPhase}"]`));
   onOrdreChange();
   renderQuizQuestions();
@@ -1732,6 +1751,9 @@ function editModule(id){
   document.getElementById('m-pdf-url').value=m.pdf_url||'';
   document.getElementById('m-pdf-nom').value=m.pdf_nom||'';
   document.getElementById('pdf-zone-text').textContent=m.pdf_nom||'Cliquez ou glissez un fichier PDF';
+  document.getElementById('m-pptx-url').value=m.pptx_url||'';
+  document.getElementById('m-pptx-nom').value=m.pptx_nom||'';
+  document.getElementById('pptx-zone-text').textContent=m.pptx_nom?`✅ ${m.pptx_nom}`:'Cliquez ou glissez un fichier PowerPoint';
   document.getElementById('m-score-min').value=m.score_minimum||70;
   // Phase chips — sélectionne le bon
   document.querySelectorAll('.phase-chip').forEach(c=>{
@@ -1789,6 +1811,8 @@ async function saveModule(){
     support_technique:document.getElementById('m-support-url')?.value.trim()||'',
     pdf_url:document.getElementById('m-pdf-url').value,
     pdf_nom:document.getElementById('m-pdf-nom').value,
+    pptx_url:document.getElementById('m-pptx-url').value,
+    pptx_nom:document.getElementById('m-pptx-nom').value,
     contenu:document.getElementById('m-contenu-text').value.trim(),
     quiz:quizQuestions.filter(q=>q.texte.trim()).map(q=>({
       texte:q.texte,
@@ -1842,6 +1866,38 @@ async function uploadPDF(file){
 document.getElementById('pdf-zone').addEventListener('dragover',e=>{e.preventDefault();e.currentTarget.classList.add('drag');});
 document.getElementById('pdf-zone').addEventListener('dragleave',e=>e.currentTarget.classList.remove('drag'));
 document.getElementById('pdf-zone').addEventListener('drop',e=>{e.preventDefault();e.currentTarget.classList.remove('drag');uploadPDF(e.dataTransfer.files[0]);});
+
+async function uploadPPTX(file){
+  if(!file)return;
+  const name=(file.name||'').toLowerCase();
+  if(!/\.(pptx|ppt)$/.test(name)){
+    alert('Format non supporté. Attendus : .pptx ou .ppt');
+    return;
+  }
+  if(file.size>50*1024*1024){alert('Fichier trop grand (max 50 Mo)');return;}
+  const zone=document.getElementById('pptx-zone');
+  const progress=document.getElementById('pptx-progress');
+  const bar=document.getElementById('pptx-progress-bar');
+  const text=document.getElementById('pptx-zone-text');
+  progress.style.display='block';bar.style.width='0%';text.textContent='Upload en cours…';
+  const ref=storage.ref(`pptx/${Date.now()}_${file.name}`);
+  const task=ref.put(file);
+  task.on('state_changed',snap=>{
+    bar.style.width=(snap.bytesTransferred/snap.totalBytes*100)+'%';
+  },err=>{
+    alert('Erreur upload : '+err.message);progress.style.display='none';
+  },async()=>{
+    const url=await task.snapshot.ref.getDownloadURL();
+    document.getElementById('m-pptx-url').value=url;
+    document.getElementById('m-pptx-nom').value=file.name;
+    text.textContent=`✅ ${file.name}`;
+    progress.style.display='none';
+  });
+}
+
+document.getElementById('pptx-zone').addEventListener('dragover',e=>{e.preventDefault();e.currentTarget.classList.add('drag');});
+document.getElementById('pptx-zone').addEventListener('dragleave',e=>e.currentTarget.classList.remove('drag'));
+document.getElementById('pptx-zone').addEventListener('drop',e=>{e.preventDefault();e.currentTarget.classList.remove('drag');uploadPPTX(e.dataTransfer.files[0]);});
 
 // ─── Quiz Builder ─────────────────────────────────────────
 function addQuestion(){
