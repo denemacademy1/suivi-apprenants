@@ -550,6 +550,9 @@ table.lead-table{width:100%;border-collapse:collapse}
     <div class="sb-nav-item" data-page="infos-denem" onclick="showPage('infos-denem')">
       <span class="sb-nav-icon">ℹ️</span>Infos DENEM Academy
     </div>
+    <div class="sb-nav-item" data-page="booker-rdv" onclick="showPage('booker-rdv')">
+      <span class="sb-nav-icon">🗓</span>Booker un RDV
+    </div>
     <div class="sb-section-label" style="margin-top:8px">Landing Page</div>
     <div class="sb-nav-item" data-page="rdv-bookes" onclick="showPage('rdv-bookes')">
       <span class="sb-nav-icon">🗓</span>RDVs Bookés
@@ -1213,6 +1216,22 @@ table.lead-table{width:100%;border-collapse:collapse}
       </p>
     </div>
 
+    <!-- PAGE: BOOKER UN RDV (iframe rdv-express.html) -->
+    <div id="page-booker-rdv" style="display:none">
+      <div style="max-width:1120px;margin:0 auto">
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#0F172A">🗓 Booker un RDV en direct</div>
+            <div style="font-size:12.5px;color:#64748B;margin-top:2px">Remplis les coordonnées du prospect au téléphone → réserve un créneau → l'invite Google Meet part immédiatement.</div>
+          </div>
+          <a id="booker-open-tab" href="https://denemacademy.com/rdv-express.html" target="_blank" rel="noopener" style="padding:8px 14px;background:#F1F5F9;color:#334155;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none">↗ Ouvrir en plein écran</a>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.04)">
+          <iframe id="booker-iframe" src="https://denemacademy.com/rdv-express.html" title="Booker un RDV" style="width:100%;height:1200px;border:none;display:block"></iframe>
+        </div>
+      </div>
+    </div>
+
     <!-- PAGE: INFOS DENEM ACADEMY -->
     <div id="page-infos-denem" style="display:none">
       <div class="tpl-header">
@@ -1541,7 +1560,10 @@ table.lead-table{width:100%;border-collapse:collapse}
         <div class="modal-lead-sub" id="modal-lead-sub">—</div>
         <div class="modal-header-badges" id="modal-lead-badges"></div>
       </div>
-      <button class="modal-close" onclick="closeModal('modal-lead')">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="btn-book-lead-rdv" onclick="bookRdvForActiveLead()" title="Booker un RDV pour ce lead" style="background:linear-gradient(135deg,#6B5BFF,#EC4899);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">🗓 Booker un RDV</button>
+        <button class="modal-close" onclick="closeModal('modal-lead')">✕</button>
+      </div>
     </div>
     <div class="modal-tabs">
       <div class="modal-tab active" onclick="switchTab(this,'tab-profil')">👤 Profil</div>
@@ -2149,6 +2171,7 @@ const PAGE_TITLES = {
   'objectif-setting': '🎯 Objectif du Setting',
   'templates': '💬 Templates messages',
   'infos-denem': 'ℹ️ Infos DENEM Academy',
+  'booker-rdv': '🗓 Booker un RDV',
   'rdv-bookes': '🗓 RDVs Bookés (site public)',
   'candidatures-lp': '🎯 Candidatures LP',
   'candidatures-yt': '▶️ Candidatures LP - Youtube',
@@ -2176,6 +2199,13 @@ function renderCurrentPage() {
   else if (S.currentPage === 'candidatures-yt') renderCandidaturesYt();
   else if (S.currentPage === 'leads-vsl') renderLeadsVsl();
   else if (S.currentPage === 'rdv-bookes') renderRdvBookes();
+  else if (S.currentPage === 'booker-rdv') {
+    // Ne reload que si l'iframe est sur about:blank ou vide (première visite)
+    const iframe = document.getElementById('booker-iframe');
+    if (iframe && (!iframe.src || iframe.src === 'about:blank')) {
+      iframe.src = 'https://denemacademy.com/rdv-express.html';
+    }
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -3220,6 +3250,28 @@ function renderStats() {
       </tr>`).join('')}
       </tbody></table>`
     : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Aucun lead contacté pour l\'instant</div></div>';
+}
+
+// ══════════════════════════════════════════════
+//  BOOKER UN RDV pour le lead actif (page-booker-rdv avec pré-remplissage)
+// ══════════════════════════════════════════════
+function bookRdvForActiveLead() {
+  const l = S.activeLead;
+  if (!l) { showPage('booker-rdv'); return; }
+  const tel = String(l.telephone||'').replace(/\s/g,'').replace(/^\+33/, '').replace(/^0/, '');
+  const params = new URLSearchParams({
+    prenom: l.prenom || '',
+    nom:    l.nom || '',
+    email:  l.email || '',
+    tel:    tel
+  });
+  const iframe = document.getElementById('booker-iframe');
+  const openTab = document.getElementById('booker-open-tab');
+  const url = `https://denemacademy.com/rdv-express.html?${params.toString()}`;
+  if (iframe) iframe.src = url;
+  if (openTab) openTab.href = url;
+  closeModal('modal-lead');
+  showPage('booker-rdv');
 }
 
 // ══════════════════════════════════════════════
