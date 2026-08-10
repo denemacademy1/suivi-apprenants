@@ -3259,11 +3259,17 @@ function bookRdvForActiveLead() {
   const l = S.activeLead;
   if (!l) { showPage('booker-rdv'); return; }
   const tel = String(l.telephone||'').replace(/\s/g,'').replace(/^\+33/, '').replace(/^0/, '');
+  // Reprend la note setter (illimité) + le commentaire libre du questionnaire
+  const noteSetter = (l.noteSetter || '').trim();
+  const commentaireQ = (l.reponsesQuestionnaire?.commentaireLibre || '').trim();
+  const message = [noteSetter, commentaireQ].filter(Boolean).join('\n\n');
   const params = new URLSearchParams({
-    prenom: l.prenom || '',
-    nom:    l.nom || '',
-    email:  l.email || '',
-    tel:    tel
+    prenom:  l.prenom || '',
+    nom:     l.nom || '',
+    email:   l.email || '',
+    tel:     tel,
+    message: message,
+    source:  l.sourceCanal || ''
   });
   const iframe = document.getElementById('booker-iframe');
   const openTab = document.getElementById('booker-open-tab');

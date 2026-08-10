@@ -146,7 +146,7 @@ function corsHeaders(res) {
 // (best effort — jamais bloquant pour la création du lead)
 // ─────────────────────────────────────────────────────────────
 async function sendBookingNotificationEmail({
-  toEmail, prenom, nom, email, telephone, message, answers, date, time, endTime, meetLink, eventId
+  toEmail, prenom, nom, email, telephone, message, source_hint, answers, date, time, endTime, meetLink, eventId
 }) {
   if (!toEmail) { console.warn('[booking] pas d\'adresse notif → skip email'); return; }
   const smtpUser = SMTP_USER.value();
@@ -178,6 +178,7 @@ async function sendBookingNotificationEmail({
       <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-weight:600">Coordonnées prospect</div>
       <div style="display:flex;gap:12px;margin:6px 0;font-size:14px"><span style="color:rgba(255,255,255,.5);min-width:88px">📧 Email</span><a href="mailto:${escapeAttr(email)}" style="color:#A5B4FC;text-decoration:none">${escapeHtml(email)}</a></div>
       ${telephone ? `<div style="display:flex;gap:12px;margin:6px 0;font-size:14px"><span style="color:rgba(255,255,255,.5);min-width:88px">📞 Tél</span><a href="tel:${escapeAttr(telephone)}" style="color:#A5B4FC;text-decoration:none">${escapeHtml(telephone)}</a></div>` : ''}
+      ${source_hint ? `<div style="display:flex;gap:12px;margin:6px 0;font-size:14px"><span style="color:rgba(255,255,255,.5);min-width:88px">🎯 Source</span><span style="color:#fff;font-weight:600">${escapeHtml(source_hint)}</span></div>` : ''}
     </div>
 
     ${message ? `
@@ -214,7 +215,7 @@ Nouveau RDV réservé sur denemacademy.com
 
 Prospect : ${prenom} ${nom}
 Email    : ${email}
-${telephone ? `Téléphone: ${telephone}\n` : ''}Date     : ${dateLabel}
+${telephone ? `Téléphone: ${telephone}\n` : ''}${source_hint ? `Source   : ${source_hint}\n` : ''}Date     : ${dateLabel}
 Heure    : ${time} - ${endTime} (Europe/Paris)
 ${meetLink ? `Meet     : ${meetLink}\n` : ''}${message ? `\nMessage:\n${message}\n` : ''}${answersText}
 Lead visible dans denem.academy/setting (sourceCanal=Booking)`;
@@ -435,7 +436,7 @@ exports.bookingCreate = onRequest(
     if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
     try {
-      const { prenom, nom, email, telephone, message, date, time, answers } = req.body || {};
+      const { prenom, nom, email, telephone, message, source_hint, date, time, answers } = req.body || {};
       if (!prenom || !nom || !email || !date || !time) {
         return res.status(400).json({ error: 'Champs requis : prenom, nom, email, date, time' });
       }
@@ -486,12 +487,14 @@ exports.bookingCreate = onRequest(
             `\n${i+1}. ${a.question}\n→ ${a.answer || '(pas de réponse)'}`
           ).join('\n')
         : '';
+      const sourceStr = String(source_hint||'').trim();
       const description = [
         cfg.event_description_intro ? cfg.event_description_intro : null,
         cfg.event_description_intro ? '\n———————————————\n' : null,
         `Prospect : ${prenom} ${nom}`,
         `Email : ${email}`,
         telephone ? `Téléphone : ${telephone}` : null,
+        sourceStr ? `Provenance : ${sourceStr}` : null,
         message ? `\nMessage :\n${message}` : null,
         answersBlock || null,
         `\n— Réservé via denemacademy.com`
@@ -573,6 +576,7 @@ exports.bookingCreate = onRequest(
         booking_meet_link: meetLink,
         booking_start_utc: startUtc.toISOString(),
         booking_end_utc:   endUtc.toISOString(),
+        booking_original_source: sourceStr || null,
         dateCreation: FieldValue.serverTimestamp(),
         dateLastContactSetter: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -594,6 +598,7 @@ exports.bookingCreate = onRequest(
             email: leadDoc.email,
             telephone: leadDoc.telephone,
             message: leadDoc.reponsesQuestionnaire.commentaireLibre,
+            source_hint: sourceStr,
             answers: answersArr,
             date, time, endTime,
             meetLink,
