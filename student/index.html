@@ -1481,6 +1481,8 @@ auth.onAuthStateChanged(async user=>{
       }catch(_){}
     }
     if(appDoc)S.apprenant={id:appDoc.id,...appDoc.data()};
+    // Recalcule les masterclass visibles maintenant que S.apprenant est chargé
+    if (typeof refreshMasterclassVisibility === 'function') refreshMasterclassVisibility();
 
     if(S.apprenant){
       // Le badge Jour de formation est désormais dans la topbar (updateDayChip)
@@ -1583,27 +1585,16 @@ function loadData(){
     checkInitialBadges();
   });
   // ─── Masterclass (live sync depuis CSM) ───
+  // ⚠️ On garde TOUTES les masterclass publiées dans S._masterclassesAll,
+  // puis on filtre par audience au rendu (S.apprenant peut ne pas être chargé
+  // au premier snapshot Firestore → filtrer ici capturerait myId=undefined).
   db.collection("masterclass").onSnapshot(snap=>{
-    const myId = S.apprenant?.id;
-    S.masterclasses = snap.docs
+    S._masterclassesAll = snap.docs
       .map(d => ({ id:d.id, ...d.data() }))
       .filter(m => m.published !== false)
-      // 🎯 Audience : 'all' (défaut/legacy) → visible par tous ;
-      //              'targeted' → visible seulement si mon id est dans audience_ids.
-      .filter(m => {
-        if (m.audience_type !== 'targeted') return true;
-        if (!Array.isArray(m.audience_ids) || m.audience_ids.length === 0) return false;
-        return !!myId && m.audience_ids.includes(myId);
-      })
       .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-    const badge = document.getElementById('nav-badge-masterclass');
-    if (badge){
-      if (S.masterclasses.length){ badge.textContent = S.masterclasses.length; badge.style.display = 'flex'; }
-      else { badge.style.display = 'none'; }
-    }
-    if (S.currentPage === 'masterclass') renderMasterclassPageStudent();
-    renderHomeMasterclass();
-  }, e => { console.warn('[masterclass] listener:', e); S.masterclasses = []; renderHomeMasterclass(); });
+    refreshMasterclassVisibility();
+  }, e => { console.warn('[masterclass] listener:', e); S._masterclassesAll = []; refreshMasterclassVisibility(); });
   if(S.apprenant){
     // Live sync apprenant profile (CSM edits propagate without page reload)
     db.collection("apprenants").doc(S.apprenant.id).onSnapshot(d=>{
@@ -4190,6 +4181,25 @@ const MASTERCLASS_THEMES = [
 
 function mcThemeCfgStudent(key){
   return MASTERCLASS_THEMES.find(t=>t.key===key) || {key,label:key,icon:'🎬',color:'#6366F1'};
+}
+
+// Filtre live des masterclass visibles selon l'audience (tous / ciblé)
+// Appelé à chaque snapshot Firestore ET dès que S.apprenant devient disponible
+function refreshMasterclassVisibility(){
+  const all = S._masterclassesAll || [];
+  const myId = S.apprenant?.id;
+  S.masterclasses = all.filter(m => {
+    if (m.audience_type !== 'targeted') return true;
+    if (!Array.isArray(m.audience_ids) || m.audience_ids.length === 0) return false;
+    return !!myId && m.audience_ids.includes(myId);
+  });
+  const badge = document.getElementById('nav-badge-masterclass');
+  if (badge){
+    if (S.masterclasses.length){ badge.textContent = S.masterclasses.length; badge.style.display = 'flex'; }
+    else { badge.style.display = 'none'; }
+  }
+  if (S.currentPage === 'masterclass') renderMasterclassPageStudent();
+  renderHomeMasterclass();
 }
 
 function renderMasterclassPageStudent(){
