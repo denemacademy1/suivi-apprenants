@@ -3894,31 +3894,29 @@ function renderHomeMasterclass(){
     .filter(m => !isNaN(m._ts) && m._ts >= now - 1.5*3600*1000) // tolérance 1h30 après début (encore en live)
     .sort((a,b) => a._ts - b._ts);
 
-  const next = upcoming[0];
+  const nextLive = upcoming[0];
+  // Fallback : si pas de live upcoming, on affiche la masterclass la plus récente visible
+  // (utile pour les replays / masterclass ciblées sans date_event)
+  const next = nextLive || (S.masterclasses||[]).find(m => m.published !== false) || null;
   if(!next){ el.innerHTML = ''; return; }
 
+  const isReplay = !nextLive; // pas de date d'événement → replay ou masterclass sans planning
   const th = mcThemeCfgStudent(next.theme);
-  const dt = new Date(next._ts);
-  const dateLabel = dt.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
-  const heureLabel = next.heure || dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-  // Time until event
-  const diffMs = next._ts - now;
-  let countdown = '';
-  if (diffMs < 0){
-    countdown = '🔴 En direct maintenant';
-  } else if (diffMs < 3600*1000){
-    const min = Math.max(1, Math.round(diffMs/60000));
-    countdown = `Dans ${min} min`;
-  } else if (diffMs < 24*3600*1000){
-    const h = Math.round(diffMs/3600000);
-    countdown = `Dans ${h}h`;
+  let dateLabel = '', heureLabel = '', countdown = '', isLive = false;
+  if (!isReplay) {
+    const dt = new Date(next._ts);
+    dateLabel = dt.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+    heureLabel = next.heure || dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const diffMs = next._ts - now;
+    if (diffMs < 0) countdown = '🔴 En direct maintenant';
+    else if (diffMs < 3600*1000){ const min = Math.max(1, Math.round(diffMs/60000)); countdown = `Dans ${min} min`; }
+    else if (diffMs < 24*3600*1000){ const h = Math.round(diffMs/3600000); countdown = `Dans ${h}h`; }
+    else { const d = Math.round(diffMs/(24*3600*1000)); countdown = `Dans ${d} jour${d>1?'s':''}`; }
+    isLive = diffMs < 30*60*1000;
   } else {
-    const d = Math.round(diffMs/(24*3600*1000));
-    countdown = `Dans ${d} jour${d>1?'s':''}`;
+    countdown = '🎬 Replay dispo';
   }
-  const isLive = diffMs < 30*60*1000; // dans 30 min ou moins → bouton "Rejoindre"
 
-  // ⚠️ Uniquement le lien Meet renseigné par le CSM (pas de fallback vidéo)
   const meetLink = (next.meet_link || '').trim();
   el.innerHTML = `<div class="home-mc-card" style="--mc-color:${th.color}">
     <div class="home-mc-head">
@@ -3928,22 +3926,24 @@ function renderHomeMasterclass(){
     <div class="home-mc-body">
       <div class="home-mc-icon">🎬</div>
       <div class="home-mc-content">
-        <div class="home-mc-label">Prochaine Masterclass</div>
+        <div class="home-mc-label">${isReplay ? 'Masterclass disponible pour toi' : 'Prochaine Masterclass'}</div>
         <div class="home-mc-title">${escHtml(next.titre||'')}</div>
         ${next.intervenant?`<div class="home-mc-intervenant">👤 ${escHtml(next.intervenant)}${next.intervenant_role?` · ${escHtml(next.intervenant_role)}`:''}</div>`:''}
-        <div class="home-mc-when">
+        ${!isReplay ? `<div class="home-mc-when">
           <span>📅 ${dateLabel}</span>
           <span>🕐 ${heureLabel}</span>
           ${next.duree?`<span>⏱ ${escHtml(next.duree)}</span>`:''}
-        </div>
+        </div>` : (next.duree ? `<div class="home-mc-when"><span>⏱ ${escHtml(next.duree)}</span></div>` : '')}
       </div>
     </div>
     ${next.description?`<div class="home-mc-desc">${escHtml((next.description||'').slice(0,180))}${(next.description||'').length>180?'…':''}</div>`:''}
     <div class="home-mc-actions">
-      ${meetLink
-        ? `<button class="home-mc-cta ${isLive?'live':''}" onclick="openMeetLink('${next.id}')">${isLive?'🔴 Rejoindre maintenant':'🎬 Rejoindre via Google Meet'} →</button>`
-        : `<div class="home-mc-no-link">Le lien sera ajouté par le coach prochainement.</div>`}
-      <button class="home-mc-details-btn" onclick="openMasterclassPlayer('${next.id}')">Voir le détail</button>
+      ${isReplay
+        ? `<button class="home-mc-cta" onclick="openMasterclassPlayer('${next.id}')">🎬 Regarder la masterclass →</button>`
+        : (meetLink
+          ? `<button class="home-mc-cta ${isLive?'live':''}" onclick="openMeetLink('${next.id}')">${isLive?'🔴 Rejoindre maintenant':'🎬 Rejoindre via Google Meet'} →</button>`
+          : `<div class="home-mc-no-link">Le lien sera ajouté par le coach prochainement.</div>`)}
+      ${!isReplay ? `<button class="home-mc-details-btn" onclick="openMasterclassPlayer('${next.id}')">Voir le détail</button>` : ''}
     </div>
   </div>`;
 }
@@ -4192,19 +4192,6 @@ function refreshMasterclassVisibility(){
     if (m.audience_type !== 'targeted') return true;
     if (!Array.isArray(m.audience_ids) || m.audience_ids.length === 0) return false;
     return !!myId && m.audience_ids.includes(myId);
-  });
-  // Debug console pour diagnostiquer si une masterclass n'apparaît pas
-  console.log('[masterclass]', {
-    apprenantId: myId || '(non chargé)',
-    totalPubliees: all.length,
-    visibles: S.masterclasses.length,
-    detail: all.map(m => ({
-      titre: m.titre,
-      published: m.published,
-      audience: m.audience_type || 'all',
-      ids: m.audience_ids || [],
-      visible: S.masterclasses.some(v => v.id === m.id)
-    }))
   });
   const badge = document.getElementById('nav-badge-masterclass');
   if (badge){
