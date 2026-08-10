@@ -4193,6 +4193,19 @@ function refreshMasterclassVisibility(){
     if (!Array.isArray(m.audience_ids) || m.audience_ids.length === 0) return false;
     return !!myId && m.audience_ids.includes(myId);
   });
+  // Debug console pour diagnostiquer si une masterclass n'apparaît pas
+  console.log('[masterclass]', {
+    apprenantId: myId || '(non chargé)',
+    totalPubliees: all.length,
+    visibles: S.masterclasses.length,
+    detail: all.map(m => ({
+      titre: m.titre,
+      published: m.published,
+      audience: m.audience_type || 'all',
+      ids: m.audience_ids || [],
+      visible: S.masterclasses.some(v => v.id === m.id)
+    }))
+  });
   const badge = document.getElementById('nav-badge-masterclass');
   if (badge){
     if (S.masterclasses.length){ badge.textContent = S.masterclasses.length; badge.style.display = 'flex'; }
