@@ -2370,15 +2370,16 @@ function renderModuleContent(m){
 
   if(m.pptx_url){
     const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(m.pptx_url)}`;
+    const filename = (m.pptx_nom||'presentation.pptx').replace(/[<>:"/\\|?*]/g,'_');
     html+=`<div class="sec">
       <div class="sec-head"><div class="sec-icon" style="background:rgba(234,88,12,.15);color:#F97316">📊</div><div class="sec-title">Présentation PowerPoint</div></div>
       <div class="sec-body">
         <div style="width:100%;aspect-ratio:16/9;border:1px solid rgba(234,88,12,.25);border-radius:14px;overflow:hidden;background:#0F0E1A;margin-bottom:14px;box-shadow:0 12px 32px rgba(0,0,0,.35)">
           <iframe src="${escAttr(viewerUrl)}" style="width:100%;height:100%;border:none;display:block" allowfullscreen title="${escAttr(m.pptx_nom||'Présentation')}"></iframe>
         </div>
-        <a href="${escAttr(m.pptx_url)}" download style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 20px;background:linear-gradient(135deg,#EA580C,#F97316);color:#fff;border-radius:14px;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:.3px;transition:.2s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 32px rgba(234,88,12,.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <button onclick="downloadPptx('${escAttr(m.pptx_url)}', '${escAttr(filename)}', this)" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 20px;background:linear-gradient(135deg,#EA580C,#F97316);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;letter-spacing:.3px;cursor:pointer;font-family:inherit;transition:.2s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 32px rgba(234,88,12,.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           ⬇ Télécharger la présentation${m.pptx_nom?` — ${escHtml(m.pptx_nom)}`:''}
-        </a>
+        </button>
       </div>
     </div>`;
   }
@@ -4181,6 +4182,35 @@ const MASTERCLASS_THEMES = [
 
 function mcThemeCfgStudent(key){
   return MASTERCLASS_THEMES.find(t=>t.key===key) || {key,label:key,icon:'🎬',color:'#6366F1'};
+}
+
+// Force le téléchargement d'un .pptx cross-origin (Firebase Storage)
+// via fetch + blob. Fallback : ouvre dans un nouvel onglet si CORS refuse.
+async function downloadPptx(url, filename, btnEl){
+  if (!url) return;
+  const originalHtml = btnEl ? btnEl.innerHTML : '';
+  if (btnEl) { btnEl.disabled = true; btnEl.innerHTML = '⏳ Téléchargement…'; }
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const blob = await resp.blob();
+    const dlUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = filename || 'presentation.pptx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
+    if (btnEl) {
+      btnEl.innerHTML = '✅ Téléchargé';
+      setTimeout(() => { btnEl.innerHTML = originalHtml; btnEl.disabled = false; }, 2000);
+    }
+  } catch (e) {
+    console.error('[pptx] download failed, fallback new tab', e);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    if (btnEl) { btnEl.innerHTML = originalHtml; btnEl.disabled = false; }
+  }
 }
 
 // Filtre live des masterclass visibles selon l'audience (tous / ciblé)
